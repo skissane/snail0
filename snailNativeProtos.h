@@ -8,6 +8,7 @@ NATIVE(div, VARIADIC);
 NATIVE(eq, 2);
 NATIVE(error, 1);
 NATIVE(eval,1);
+NATIVE(foreach,3);
 NATIVE(gt, 2);
 NATIVE(gte, 2);
 NATIVE(if,VARIADIC);

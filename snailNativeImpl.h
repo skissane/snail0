@@ -581,3 +581,40 @@ NATIVE(if,VARIADIC) {
 	snailSetResult(snail,"");
 	return snailStatusOk;
 }
+
+NATIVE(foreach,3) {
+	if (snailTokenClassify(args[0]) != 'U') {
+		snailSetResult(snail,"argument 0 must be unquoted (U)");
+		return snailStatusError;
+	}
+	if (snailTokenClassify(args[1]) != 'L') {
+		snailSetResult(snail,"argument 1 must be list (L)");
+		return snailStatusError;
+	}
+	if (snailTokenClassify(args[2]) != 'L') {
+		snailSetResult(snail,"argument 2 must be list (L)");
+		return snailStatusError;
+	}
+	snailSetResult(snail, "");
+	snailArray *list = snailUnquoteList(args[1]);
+	for (int i = 0; i < list->length; i++) {
+		char *elem = list->elems[i];
+		snailSetVar(snail, args[0], snailDupString(elem));
+		snailStatus ss = snailExecList(snail,args[2]);
+		if (ss == snailStatusOk || ss == snailStatusContinue)
+			continue;
+		if (ss == snailStatusBreak) {
+			snailArrayDestroy(list,free);
+			return snailStatusOk;
+		}
+		if (ss == snailStatusError || ss == snailStatusReturn) {
+			snailArrayDestroy(list,free);
+			return ss;
+		}
+		snailSetResult(snail,"unexpected status in loop");
+		snailArrayDestroy(list,free);
+		return snailStatusError;
+	}
+	snailArrayDestroy(list,free);
+	return snailStatusOk;
+}
