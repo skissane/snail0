@@ -19,6 +19,13 @@
 		} \
 	} while(0)
 
+#define NATIVE_ARG_MUSTCLASS(_index,_class) do { \
+		if (snailTokenClassify(args[_index]) != _class) { \
+			snailSetResult(snail,"argument " #_index " must have type " #_class); \
+			return snailStatusError; \
+		} \
+	} while(0)
+
 NATIVE(error, 1) {
 	snailSetResult(snail, args[0]);
 	return snailStatusError;
@@ -309,7 +316,7 @@ NATIVE(list_index, 2) {
 }
 
 NATIVE(set, 2) {
-	snailSetVar(snail, args[0],args[1]);
+	snailSetVar(snail, args[0], snailDupString(args[1]));
 	snailSetResult(snail, "");
 	return snailStatusOk;
 }
@@ -426,7 +433,7 @@ NATIVE(continue,0) {
 
 NATIVE(eval,1) {
 	if (snailTokenClassify(args[0]) != 'L') {
-		snailSetResult(snail,"bad arguments");
+		snailSetResult(snail,"eval argument 0 must be of type L");
 		return snailStatusError;
 	}
 	return snailExecList(snail,args[0]);
@@ -621,5 +628,138 @@ NATIVE(foreach,3) {
 
 NATIVE(time_now,0) {
 	snailSetResultInt(snail, snailTimeNow());
+	return snailStatusOk;
+}
+
+NATIVE(catch,3) {
+	if (snailTokenClassify(args[0]) != 'L') {
+		snailSetResult(snail,"argument 0 must have type L");
+		return snailStatusError;
+	}
+	if (snailTokenClassify(args[1]) != 'U') {
+		snailSetResult(snail,"argument 1 must have type U");
+		return snailStatusError;
+	}
+	if (snailTokenClassify(args[2]) != 'L') {
+		snailSetResult(snail,"argument 2 must have type U");
+		return snailStatusError;
+	}
+	snailStatus ss = snailExecList(snail,args[0]);
+	if (ss == snailStatusError) {
+		snailSetVar(snail, args[1], snailDupString(snail->result));
+		return snailExecList(snail,args[2]);
+	}
+	return ss;
+}
+
+NATIVE(file_read,1) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	char *fileName = snailTokenUnquote(args[0]);
+	char *script = snailReadFile(fileName);
+	free(fileName);
+	if (!script) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg, "unable to read file ");
+		snailBufferAddString(msg, args[0]);
+		snailSetResult(snail, msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+	char *quoted = snailMakeQuoted(script);
+	snailSetResult(snail, quoted);
+	free(script);
+	return snailStatusOk;
+}
+
+NATIVE(file_run,1) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	char *fileName = snailTokenUnquote(args[0]);
+	char *script = snailReadFile(fileName);
+	free(fileName);
+	if (!script) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg, "unable to read file ");
+		snailBufferAddString(msg, args[0]);
+		snailSetResult(snail, msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+	snailStatus status = snailExec(snail, script);
+	free(script);
+	return status;
+}
+
+NATIVE(null,0) {
+	snailSetResult(snail, "");
+	return snailStatusOk;
+}
+
+NATIVE(is_null,1) {
+	snailSetResultBool(snail, snailTokenClassify(args[0]) == 'Z');
+	return snailStatusOk;
+}
+
+NATIVE(list_add, 2) {
+	snailArray *list = snailUnquoteList(args[0]);
+	if (list == NULL) {
+		snailSetResult(snail, "list.add: argument 0 is not a valid list");
+		return snailStatusError;
+	}
+	snailArrayAdd(list, snailDupString(args[1]));
+	char *result = snailQuoteList(list);
+	snailSetResult(snail, result);
+	snailArrayDestroy(list, free);
+	return snailStatusOk;
+}
+
+NATIVE(list_at, 2) {
+	snailArray *list = snailUnquoteList(args[0]);
+	if (list == NULL) {
+		snailSetResult(snail, "list.at: argument 0 is not a valid list");
+		return snailStatusError;
+	}
+	if (!snailIsInt(args[1])) {
+		snailSetResult(snail, "list.at: argument 1 is not a integer");
+		return snailStatusError;
+	}
+	int64_t at = strtoll(args[1], NULL, 10);
+	if (at < 0 || at >= list->length) {
+		snailSetResult(snail, "list.at: provided index is out of range");
+		return snailStatusError;
+	}
+	snailSetResult(snail, list->elems[at]);
+	snailArrayDestroy(list, free);
+	return snailStatusOk;
+}
+
+NATIVE(list_concat, VARIADIC) {
+	NATIVE_ARG_MIN(1);
+	snailArray *list0 = snailUnquoteList(args[0]);
+	if (list0 == NULL) {
+		snailSetResult(snail, "list.concat: argument 0 is not a valid list");
+		return snailStatusError;
+	}
+	for (int i = 1; i < argCount; i++) {
+		snailArray *list1 = snailUnquoteList(args[i]);
+		if (list1 == NULL) {
+			snailBuffer *msg = snailBufferCreate(16);
+			snailBufferAddString(msg, "list.concat: argument ");
+			char *n = snailI64ToStr(i);
+			snailBufferAddString(msg, n);
+			free(n);
+			snailBufferAddString(msg, " is not a valid list");
+			snailSetResult(snail, msg->bytes);
+			snailBufferDestroy(msg);
+			return snailStatusError;
+		}
+		for (int j = 0; j < list1->length; j++) {
+			snailArrayAdd(list0, snailDupString(list1->elems[j]));
+		}
+		snailArrayDestroy(list1, free);
+	}
+	char *result = snailQuoteList(list0);
+	snailSetResult(snail, result);
+	snailArrayDestroy(list0, free);
+	free(result);
 	return snailStatusOk;
 }

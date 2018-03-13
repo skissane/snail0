@@ -1015,9 +1015,11 @@ snailArray *snailParseList(char *str) {
 		}
 		else {
 			snailArrayDestroy(a, free);
+			snailParseDestroy(t);
 			return NULL;
 		}
 	}
+	snailParseDestroy(t);
 	return a;
 }
 
@@ -1069,22 +1071,31 @@ char snailTokenClassify(char *script) {
 	script = snailTokenNormalize(script);
 	if (script == NULL)
 		return 0;
+	char r = 0;
 	switch (script[0]) {
 		case '"':
-			return 'Q';
+			r = 'Q';
+			break;
 		case '{':
-			return 'L';
+			r = 'L';
+			break;
 		case '[':
-			return 'X';
+			r = 'X';
+			break;
 		case '%':
-			return script[1] == '{' ? 'D' : 'U';
+			r = script[1] == '{' ? 'D' : 'U';
+			break;
 		case '$':
-			return 'V';
+			r = 'V';
+			break;
 		case '\n':
-			return 'N';
+			r = 'N';
+			break;
 		default:
-			return 'U';
+			r = 'U';
 	}
+	free(script);
+	return r;
 }
 
 char *snailTokenUnquote(char *script) {
@@ -1117,6 +1128,7 @@ char *snailTokenUnquote(char *script) {
 			case '"':
 				i++;
 				if (script[i] == 0) {
+					snailBufferAddChar(b, 0);
 					char *r = snailDupString(b->bytes);
 					snailBufferDestroy(b);
 					return r;
