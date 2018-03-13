@@ -1294,3 +1294,10 @@ int snailArraySortCmp(void *thunk, const void **a, const void **b) {
 	snailArrayComparator *cmp = thunk;
 	return cmp(*a, *b);
 }
+
+int64_t snailTimeNow(void) {
+	struct timeval tp;
+	gettimeofday(&tp, NULL);
+	int64_t msec = (tp.tv_sec * 1000) + (tp.tv_usec / 1000);
+	return msec;
+}

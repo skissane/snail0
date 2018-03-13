@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <stdnoreturn.h>
 #include <string.h>
+#include <sys/time.h>
 
 /***---Constants---***/
 const int VARIADIC = -1;

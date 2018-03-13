@@ -31,6 +31,7 @@ char *snailU64ToStr(uint64_t n);
 char snailTokenClassify(char *script);
 int snailArraySortCmp(void *thunk, const void **a, const void **b);
 int snailRunFile(snailInterp *snail, char *fileName);
+int64_t snailTimeNow(void);
 noreturn void snailPanic(char *msg);
 snailArray *snailArrayCreate(int initSize);
 snailArray *snailParseList(char *str);

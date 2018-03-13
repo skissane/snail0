@@ -618,3 +618,8 @@ NATIVE(foreach,3) {
 	snailArrayDestroy(list,free);
 	return snailStatusOk;
 }
+
+NATIVE(time_now,0) {
+	snailSetResultInt(snail, snailTimeNow());
+	return snailStatusOk;
+}

@@ -41,6 +41,7 @@ NATIVE(string_is_int, 1);
 NATIVE(string_is_true, 1);
 NATIVE(string_length, 1);
 NATIVE(sub, VARIADIC);
+NATIVE(time_now,0);
 NATIVE(token_classify,1);
 NATIVE(token_quote,1);
 NATIVE(token_unquote,1);
