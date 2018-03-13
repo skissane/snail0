@@ -411,6 +411,86 @@ NATIVE(repl_prompt_set,1) {
 	return snailStatusOk;
 }
 
+NATIVE(return,1) {
+	snailSetResult(snail,args[0]);
+	return snailStatusReturn;
+}
+
+NATIVE(break,0) {
+	return snailStatusBreak;
+}
+
+NATIVE(continue,0) {
+	return snailStatusContinue;
+}
+
+NATIVE(eval,1) {
+	if (snailTokenClassify(args[0]) != 'L') {
+		snailSetResult(snail,"bad arguments");
+		return snailStatusError;
+	}
+	return snailExecList(snail,args[0]);
+}
+
+NATIVE(loop,1) {
+	if (snailTokenClassify(args[0]) != 'L') {
+		snailSetResult(snail,"bad arguments");
+		return snailStatusError;
+	}
+	for (;;) {
+		snailStatus ss = snailExecList(snail,args[0]);
+		if (ss == snailStatusOk || ss == snailStatusContinue)
+			continue;
+		if (ss == snailStatusBreak)
+			return snailStatusOk;
+		if (ss == snailStatusError || ss == snailStatusReturn)
+			return ss;
+		snailSetResult(snail,"unexpected status in loop");
+		return snailStatusError;
+	}
+}
+
+NATIVE(proc,3) {
+	if (snailTokenClassify(args[0]) != 'U') {
+		snailSetResult(snail,"bad procedure name");
+		return snailStatusError;
+	}
+	if (snailTokenClassify(args[1]) != 'L') {
+		snailSetResult(snail,"bad procedure arguments");
+		return snailStatusError;
+	}
+	if (snailTokenClassify(args[2]) != 'L') {
+		snailSetResult(snail,"bad procedure body");
+		return snailStatusError;
+	}
+	if (snailHashTableGet(snail->commands, args[0]) != NULL) {
+		snailSetResult(snail,"duplicate command name");
+		return snailStatusError;
+	}
+	char *pname = snailDupString(args[0]);
+	snailArray *pargs = snailUnquoteList(args[1]);
+	char *pbody = snailDupString(args[2]+1);
+	pbody[strlen(pbody)-1] = 0;
+
+	int arity = 0;
+	for (int i = 0; i < pargs->length; i++ ) {
+		char *parg = pargs->elems[i];
+		if (arity >= 0 && parg[0] == '$')
+			arity++;
+		if (strcmp(parg,"?") == 0 || strcmp(parg,"&") == 0)
+			arity = VARIADIC;
+	}
+
+	snailCommand *cmd = snailMalloc(sizeof(snailCommand));
+	cmd->name = pname;
+	cmd->arity = arity;
+	cmd->args = snailDupString(args[1]);
+	cmd->script = pbody;
+	snailHashTablePut(snail->commands, pname, cmd);
+	snailArrayDestroy(pargs,free);
+	return snailStatusOk;
+}
+
 NATIVE(if,VARIADIC) {
 	NATIVE_ARG_MIN(3);
 

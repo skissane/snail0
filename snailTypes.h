@@ -22,7 +22,10 @@ typedef struct snailBuffer {
 
 typedef enum snailStatus {
 	snailStatusOk,
-	snailStatusError
+	snailStatusError,
+	snailStatusReturn,
+	snailStatusContinue,
+	snailStatusBreak
 } snailStatus;
 
 typedef struct snailHashCell {
@@ -74,8 +77,7 @@ typedef struct snailParseTool {
 	snailBuffer *error;
 } snailParseTool;
 
-typedef void snailHashCellDestructor (char *key, void *value);
-typedef void snailArrayDestructor (void *element);
+typedef void snailDestructor (void *value);
 
 typedef enum snailParseResult {
 	snailParseResultEnd,

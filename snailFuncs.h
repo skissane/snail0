@@ -369,7 +369,6 @@ snailStatus snailExec(snailInterp *snail, char *script) {
 	snailClearResult(snail);
 	snailParseTool *tool = snailParseCreate(script);
 	snailArray *words = snailArrayCreate(8);
-	char *word;
 	snailParseResult result;
 nextWord:
 	result = snailParseNext(tool);
@@ -386,7 +385,7 @@ nextWord:
 			goto stmtDone;
 		}
 		if (tool->word->bytes[0] == '$') {
-			word = snailGetVar(snail, tool->word->bytes+1);
+			char *word = snailGetVar(snail, tool->word->bytes+1);
 			if (word == NULL) {
 				char *msg = snailMakeVarNotFoundError(tool->word->bytes);
 				snailSetResult(snail, msg);
@@ -396,6 +395,7 @@ nextWord:
 				return snailStatusError;
 			}
 			snailArrayAdd(words, word);
+			word = NULL;
 			goto nextWord;
 		} else if (tool->word->bytes[0] == '[') {
 			snailStatus ss = snailExecSub(snail,tool->word->bytes);
@@ -404,12 +404,14 @@ nextWord:
 				snailArrayDestroy(words, free);
 				return ss;
 			}
-			word = snailDupString(snail->result);
+			char *word = snailDupString(snail->result);
 			snailArrayAdd(words, word);
+			word = NULL;
 			goto nextWord;
 		} else {
-			word = snailDupString(tool->word->bytes);
+			char *word = snailDupString(tool->word->bytes);
 			snailArrayAdd(words, word);
+			word = NULL;
 			goto nextWord;
 		}
 	default:
@@ -434,13 +436,18 @@ stmtDone:
 
 	switch (status) {
 	case snailStatusError:
+	case snailStatusReturn:
+	case snailStatusBreak:
+	case snailStatusContinue:
 		snailParseDestroy(tool);
 		snailArrayDestroy(words, free);
-		return snailStatusError;
+		return status;
 	case snailStatusOk:
 		goto nextWord;
 	default:
 		snailSetResult(snail, "unexpected command result");
+		snailParseDestroy(tool);
+		snailArrayDestroy(words, free);
 		return snailStatusError;
 	}
 }
@@ -481,6 +488,12 @@ loopRepl:
 			printf("ok: %s\n", snailGetResult(snail));
 		else if (status == snailStatusError)
 			printf("error: %s\n", snailGetResult(snail));
+		else if (status == snailStatusReturn)
+			printf("return: %s\n", snailGetResult(snail));
+		else if (status == snailStatusBreak)
+			printf("break: %s\n", snailGetResult(snail));
+		else if (status == snailStatusContinue)
+			printf("continue: %s\n", snailGetResult(snail));
 		else
 			snailPanic("unexpected status returned by snailExec");
 		printf("%s", snail->repl->prompt);
@@ -516,6 +529,12 @@ snailCallFrame *snailCallFrameCreate(char *cmdName) {
 	return frame;
 }
 
+void snailCallFrameDestroy(snailCallFrame *frame) {
+	free(frame->cmdName);
+	snailHashTableDestroy(frame->vars,free);
+	free(frame);
+}
+
 char *snailGetVar(snailInterp *snail, char *name) {
 	snailCallFrame *frame = snail->frames->elems[snail->framePointer];
 	return snailHashTableGet(frame->vars,name);
@@ -537,16 +556,18 @@ snailInterp *snailCreate(void) {
 	return snail;
 }
 
-void snailDestroyGlobal(char *key, void *value) {
-	free(value);
+void snailDestroyCommand(snailCommand *cmd) {
+	free(cmd->name);
+	free(cmd);
 }
 
 void snailDestroy(snailInterp *snail) {
 	if (snail == NULL)
 		return;
 	free(snail->result);
-	snailArrayDestroy(snail->frames,free);
-	snailHashTableDestroy(snail->globals,snailDestroyGlobal);
+	snailArrayDestroy(snail->frames,(void*)snailCallFrameDestroy);
+	snailHashTableDestroy(snail->globals,free);
+	snailHashTableDestroy(snail->commands, (void*)snailDestroyCommand);
 	snailReplStateDestroy(snail->repl);
 	free(snail);
 }
@@ -590,22 +611,24 @@ char * snailHashTableNext(snailHashTable *ht, char *key) {
 	return NULL;
 }
 
-void snailHashCellDestroy(snailHashCell *cell, snailHashCellDestructor *destructor) {
+void snailHashCellDestroy(snailHashCell *cell, snailDestructor *destructor) {
 	for (;;) {
 		if (cell == NULL)
 			return;
 		snailHashCell *next = cell->next;
-		destructor(cell->key, cell->value);
+		destructor(cell->value);
+		free(cell->key);
 		free(cell);
 		cell = next;
 	}
 }
 
-void snailHashTableDestroy(snailHashTable *ht, snailHashCellDestructor *destructor) {
+void snailHashTableDestroy(snailHashTable *ht, snailDestructor *destructor) {
 	if (ht == NULL)
 		return;
 	for (int i = 0; i < ht->numberOfBuckets; i++)
 		snailHashCellDestroy(ht->buckets[i], destructor);
+	free(ht->buckets);
 	free(ht);
 }
 
@@ -725,7 +748,7 @@ snailArray *snailArrayCreate(int initSize) {
 	return buf;
 }
 
-void snailArrayDestroy(snailArray *array, snailArrayDestructor *destructor) {
+void snailArrayDestroy(snailArray *array, snailDestructor *destructor) {
 	if (destructor != NULL)
 		for (int i = 0; i < array->length; i++)
 			if (array->elems[i] != NULL)
@@ -734,7 +757,7 @@ void snailArrayDestroy(snailArray *array, snailArrayDestructor *destructor) {
 	free(array);
 }
 
-void snailArrayEmpty(snailArray *array, snailArrayDestructor *destructor) {
+void snailArrayEmpty(snailArray *array, snailDestructor *destructor) {
 	array->length = 0;
 	if (destructor != NULL)
 		for (int i = 0; i < array->length; i++)
@@ -781,7 +804,7 @@ snailStatus snailRunCommand(snailInterp *snail, char *cmdName, int argCount, cha
 		return cmd->native(snail, cmdName, argCount, args);
 	}
 
-	// Handle script command
+	// Should never happen: command has neither native nor script
 	if (cmd->script == NULL) {
 		snailBuffer *msg = snailBufferCreate(16);
 		snailBufferAddString(msg, "command \"");
@@ -793,15 +816,23 @@ snailStatus snailRunCommand(snailInterp *snail, char *cmdName, int argCount, cha
 		return snailStatusError;
 	}
 
-	// Should never happen: command has neither native nor script
-	snailBuffer *msg = snailBufferCreate(16);
-	snailBufferAddString(msg, "command \"");
-	snailBufferAddString(msg, cmdName);
-	snailBufferAddString(msg, "\": script execution not yet implemented");
-	snailBufferAddChar(msg, 0);
-	snailSetResult(snail, msg->bytes);
-	snailBufferDestroy(msg);
-	return snailStatusError;
+	// Handle script command
+	snailCallFrame *frame = snailCallFrameCreate(cmdName);
+	snailArrayAdd(snail->frames, frame);
+	snailArray *argDefs = snailUnquoteList(cmd->args);
+	for (int i = 0, j = 0; i < argDefs->length; i++) {
+		char *argDef = argDefs->elems[i];
+		if (j >= argCount)
+			break;
+		if (argDef[0] == '$') {
+			snailSetVar(snail, argDef+1, args[j++]);
+		}
+	}
+	snailStatus ss = snailExec(snail, cmd->script);
+	snailArrayShift(snail->frames);
+	snailCallFrameDestroy(frame);
+	snailArrayDestroy(argDefs,free);
+	return ss;
 }
 
 void snailSetResult(snailInterp *snail, char *result) {
@@ -1049,6 +1080,8 @@ char snailTokenClassify(char *script) {
 			return script[1] == '{' ? 'D' : 'U';
 		case '$':
 			return 'V';
+		case '\n':
+			return 'N';
 		default:
 			return 'U';
 	}
@@ -1135,6 +1168,7 @@ char * snailTokenNormalize(char *script) {
 		snailParseDestroy(tool);
 		return NULL;
 	}
+	snailParseDestroy(tool);
 	return token;
 }
 
@@ -1227,6 +1261,14 @@ void * snailArrayPop(snailArray *array) {
 	array->elems[array->length-1] = NULL;
 	array->length--;
 	return first;
+}
+
+void *snailArrayShift(snailArray *array) {
+	if (array->length == 0)
+		return NULL;
+	void *last = array->elems[array->length-1];
+	array->length--;
+	return last;
 }
 
 char *snailQuoteList(snailArray *list) {
