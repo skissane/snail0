@@ -1,24 +1,3 @@
-proc test.case {$name $body} {proc $name {} $body}
-proc test.run.case {$name} {
-	set start [time.now]
-	set caught [null]
-	catch {eval [list $name]} e {set caught $e}
-	set duration [- [time.now] $start]
-	list $name [if {is.null $caught} then {pass PASS} else {pass FAIL}] $duration [nvl $caught ""]
-}
-
-proc test.run.cases {$cases} {
-	set r {}
-	foreach name $cases {
-		set r [list.add $r [test.run.case $name]]
-	}
-	pass $r
-}
-
-proc help.cmds {} {
-	foreach cmd [list.sort [info.cmds]] {puts $cmd}
-}
-
 proc module.cmds {$name} {
 	arg.must.symbol name
 	if {module.exists.unloaded $name} then {module.load $name}
@@ -32,8 +11,6 @@ proc module.cmds {$name} {
 	list.sort $r
 }
 
-proc test.run.suite {$package} {test.run.cases [module.cmds $package]}
-
 proc list.find.at {$list $what} {
 	set i 0
 	set length [list.length $list]
@@ -43,12 +20,6 @@ proc list.find.at {$list $what} {
 		set i [+ $i 1]
 	}
 	return ""
-}
-
-proc help {} {
-	puts "Welcome to Snail interpreter online help"
-	puts "For list of valid commands, type: help.cmds"
-	puts ""
 }
 
 proc file.exists {$path} {
@@ -184,4 +155,10 @@ proc unknown {$cmd $args} {
 		}
 	}
 	error [string.concat "unknown command " [token.quote [token.quote $cmd]]]
+}
+
+proc help {} {
+	puts "Welcome to Snail interpreter online help"
+	puts "For list of valid commands, type: help.cmds"
+	puts ""
 }

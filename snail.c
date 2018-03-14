@@ -57,8 +57,21 @@ int main(int argc, char *argv[]) {
 	int rc = 0;
 	if(argc < 2)
 		snailRepl(snail);
-	else 
-		rc = snailRunFile(snail, argv[1]);
+	else if (strcmp(argv[1],"-") == 0) {
+		for (int i = 2; argv[i] != NULL; i++) {
+			if (!snailRunScript(snail,argv[i])) {
+				rc = 1;
+				break;
+			}
+		}
+	}
+	else {
+		for (int i = 1; argv[i] != NULL; i++) {
+			rc = snailRunFile(snail, argv[i]);
+			if (rc != 0)
+				break;
+		}
+	}
 	snailDestroy(snail);
 	return rc;
 }

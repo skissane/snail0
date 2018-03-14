@@ -1,0 +1,3 @@
+proc help.cmds {} {
+	foreach cmd [list.sort [info.cmds]] {puts $cmd}
+}

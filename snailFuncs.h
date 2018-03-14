@@ -520,23 +520,18 @@ loopRepl:
 			goto loopRepl;
 		}
 		snailStatus status = snailExec(snail, buffer);
-		if (status == snailStatusOk)
-			printf("ok: %s\n", snailGetResult(snail));
-		else if (status == snailStatusError)
-			printf("error: %s\n", snailGetResult(snail));
-		else if (status == snailStatusReturn)
-			printf("return: %s\n", snailGetResult(snail));
-		else if (status == snailStatusBreak)
-			printf("break: %s\n", snailGetResult(snail));
-		else if (status == snailStatusContinue)
-			printf("continue: %s\n", snailGetResult(snail));
-		else
-			snailPanic("unexpected status returned by snailExec");
+		snailPrintResult(snail,status);
 		printf("%s", snail->repl->prompt);
 		free(buffer);
 	}
 exitRepl:
 	printf("\n");
+}
+
+bool snailRunScript(snailInterp *snail, char *script) {
+	snailStatus status = snailExec(snail, script);
+	snailPrintResult(snail, status);
+	return status != snailStatusError;
 }
 
 int snailRunFile(snailInterp *snail, char *fileName) {
@@ -552,6 +547,21 @@ int snailRunFile(snailInterp *snail, char *fileName) {
 	}
 	free(script);
 	return 0;
+}
+
+void snailPrintResult(snailInterp *snail, snailStatus status) {
+	if (status == snailStatusOk)
+		printf("ok: %s\n", snailGetResult(snail));
+	else if (status == snailStatusError)
+		printf("error: %s\n", snailGetResult(snail));
+	else if (status == snailStatusReturn)
+		printf("return: %s\n", snailGetResult(snail));
+	else if (status == snailStatusBreak)
+		printf("break: %s\n", snailGetResult(snail));
+	else if (status == snailStatusContinue)
+		printf("continue: %s\n", snailGetResult(snail));
+	else
+		snailPanic("unexpected status returned by snailExec");
 }
 
 const int snailInitialFrameCount = 32;
@@ -1317,6 +1327,25 @@ snailStatus snailExecSub(snailInterp *snail, char *code) {
 	script[len-1] = 0;
 	snailStatus ss = snailExec(snail, script+1);
 	free(script);
+	return ss;
+}
+
+snailStatus snailExecListUp(snailInterp *snail, int64_t level, char *code) {
+	if (level == 0)
+		return snailExecList(snail, code);
+	if (level < 0 || level >= snail->frames->length) {
+		snailSetResult(snail, "illegal level number");
+		return snailStatusError;
+	}
+	snailArray *savedFrames = snailArrayCreate(level);
+	for (int i = 0; i < level; i++) {
+		snailArrayAdd(savedFrames,snailArrayShift(snail->frames));
+	}
+	snailStatus ss = snailExecList(snail,code);
+	for (int i = 0; i < level; i++) {
+		snailArrayAdd(snail->frames, savedFrames->elems[i]);
+	}
+	snailArrayDestroy(savedFrames,NULL);
 	return ss;
 }
 

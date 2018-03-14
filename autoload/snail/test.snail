@@ -1,0 +1,3 @@
+test.case snail.test.t1000 {
+	test.assert.eq 2 {+ 1 1}
+}

@@ -1,0 +1,36 @@
+proc test.case {$name $body} {proc $name {} $body}
+
+proc test.run.case {$name} {
+	set start [time.now]
+	set caught [null]
+	catch {eval [list $name]} e {set caught $e}
+	set duration [- [time.now] $start]
+	list $name [if {is.null $caught} then {pass PASS} else {pass FAIL}] $duration [nvl $caught ""]
+}
+
+proc test.run.cases {$cases} {
+	set r {}
+	foreach name $cases {
+		set r [list.add $r [test.run.case $name]]
+	}
+	pass $r
+}
+
+proc test.run.suite {$package} {test.run.cases [module.cmds $package]}
+
+proc test.assert {$test} {
+	arg.must.list test
+	if {not [eval.up 1 $test]} then {
+		error [string.concat "Expected to be true, but was false: " $test]
+	}
+	null
+}
+
+proc test.assert.eq {$expect $test} {
+	arg.must.list test
+	set v [eval.up 1 $test]
+	if {not [= $expect $v]} then {
+		error [string.concat "Expected {" $expect "} got {" $v "} running " $test]
+	}
+	null
+}

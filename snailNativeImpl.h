@@ -1325,3 +1325,10 @@ NATIVE(string_sub,3) {
 	free(q);
 	return snailStatusOk;
 }
+
+NATIVE(eval_up,2) {
+	NATIVE_ARG_MUSTINT(0);
+	NATIVE_ARG_MUSTCLASS(1,'L');
+	int64_t level = strtoll(args[0], NULL, 10);
+	return snailExecListUp(snail,level,args[1]);
+}

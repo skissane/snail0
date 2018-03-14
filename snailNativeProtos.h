@@ -16,6 +16,7 @@ NATIVE(div, VARIADIC);
 NATIVE(eq, 2);
 NATIVE(error, 1);
 NATIVE(eval,1);
+NATIVE(eval_up,2);
 NATIVE(file_read,1);
 NATIVE(file_run,1);
 NATIVE(file_stat,1);
