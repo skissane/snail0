@@ -19,7 +19,9 @@ proc help.cmds {} {
 	foreach cmd [list.sort [info.cmds]] {puts $cmd}
 }
 
-proc package.cmds {$name} {
+proc module.cmds {$name} {
+	arg.must.symbol name
+	if {module.exists.unloaded $name} then {module.load $name}
 	set prefix [string.concat [token.quote $name] "."]
 	set r {}
 	foreach cmd [info.cmds] {
@@ -30,7 +32,7 @@ proc package.cmds {$name} {
 	list.sort $r
 }
 
-proc test.run.suite {$package} {test.run.cases [package.cmds $package]}
+proc test.run.suite {$package} {test.run.cases [module.cmds $package]}
 
 proc list.find.at {$list $what} {
 	set i 0
@@ -41,10 +43,6 @@ proc list.find.at {$list $what} {
 		set i [+ $i 1]
 	}
 	return ""
-}
-
-proc unknown {$cmd $args} {
-	error [string.concat "unknown command " [token.quote [token.quote $cmd]]]
 }
 
 proc help {} {
@@ -67,6 +65,33 @@ proc file.is.type {$path $type} {
 	} ignored {pass f}
 }
 
+proc token.is.quoted {$token} {= [token.classify $token] Q}
+proc token.is.symbol {$token} {= [token.classify $token] U}
+proc token.is.dict {$token} {= [token.classify $token] D}
+proc token.is.list {$token} {= [token.classify $token] L}
+proc token.is.exec {$token} {= [token.classify $token] X}
+proc token.is.newline {$token} {= [token.classify $token] N}
+proc token.is.null {$token} {= [token.classify $token] Z}
+proc token.is.var {$token} {= [token.classify $token] V}
+
+proc arg.must.quoted {$name} {
+	if {not [token.is.quoted [var.get.up 1 $name]]} then {
+		error [string.concat "argument $" $name " must be quoted string"]
+	}
+}
+
+proc arg.must.symbol {$name} {
+	if {not [token.is.symbol [var.get.up 1 $name]]} then {
+		error [string.concat "argument $" $name " must be a symbol"]
+	}
+}
+
+proc arg.must.list {$name} {
+	if {not [token.is.list [var.get.up 1 $name]]} then {
+		error [string.concat "argument $" $name " must be a list"]
+	}
+}
+
 proc file.is.blk {$path} {file.is.type $path blk}
 proc file.is.chr {$path} {file.is.type $path chr}
 proc file.is.dir {$path} {file.is.type $path dir}
@@ -76,3 +101,87 @@ proc file.is.lnk {$path} {file.is.type $path lnk}
 proc file.is.sock {$path} {file.is.type $path sock}
 
 global.set module.load.path {"./autoload"}
+global.set module.loaded %{}
+
+proc not {$bool} {if {pass $bool} then {pass f} else {pass t}}
+proc not.null {$v} {not [is.null $v]}
+
+proc string.contains {$haystack $needle} {not.null [string.find $haystack $needle]}
+
+proc module.name {$name} {
+	arg.must.symbol name
+	set quoted [token.quote $name]
+	if {not [string.contains $quoted "."]} then {
+		null
+	} else {
+		token.unquote [string.left $quoted [string.find.rev $quoted "."]]
+	}
+}
+
+proc module.find.path {$name} {
+	while {not.null $name} {
+		foreach path [global.get module.load.path] {
+			set fpath [string.concat $path "/" [string.replace [token.quote $name] "." "/"] ".snail"]
+			if {file.is.reg $fpath} then {return $fpath}
+		}
+		set name [module.name $name]
+	}
+	null
+}
+
+proc module.is.loaded {$name} {
+	arg.must.symbol name
+	nvl [dict.get [global.get module.loaded] $name] f
+}
+
+proc module.set.loaded {$name} {
+	arg.must.symbol name
+	global.set module.loaded [dict.set [global.get module.loaded] $name t]
+}
+
+proc module.exists {$name} {
+	arg.must.symbol name
+	if {module.is.loaded $name} then {return t}
+	not.null [module.find.path $name]
+}
+
+proc module.exists.unloaded {$name} {
+	arg.must.symbol name
+	if {module.is.loaded $name} then {return f}
+	not.null [module.find.path $name]
+}
+
+proc module.load {$name} {
+	arg.must.symbol name
+	if {module.is.loaded $name} then {return [null]}
+	set path [module.find.path $name]
+	if {is.null $path} then {
+		error [string.concat "no file found for module '" $name "'"]
+	}
+	catch {
+		file.run $path
+	} e {
+		error [string.concat "error loading file '" $path "' for module '" $name  "': " $e]
+	}
+	module.set.loaded $name
+	null
+}
+
+proc apply {$cmd $args} {
+	arg.must.symbol cmd
+	arg.must.list args
+	eval [list.concat [list $cmd] $args]
+}
+
+proc unknown {$cmd $args} {
+	if {token.is.symbol $cmd} then {
+		set module [module.name $cmd]
+		if {not.null $module} then {
+			if {module.exists.unloaded $module} then {
+				module.load $module
+				return [apply $cmd $args]
+			}
+		}
+	}
+	error [string.concat "unknown command " [token.quote [token.quote $cmd]]]
+}

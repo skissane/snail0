@@ -13,6 +13,7 @@ bool snailTokenIsNormalized(char *script);
 bool snailTokenIsValid(char *script);
 char *snailDupString(char *str);
 char *snailGetResult(snailInterp *snail);
+char *snailGetUpVar(snailInterp *snail, int level, char *name);
 char *snailGetVar(snailInterp *snail, char *name);
 char *snailHashTableFirst(snailHashTable *ht);
 char *snailHashTableNext(snailHashTable *ht, char *key);

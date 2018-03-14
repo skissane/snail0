@@ -592,6 +592,16 @@ bool snailSetUpVar(snailInterp *snail, int level, char *name, char *value) {
 	return true;
 }
 
+char * snailGetUpVar(snailInterp *snail, int level, char *name) {
+	if (level < 0)
+		return NULL;
+	int off = snail->frames->length-1 - level;
+	if (off < 0)
+		return NULL;
+	snailCallFrame *frame = snail->frames->elems[off];
+	return snailHashTableGet(frame->vars,name);
+}
+
 void snailRunInitScript(snailInterp *snail) {
 	snailStatus ss = snailExec(snail, snailInitScript);
 	if (ss != snailStatusOk) {

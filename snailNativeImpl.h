@@ -341,6 +341,25 @@ NATIVE(set_up, 3) {
 	return snailStatusOk;
 }
 
+NATIVE(var_get_up, 2) {
+	NATIVE_ARG_MUSTINT(0);
+	int64_t level = strtoll(args[0], NULL, 10);
+	char *value = snailGetUpVar(snail, level, args[1]);
+	if (value == NULL) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg, "var.get.up: variable $");
+		snailBufferAddString(msg, args[1]);
+		snailBufferAddString(msg, " not found in level ");
+		snailBufferAddString(msg, args[0]);
+		snailBufferAddChar(msg, 0);
+		snailSetResult(snail, msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+	snailSetResult(snail, value);
+	return snailStatusOk;
+}
+
 NATIVE(info_vars, 0) {
 	snailCallFrame *frame = snail->frames->elems[snail->frames->length-1];
 	snailBuffer *buf = snailBufferCreate(64);
@@ -1214,8 +1233,10 @@ NATIVE(string_replace,3) {
 	free(target);
 	free(find);
 	free(sub);
-	snailSetResult(snail,r);
+	char *q = snailMakeQuoted(r);
 	free(r);
+	snailSetResult(snail,q);
+	free(q);
 	return snailStatusOk;
 }
 

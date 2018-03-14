@@ -82,6 +82,7 @@ NATIVE(token_unquote,1);
 NATIVE(unsupported_parse_dump,1);
 NATIVE(var_del, 1);
 NATIVE(var_get, 1);
+NATIVE(var_get_up, 2);
 NATIVE(var_has, 1);
 NATIVE(while,2);
 
