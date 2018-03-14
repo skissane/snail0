@@ -1458,3 +1458,50 @@ char *snailQuoteDict(snailHashTable *ht) {
 	snailBufferDestroy(buf);
 	return result;
 }
+
+char *snailStringReplace(char *target, char *find, char *sub) {
+	snailBuffer *out = snailBufferCreate(strlen(target)+1);
+	if (find == NULL || find[0] == 0) {
+		snailBufferAddString(out, target);
+		snailBufferAddChar(out, 0);
+		char *p = snailDupString(out->bytes);
+		snailBufferDestroy(out);
+		return p;
+	}
+	if (sub == NULL)
+		sub = "";
+	int32_t off = 0;
+	while (true) {
+		char *found = strstr(target + off, find);
+		if (found == NULL) {
+			snailBufferAddString(out, target + off);
+			snailBufferAddChar(out, 0);
+			char *p = snailDupString(out->bytes);
+			snailBufferDestroy(out);
+			return p;
+		}
+		for (int32_t i = off; i < (found - (target)); i++) {
+			snailBufferAddChar(out, target[i]);
+		}
+		snailBufferAddString(out, sub);
+		off += (found - (target + off)) + strlen(find);
+
+		snailBufferAddChar(out, 0);
+		out->length--;
+	}
+}
+
+const char *snailStringFindRev(const char *haystack, const char *needle) {
+	size_t hlen = strlen(haystack);
+	size_t nlen = strlen(needle);
+	for (ssize_t i = hlen-1; i >= 0; i--) {
+		for (size_t j = 0; j < nlen && i+j < hlen; j++) {
+			if (haystack[i+j] != needle[j])
+				goto nextOuter;
+		}
+		return haystack + i;
+nextOuter:
+		;
+	}
+	return NULL;
+}

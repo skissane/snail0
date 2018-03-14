@@ -74,3 +74,5 @@ proc file.is.fifo {$path} {file.is.type $path fifo}
 proc file.is.reg {$path} {file.is.type $path reg}
 proc file.is.lnk {$path} {file.is.type $path lnk}
 proc file.is.sock {$path} {file.is.type $path sock}
+
+global.set module.load.path {"./autoload"}

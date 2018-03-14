@@ -1124,3 +1124,183 @@ NATIVE(info_about_cmd,1) {
 	free(quoted);
 	return snailStatusOk;
 }
+
+NATIVE(global_set, 2) {
+	NATIVE_ARG_MUSTCLASS(0,'U');
+	free(snailHashTablePut(snail->globals,args[0],args[1]));
+	snailSetResult(snail,"");
+	return snailStatusOk;
+}
+
+NATIVE(global_get, 1) {
+	NATIVE_ARG_MUSTCLASS(0,'U');
+	char *value = snailHashTableGet(snail->globals,args[0]);
+	snailSetResult(snail,value == NULL ? "" : value);
+	return snailStatusOk;
+}
+
+NATIVE(info_globals, 0) {
+	snailBuffer *buf = snailBufferCreate(64);
+	snailBufferAddChar(buf,'{');
+	char *cmd = snailHashTableFirst(snail->globals);
+	while (cmd != NULL) {
+		if (buf->length > 1)
+			snailBufferAddChar(buf, ' ');
+		snailBufferAddString(buf, cmd);
+		cmd = snailHashTableNext(snail->globals, cmd);
+	}
+	snailBufferAddChar(buf,'}');
+	snailBufferAddChar(buf, 0);
+	snailSetResult(snail, buf->bytes);
+	snailBufferDestroy(buf);
+	return snailStatusOk;
+}
+
+NATIVE(string_find,2) {
+	NATIVE_ARG_MUSTCLASS(0,'Q');
+	NATIVE_ARG_MUSTCLASS(1,'Q');
+	char *haystack = snailTokenUnquote(args[0]);
+	char *needle = snailTokenUnquote(args[1]);
+	char *r = strstr(haystack, needle);
+	if (r == NULL) {
+		snailSetResult(snail, "");
+	}
+	else {
+		char *rs = snailI64ToStr(r - haystack);
+		snailSetResult(snail,rs);
+		free(rs);
+	}
+	free(haystack);
+	free(needle);
+	return snailStatusOk;
+}
+
+NATIVE(string_find_at,3) {
+	NATIVE_ARG_MUSTCLASS(0,'Q');
+	NATIVE_ARG_MUSTCLASS(1,'Q');
+	NATIVE_ARG_MUSTINT(2);
+	char *haystack = snailTokenUnquote(args[0]);
+	char *needle = snailTokenUnquote(args[1]);
+	int64_t off = strtoll(args[2],NULL,10);
+	int length = strlen(haystack);
+	if (off < 0 || off >= length) {
+		snailSetResult(snail, "");
+		free(haystack);
+		free(needle);
+		return snailStatusOk;
+	}
+	char *r = strstr(haystack + off, needle);
+	if (r == NULL) {
+		snailSetResult(snail, "");
+	}
+	else {
+		char *rs = snailI64ToStr(r - haystack);
+		snailSetResult(snail,rs);
+		free(rs);
+	}
+	free(haystack);
+	free(needle);
+	return snailStatusOk;
+}
+
+NATIVE(string_replace,3) {
+	NATIVE_ARG_MUSTCLASS(0,'Q');
+	NATIVE_ARG_MUSTCLASS(1,'Q');
+	NATIVE_ARG_MUSTCLASS(2,'Q');
+	char *target = snailTokenUnquote(args[0]);
+	char *find = snailTokenUnquote(args[1]);
+	char *sub = snailTokenUnquote(args[2]);
+	char *r = snailStringReplace(target, find, sub);
+	free(target);
+	free(find);
+	free(sub);
+	snailSetResult(snail,r);
+	free(r);
+	return snailStatusOk;
+}
+
+NATIVE(string_find_rev,2) {
+	NATIVE_ARG_MUSTCLASS(0,'Q');
+	NATIVE_ARG_MUSTCLASS(1,'Q');
+	char *haystack = snailTokenUnquote(args[0]);
+	char *needle = snailTokenUnquote(args[1]);
+	const char *r = snailStringFindRev(haystack, needle);
+	if (r == NULL) {
+		snailSetResult(snail, "");
+	}
+	else {
+		char *rs = snailI64ToStr(r - haystack);
+		snailSetResult(snail,rs);
+		free(rs);
+	}
+	free(haystack);
+	free(needle);
+	return snailStatusOk;
+}
+
+NATIVE(string_left,2) {
+	NATIVE_ARG_MUSTCLASS(0,'Q');
+	NATIVE_ARG_MUSTINT(1);
+	int64_t off = strtoll(args[1],NULL,10);
+	char *s = snailTokenUnquote(args[0]);
+	if (off < 0) {
+		free(s);
+		char *q = snailMakeQuoted("");
+		snailSetResult(snail,q);
+		free(q);
+		return snailStatusOk;
+	}
+	if (off >= strlen(s)) {
+		free(s);
+		snailSetResult(snail,args[0]);
+		return snailStatusOk;
+	}
+	s[off] = 0;
+	char *q = snailMakeQuoted(s);
+	free(s);
+	snailSetResult(snail,q);
+	free(q);
+	return snailStatusOk;
+}
+
+NATIVE(string_skip,2) {
+	NATIVE_ARG_MUSTCLASS(0,'Q');
+	NATIVE_ARG_MUSTINT(1);
+	int64_t off = strtoll(args[1],NULL,10);
+	char *s = snailTokenUnquote(args[0]);
+	if (off < 0 || off >= strlen(s)) {
+		free(s);
+		char *q = snailMakeQuoted("");
+		snailSetResult(snail,q);
+		free(q);
+		return snailStatusOk;
+	}
+	char *q = snailMakeQuoted(s+off);
+	free(s);
+	snailSetResult(snail,q);
+	free(q);
+	return snailStatusOk;
+}
+
+NATIVE(string_sub,3) {
+	NATIVE_ARG_MUSTCLASS(0,'Q');
+	NATIVE_ARG_MUSTINT(1);
+	NATIVE_ARG_MUSTINT(2);
+	int64_t off = strtoll(args[1],NULL,10);
+	int64_t len = strtoll(args[2],NULL,10);
+	char *s = snailTokenUnquote(args[0]);
+	if (off < 0 || off >= strlen(s)) {
+		free(s);
+		char *q = snailMakeQuoted("");
+		snailSetResult(snail,q);
+		free(q);
+		return snailStatusOk;
+	}
+	if ((off + len) < strlen(s))
+		s[off+len] = 0;
+	char *q = snailMakeQuoted(s+off);
+	free(s);
+	snailSetResult(snail,q);
+	free(q);
+	return snailStatusOk;
+}
