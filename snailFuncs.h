@@ -1,7 +1,7 @@
 /***---FUNCTIONS---***/
 snailBuffer *snailBufferCreate(int initSize) {
 	snailBuffer *buf = snailMalloc(sizeof(snailBuffer));
-	buf->bytes = malloc(initSize);
+	buf->bytes = snailMalloc(initSize);
 	buf->allocated = initSize;
 	buf->length = 0;
 	return buf;
@@ -117,7 +117,7 @@ char *snailReadFile(const char *filename) {
 	return str;
 }
 
-snailParseTool *snailParseCreate(char *script) {
+snailParseTool *snailParseCreate(const char *script) {
 	snailParseTool *p = snailMalloc(sizeof(snailParseTool));
 	p->script = script;
 	p->length = strlen(script);
@@ -248,6 +248,42 @@ nextChar:
 					goto nextChar;
 
 			}
+		case '%': // could be dict or unquoted token
+			switch (ch) {
+				case '{': // Start of dictionary
+					parser->pos++;
+					snailBufferAddChar(parser->word,ch);
+					snailBufferAddChar(parser->context,ch);
+					state = '0';
+					goto nextChar;
+				case '[': // disallowed characters
+				case '$':
+				case '"':
+					snailBufferAddString(parser->error,"illegal character sequence inside token: '%");
+					snailBufferAddChar(parser->error,ch);
+					snailBufferAddString(parser->error,"'");
+					snailBufferAddChar(parser->error,0);
+					return snailParseResultError;
+				// Valid token terminators
+				case 0:
+				case '}':
+				case ']':
+				case ' ':
+				case '\t':
+				case '\n':
+					if (parser->context->length == 0) {
+						snailBufferAddChar(parser->error,0);
+						return snailParseResultToken;
+					}
+					state = '0';
+					goto nextChar;
+				// Any other character, start an unquoted token
+				default:
+					parser->pos++;
+					snailBufferAddChar(parser->word,ch);
+					state = '_';
+					goto nextChar;
+			}
 		case '0': // initial state
 			switch (ch) {
 				// EOF in initial state
@@ -365,7 +401,7 @@ char * snailParseGetContext(char *script) {
 	}
 }
 
-snailStatus snailExec(snailInterp *snail, char *script) {
+snailStatus snailExec(snailInterp *snail, const char *script) {
 	snailClearResult(snail);
 	snailParseTool *tool = snailParseCreate(script);
 	snailArray *words = snailArrayCreate(8);
@@ -536,23 +572,47 @@ void snailCallFrameDestroy(snailCallFrame *frame) {
 }
 
 char *snailGetVar(snailInterp *snail, char *name) {
-	snailCallFrame *frame = snail->frames->elems[snail->framePointer];
+	snailCallFrame *frame = snail->frames->elems[snail->frames->length-1];
 	return snailHashTableGet(frame->vars,name);
 }
 
 void snailSetVar(snailInterp *snail, char *name, char *value) {
-	snailCallFrame *frame = snail->frames->elems[snail->framePointer];
+	snailCallFrame *frame = snail->frames->elems[snail->frames->length-1];
 	free(snailHashTablePut(frame->vars,name,value));
+}
+
+bool snailSetUpVar(snailInterp *snail, int level, char *name, char *value) {
+	if (level < 0)
+		return false;
+	int off = snail->frames->length-1 - level;
+	if (off < 0)
+		return false;
+	snailCallFrame *frame = snail->frames->elems[off];
+	free(snailHashTablePut(frame->vars,name,value));
+	return true;
+}
+
+void snailRunInitScript(snailInterp *snail) {
+	snailStatus ss = snailExec(snail, snailInitScript);
+	if (ss != snailStatusOk) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"execution of snail init script failed: ");
+		snailBufferAddString(msg,snail->result);
+		snailBufferAddChar(msg,0);
+		snailPanic(msg->bytes);
+	}
 }
 
 snailInterp *snailCreate(void) {
 	snailInterp *snail = snailMalloc(sizeof(snailInterp));
+	snail->startupTime = snailTimeNow();
 	snail->frames = snailArrayCreate(snailInitialFrameCount);
 	snailArrayAdd(snail->frames, snailCallFrameCreate("(top)"));
 	snail->globals = snailHashTableCreate(snailInitialGlobalTableSize);
 	snail->commands =  snailHashTableCreate(snailCommandTableSize);
 	snail->repl = snailReplStateCreate();
 	snailRegisterNatives(snail);
+	snailRunInitScript(snail);
 	return snail;
 }
 
@@ -742,7 +802,7 @@ void snailRegisterNative(snailInterp *snail, char *name, int arity, snailNative 
 
 snailArray *snailArrayCreate(int initSize) {
 	snailArray *buf = snailMalloc(sizeof(snailArray));
-	buf->elems = malloc(initSize * sizeof(void*));
+	buf->elems = snailMalloc(initSize * sizeof(void*));
 	buf->allocated = initSize;
 	buf->length = 0;
 	return buf;
@@ -781,6 +841,25 @@ void snailArrayAdd(snailArray *array, void *element) {
 snailStatus snailRunCommand(snailInterp *snail, char *cmdName, int argCount, char **args) {
 	// Get command from command table
 	snailCommand *cmd = snailHashTableGet(snail->commands, cmdName);
+
+	// Try unknown command handler if command does not exist
+	if (cmd == NULL) {
+		snailCommand *cmdUnknown = snailHashTableGet(snail->commands, "unknown");
+		if (cmdUnknown != NULL) {
+			snailArray *args2 = snailArrayCreate(argCount);
+			for (int i = 0; i < argCount; i++) {
+				snailArrayAdd(args2, args[i]);
+			}
+			char *result = snailQuoteList(args2);
+			snailArrayDestroy(args2, NULL);
+			char * words[2];
+			words[0] = snailDupString(cmdName);
+			words[1] = snailDupString(result);
+			snailStatus statusUnknown = snailRunCommand(snail, "unknown", 2, words);
+			free(result);
+			return statusUnknown;
+		}
+	}
 
 	// Raise error if command does not exist
 	if (cmd == NULL) {
@@ -825,13 +904,15 @@ snailStatus snailRunCommand(snailInterp *snail, char *cmdName, int argCount, cha
 		if (j >= argCount)
 			break;
 		if (argDef[0] == '$') {
-			snailSetVar(snail, argDef+1, args[j++]);
+			snailSetVar(snail, argDef+1, snailDupString(args[j++]));
 		}
 	}
 	snailStatus ss = snailExec(snail, cmd->script);
 	snailArrayShift(snail->frames);
 	snailCallFrameDestroy(frame);
 	snailArrayDestroy(argDefs,free);
+	if (ss == snailStatusReturn)
+		ss = snailStatusOk;
 	return ss;
 }
 
@@ -1279,6 +1360,7 @@ void *snailArrayShift(snailArray *array) {
 	if (array->length == 0)
 		return NULL;
 	void *last = array->elems[array->length-1];
+	array->elems[array->length-1] = NULL;
 	array->length--;
 	return last;
 }
@@ -1312,4 +1394,67 @@ int64_t snailTimeNow(void) {
 	gettimeofday(&tp, NULL);
 	int64_t msec = (tp.tv_sec * 1000) + (tp.tv_usec / 1000);
 	return msec;
+}
+
+snailArray *snailUnquoteDict(char *str) {
+	int len = strlen(str);
+	if (len < 3) // %{} is shortest possible valid dict
+		return NULL;
+	if (str[0] != '%' || str[1] != '{' || str[len-1] != '}') {
+		return NULL;
+	}
+	char *body = snailDupString(str+2);
+	body[len-3] = 0;
+	snailArray *array = snailParseList(body);
+	free(body);
+	return array;
+}
+
+snailHashTable *snailParseDict(char *str) {
+	snailArray *list = snailUnquoteDict(str);
+	if (list == NULL)
+		return NULL;
+	snailHashTable *ht = snailHashTableCreate(16);
+	for (int i = 0; i < list->length; i+=2) {
+		char *key = list->elems[i];
+		char *value = i + 1 < list->length ? list->elems[i+1] : "";
+		free(snailHashTablePut(ht,key,snailDupString(value)));
+	}
+	snailArrayDestroy(list,free);
+	return ht;
+}
+
+snailArray *snailHashTableKeys(snailHashTable *ht) {
+	snailArray *keys = snailArrayCreate(16);
+	if (ht != NULL) {
+		char *key = snailHashTableFirst(ht);
+		while (key != NULL) {
+			snailArrayAdd(keys,snailDupString(key));
+			key = snailHashTableNext(ht, key);
+		}
+	}
+	return keys;
+}
+
+char *snailQuoteDict(snailHashTable *ht) {
+	if (ht == NULL)
+		return NULL;
+	snailBuffer *buf = snailBufferCreate(64);
+	snailBufferAddChar(buf,'%');
+	snailBufferAddChar(buf,'{');
+	char *key = snailHashTableFirst(ht);
+	while (key != NULL) {
+		char *value = snailHashTableGet(ht, key);
+		if (buf->length > 2)
+			snailBufferAddChar(buf, ' ');
+		snailBufferAddString(buf, key[0]!=0?key:"\"\"");
+		snailBufferAddChar(buf, ' ');
+		snailBufferAddString(buf, value[0]!=0?value:"\"\"");
+		key = snailHashTableNext(ht, key);
+	}
+	snailBufferAddChar(buf,'}');
+	snailBufferAddChar(buf, 0);
+	char *result = snailDupString(buf->bytes);
+	snailBufferDestroy(buf);
+	return result;
 }

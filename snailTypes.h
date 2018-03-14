@@ -55,11 +55,11 @@ typedef struct snailCommand {
 
 typedef struct snailInterp {
 	char *result;
-	int framePointer;
 	snailArray *frames;
 	snailHashTable *globals;
 	snailHashTable *commands;
 	snailReplState *repl;
+	int64_t startupTime;
 } snailInterp;
 
 typedef struct snailReplState {
@@ -69,7 +69,7 @@ typedef struct snailReplState {
 } snailReplState;
 
 typedef struct snailParseTool {
-	char *script;
+	const char *script;
 	int length;
 	int pos;
 	snailBuffer *word;

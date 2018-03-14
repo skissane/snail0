@@ -11,9 +11,15 @@
 #include <stdnoreturn.h>
 #include <string.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 
 /***---Constants---***/
 const int VARIADIC = -1;
+
+/***---INIT SCRIPT---***/
+static const char snailInitScript[] = {
+#include "snailInit.h"
+};
 
 /***---TYPES---***/
 #include "snailTypes.h"

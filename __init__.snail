@@ -1,0 +1,76 @@
+proc test.case {$name $body} {proc $name {} $body}
+proc test.run.case {$name} {
+	set start [time.now]
+	set caught [null]
+	catch {eval [list $name]} e {set caught $e}
+	set duration [- [time.now] $start]
+	list $name [if {is.null $caught} then {pass PASS} else {pass FAIL}] $duration [nvl $caught ""]
+}
+
+proc test.run.cases {$cases} {
+	set r {}
+	foreach name $cases {
+		set r [list.add $r [test.run.case $name]]
+	}
+	pass $r
+}
+
+proc help.cmds {} {
+	foreach cmd [list.sort [info.cmds]] {puts $cmd}
+}
+
+proc package.cmds {$name} {
+	set prefix [string.concat [token.quote $name] "."]
+	set r {}
+	foreach cmd [info.cmds] {
+		if {string.starts.with [token.quote $cmd] $prefix} then {
+			set r [list.add $r $cmd]
+		}
+	}
+	list.sort $r
+}
+
+proc test.run.suite {$package} {test.run.cases [package.cmds $package]}
+
+proc list.find.at {$list $what} {
+	set i 0
+	set length [list.length $list]
+	while {< $i $length} {
+		set e [list.at $list $i]
+		if {= $e $what} then {return $i}
+		set i [+ $i 1]
+	}
+	return ""
+}
+
+proc unknown {$cmd $args} {
+	error [string.concat "unknown command " [token.quote [token.quote $cmd]]]
+}
+
+proc help {} {
+	puts "Welcome to Snail interpreter online help"
+	puts "For list of valid commands, type: help.cmds"
+	puts ""
+}
+
+proc file.exists {$path} {
+	catch {
+		file.stat $path
+		pass t
+	} ignored { pass f }
+}
+
+proc file.is.type {$path $type} {
+	catch {
+		set stat [file.stat $path]
+		= [dict.get $stat type] $type
+	} ignored {pass f}
+}
+
+proc file.is.blk {$path} {file.is.type $path blk}
+proc file.is.chr {$path} {file.is.type $path chr}
+proc file.is.dir {$path} {file.is.type $path dir}
+proc file.is.fifo {$path} {file.is.type $path fifo}
+proc file.is.reg {$path} {file.is.type $path reg}
+proc file.is.lnk {$path} {file.is.type $path lnk}
+proc file.is.sock {$path} {file.is.type $path sock}

@@ -1,3 +1,5 @@
 *.dSYM
 *.o
+/bin2c
 /snail
+/snailInit.h

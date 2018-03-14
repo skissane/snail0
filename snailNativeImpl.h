@@ -321,8 +321,28 @@ NATIVE(set, 2) {
 	return snailStatusOk;
 }
 
+NATIVE(set_up, 3) {
+	NATIVE_ARG_MUSTINT(0);
+	int64_t level = strtoll(args[0], NULL, 10);
+	if (!snailSetUpVar(snail, level, args[1], snailDupString(args[2]))) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg, "set.up called with bad level '");
+		snailBufferAddString(msg, args[0]);
+		snailBufferAddString(msg, "' with fp=");
+		char *fpStr = snailI64ToStr(snail->frames->length-1);
+		snailBufferAddString(msg, fpStr);
+		free(fpStr);
+		snailBufferAddChar(msg, 0);
+		snailSetResult(snail, msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+	snailSetResult(snail, "");
+	return snailStatusOk;
+}
+
 NATIVE(info_vars, 0) {
-	snailCallFrame *frame = snail->frames->elems[snail->framePointer];
+	snailCallFrame *frame = snail->frames->elems[snail->frames->length-1];
 	snailBuffer *buf = snailBufferCreate(64);
 	snailBufferAddChar(buf,'{');
 	char *cmd = snailHashTableFirst(frame->vars);
@@ -352,7 +372,7 @@ NATIVE(var_get, 1) {
 }
 
 NATIVE(var_del, 1) {
-	snailCallFrame *frame = snail->frames->elems[snail->framePointer];
+	snailCallFrame *frame = snail->frames->elems[snail->frames->length-1];
 	snailSetResultBool(snail,snailHashTableDelete(frame->vars, args[0]) != NULL);
 	return snailStatusOk;
 }
@@ -631,6 +651,11 @@ NATIVE(time_now,0) {
 	return snailStatusOk;
 }
 
+NATIVE(time_startup,0) {
+	snailSetResultInt(snail, snail->startupTime);
+	return snailStatusOk;
+}
+
 NATIVE(catch,3) {
 	if (snailTokenClassify(args[0]) != 'L') {
 		snailSetResult(snail,"argument 0 must have type L");
@@ -732,6 +757,18 @@ NATIVE(list_at, 2) {
 	return snailStatusOk;
 }
 
+NATIVE(nvl, VARIADIC) {
+	NATIVE_ARG_MIN(1);
+	for (int i = 0; i < argCount; i++) {
+		if (snailTokenClassify(args[i]) != 'Z') {
+			snailSetResult(snail, args[i]);
+			return snailStatusOk;
+		}
+	}
+	snailSetResult(snail, "");
+	return snailStatusOk;
+}
+
 NATIVE(list_concat, VARIADIC) {
 	NATIVE_ARG_MIN(1);
 	snailArray *list0 = snailUnquoteList(args[0]);
@@ -761,5 +798,329 @@ NATIVE(list_concat, VARIADIC) {
 	snailSetResult(snail, result);
 	snailArrayDestroy(list0, free);
 	free(result);
+	return snailStatusOk;
+}
+
+NATIVE(string_concat, VARIADIC) {
+	NATIVE_ARG_MIN(1);
+	snailBuffer *buf = snailBufferCreate(16);
+	for (int i = 0; i < argCount; i++) {
+		char * unquoted = snailTokenUnquote(args[i]);
+		if (unquoted == NULL) {
+			snailBufferAddString(buf, args[i]);
+		}
+		else {
+			snailBufferAddString(buf, unquoted);
+			free(unquoted);
+		}
+	}
+	snailBufferAddChar(buf, 0);
+	char *result = snailMakeQuoted(buf->bytes);
+	snailSetResult(snail, result);
+	free(result);
+	return snailStatusOk;
+}
+
+NATIVE(string_starts_with, 2) {
+	NATIVE_ARG_MUSTCLASS(0,'Q');
+	NATIVE_ARG_MUSTCLASS(1,'Q');
+	char *target = snailTokenUnquote(args[0]);
+	char *starts = snailTokenUnquote(args[1]);
+	int l_target = strlen(target);
+	int l_starts = strlen(starts);
+	if (l_target < l_starts) {
+		free(target);
+		free(starts);
+		snailSetResultBool(snail, false);
+		return snailStatusOk;
+	}
+	for (int i = 0; i < l_starts; i++) {
+		if (target[i] != starts[i]) {
+			free(target);
+			free(starts);
+			snailSetResultBool(snail, false);
+			return snailStatusOk;
+		}
+	}
+	free(target);
+	free(starts);
+	snailSetResultBool(snail, true);
+	return snailStatusOk;
+}
+
+NATIVE(frame_count,0) {
+	snailSetResultInt(snail, snail->frames->length);
+	return snailStatusOk;
+}
+
+NATIVE(frame_cmds,0) {
+	snailArray *r = snailArrayCreate(snail->frames->length);
+	for (int i = snail->frames->length-1; i >= 0; i--) {
+		snailCallFrame *frame = snail->frames->elems[i];
+		char *name = frame->cmdName != NULL ? frame->cmdName : "";
+		if (snailTokenIsValid(name))
+			snailArrayAdd(r, snailDupString(name));
+		else
+			snailArrayAdd(r, snailMakeQuoted(name));
+	}
+	char *result = snailQuoteList(r);
+	snailSetResult(snail, result);
+	snailArrayDestroy(r, free);
+	free(result);
+	return snailStatusOk;
+}
+
+NATIVE(while,2) {
+	NATIVE_ARG_MUSTCLASS(0,'L');
+	NATIVE_ARG_MUSTCLASS(1,'L');
+	for (;;) {
+		// Evaluate conditional
+		snailStatus ssCond = snailExecList(snail,args[0]);
+		// Any error/etc in conditional, abort loop
+		if (ssCond != snailStatusOk)
+			return ssCond;
+		// If conditional did not evaluate to true, abort loop
+		if (!snailIsTrue(snail->result)) {
+			snailSetResult(snail,"");
+			return snailStatusOk;
+		}
+
+		// Conditional still true, another step around the loop
+		snailStatus ss = snailExecList(snail,args[1]);
+		if (ss == snailStatusOk || ss == snailStatusContinue)
+			continue;
+		if (ss == snailStatusBreak)
+			return snailStatusOk;
+		if (ss == snailStatusError || ss == snailStatusReturn)
+			return ss;
+		snailSetResult(snail,"unexpected status in loop");
+		return snailStatusError;
+	}
+}
+
+NATIVE(dict, VARIADIC) {
+	if ((argCount % 2) != 0) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"dict command takes even number of arguments, given ");
+		char *s_argCount = snailI64ToStr(argCount);
+		snailBufferAddString(msg,s_argCount);
+		free(s_argCount);
+		snailBufferAddString(msg," arguments");
+		snailBufferAddChar(msg,0);
+		snailSetResult(snail, msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+	snailHashTable *ht = snailHashTableCreate(argCount/2);
+	for (int i = 0; i < argCount; i += 2) {
+		char *key = args[i];
+		char *value = args[i+1];
+		free(snailHashTablePut(ht, key, snailDupString(value)));
+	}
+	char *quoted = snailQuoteDict(ht);
+	if (quoted == NULL) {
+		snailSetResult(snail,"unexpected error in dict command");
+		snailHashTableDestroy(ht,free);
+		return snailStatusError;
+	}
+	snailHashTableDestroy(ht,free);
+	snailSetResult(snail,quoted);
+	free(quoted);
+	return snailStatusOk;
+}
+
+NATIVE(dict_size,1) {
+	NATIVE_ARG_MUSTCLASS(0,'D');
+	snailHashTable *ht = snailParseDict(args[0]);
+	if (ht == NULL) {
+		snailSetResult(snail,"unexpected error in dict.size command");
+		return snailStatusError;
+	}
+	snailSetResultInt(snail, ht->numberOfCells);
+	snailHashTableDestroy(ht,free);
+	return snailStatusOk;
+}
+
+NATIVE(dict_keys,1) {
+	NATIVE_ARG_MUSTCLASS(0,'D');
+	snailHashTable *ht = snailParseDict(args[0]);
+	if (ht == NULL) {
+		snailSetResult(snail,"unexpected error in dict.keys command");
+		return snailStatusError;
+	}
+	snailArray *keys = snailHashTableKeys(ht);
+	snailHashTableDestroy(ht, free);
+	char *result = snailQuoteList(keys);
+	snailArrayDestroy(keys, free);
+	snailSetResult(snail, result);
+	free(result);
+	return snailStatusOk;
+}
+
+NATIVE(dict_has,2) {
+	NATIVE_ARG_MUSTCLASS(0,'D');
+	snailHashTable *ht = snailParseDict(args[0]);
+	if (ht == NULL) {
+		snailSetResult(snail,"unexpected error in dict.has command");
+		return snailStatusError;
+	}
+	char *value = snailHashTableGet(ht, args[1]);
+	snailSetResultBool(snail, value != NULL);
+	snailHashTableDestroy(ht, free);
+	return snailStatusOk;
+}
+
+NATIVE(dict_get,2) {
+	NATIVE_ARG_MUSTCLASS(0,'D');
+	snailHashTable *ht = snailParseDict(args[0]);
+	if (ht == NULL) {
+		snailSetResult(snail,"unexpected error in dict.has command");
+		return snailStatusError;
+	}
+	char *value = snailHashTableGet(ht, args[1]);
+	snailSetResult(snail, value == NULL ? "" : value);
+	snailHashTableDestroy(ht, free);
+	return snailStatusOk;
+}
+
+NATIVE(dict_set,3) {
+	NATIVE_ARG_MUSTCLASS(0,'D');
+	snailHashTable *ht = snailParseDict(args[0]);
+	if (ht == NULL) {
+		snailSetResult(snail,"unexpected error in dict.set command (parsing failed)");
+		return snailStatusError;
+	}
+	free(snailHashTablePut(ht, args[1], snailDupString(args[2])));
+	char *quoted = snailQuoteDict(ht);
+	if (quoted == NULL) {
+		snailSetResult(snail,"unexpected error in dict.set command (quoting failed)");
+		snailHashTableDestroy(ht,free);
+		return snailStatusError;
+	}
+	snailHashTableDestroy(ht,free);
+	snailSetResult(snail,quoted);
+	free(quoted);
+	return snailStatusOk;
+}
+
+NATIVE(dict_set_all,2) {
+	NATIVE_ARG_MUSTCLASS(0,'D');
+	NATIVE_ARG_MUSTCLASS(1,'D');
+	snailHashTable *ht0 = snailParseDict(args[0]);
+	if (ht0 == NULL) {
+		snailSetResult(snail,"unexpected error in dict.set.all command (parsing arg 0 failed)");
+		return snailStatusError;
+	}
+	snailHashTable *ht1 = snailParseDict(args[1]);
+	if (ht1 == NULL) {
+		snailHashTableDestroy(ht0,free);
+		snailSetResult(snail,"unexpected error in dict.set.all command (parsing arg 1 failed)");
+		return snailStatusError;
+	}
+	char *key = snailHashTableFirst(ht1);
+	while (key != NULL) {
+		char *value = snailHashTableGet(ht1, key);
+		free(snailHashTablePut(ht0, key, snailDupString(value)));
+		key = snailHashTableNext(ht1, key);
+	}
+	char *quoted = snailQuoteDict(ht0);
+	if (quoted == NULL) {
+		snailSetResult(snail,"unexpected error in dict.set.all command (quoting failed)");
+		snailHashTableDestroy(ht0,free);
+		snailHashTableDestroy(ht1,free);
+		return snailStatusError;
+	}
+	snailHashTableDestroy(ht0,free);
+	snailHashTableDestroy(ht1,free);
+	snailSetResult(snail,quoted);
+	free(quoted);
+	return snailStatusOk;
+}
+
+NATIVE(file_stat,1) {
+	NATIVE_ARG_MUSTCLASS(0,'Q');
+	char *fileName = snailTokenUnquote(args[0]);
+	struct stat buf;
+	int rc = stat(fileName,&buf);
+	if (rc != 0) {
+		int e = errno;
+		snailBuffer *buf = snailBufferCreate(16);
+		snailBufferAddString(buf,"file.stat failed for file ");
+		snailBufferAddString(buf,args[0]);
+		snailBufferAddString(buf," with OS error ");
+		char *r = snailI64ToStr(e);
+		snailBufferAddString(buf,r);
+		free(r);
+		snailBufferAddChar(buf,0);
+		snailSetResult(snail,buf->bytes);
+		snailBufferDestroy(buf);
+		return snailStatusError;
+	}
+	snailHashTable *ht = snailHashTableCreate(16);
+	snailHashTablePut(ht, "dev", snailI64ToStr(buf.st_dev));
+	snailHashTablePut(ht, "ino", snailI64ToStr(buf.st_ino));
+	snailHashTablePut(ht, "mode", snailI64ToStr(buf.st_mode));
+	snailHashTablePut(ht, "nlink", snailI64ToStr(buf.st_nlink));
+	snailHashTablePut(ht, "uid", snailI64ToStr(buf.st_uid));
+	snailHashTablePut(ht, "gid", snailI64ToStr(buf.st_gid));
+	snailHashTablePut(ht, "rdev", snailI64ToStr(buf.st_rdev));
+	snailHashTablePut(ht, "size", snailI64ToStr(buf.st_size));
+	snailHashTablePut(ht, "atime", snailI64ToStr(buf.st_atime));
+	snailHashTablePut(ht, "mtime", snailI64ToStr(buf.st_mtime));
+	snailHashTablePut(ht, "ctime", snailI64ToStr(buf.st_ctime));
+	snailHashTablePut(ht, "blksize", snailI64ToStr(buf.st_blksize));
+	snailHashTablePut(ht, "blocks", snailI64ToStr(buf.st_blocks));
+
+	char *type = "other";
+	if (S_ISBLK(buf.st_mode))
+		type = "blk";
+	else if (S_ISCHR(buf.st_mode))
+		type = "chr";
+	else if (S_ISDIR(buf.st_mode))
+		type = "dir";
+	else if (S_ISFIFO(buf.st_mode))
+		type = "fifo";
+	else if (S_ISREG(buf.st_mode))
+		type = "reg";
+	else if (S_ISLNK(buf.st_mode))
+		type = "lnk";
+	else if (S_ISSOCK(buf.st_mode))
+		type = "sock";
+	snailHashTablePut(ht, "type", snailDupString(type));
+
+	char *quoted = snailQuoteDict(ht);
+	snailHashTableDestroy(ht,free);
+	snailSetResult(snail,quoted);
+	free(quoted);
+	return snailStatusOk;
+}
+
+NATIVE(info_about_cmd,1) {
+	NATIVE_ARG_MUSTCLASS(0,'U');
+	snailCommand *cmd = snailHashTableGet(snail->commands, args[0]);
+	if (cmd == NULL) {
+		snailSetResult(snail, "");
+		return snailStatusOk;
+	}
+	snailHashTable *ht = snailHashTableCreate(16);
+	snailHashTablePut(ht,"name",snailDupString(cmd->name));
+	snailHashTablePut(ht,"arity",snailI64ToStr(cmd->arity));
+	if (cmd->args != NULL)
+		snailHashTablePut(ht,"args",snailDupString(cmd->args));
+	if (cmd->script != NULL) {
+		snailBuffer *s = snailBufferCreate(16);
+		snailBufferAddChar(s,'{');
+		snailBufferAddString(s,cmd->script);
+		snailBufferAddChar(s,'}');
+		snailBufferAddChar(s,0);
+		snailHashTablePut(ht,"script",snailDupString(s->bytes));
+		snailBufferDestroy(s);
+	}
+	if (cmd->native != NULL)
+		snailHashTablePut(ht,"native",snailDupString("t"));
+	char *quoted = snailQuoteDict(ht);
+	snailHashTableDestroy(ht,free);
+	snailSetResult(snail,quoted);
+	free(quoted);
 	return snailStatusOk;
 }
