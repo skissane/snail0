@@ -183,3 +183,35 @@ test.case snail.test.t1181 {test.assert.eq 6 {string.find.at "cowdogcow" "cow" 1
 test.case snail.test.t1182 {test.assert {dict.has [info.about.cmd help] script}}
 test.case snail.test.t1183 {test.assert.error {list.concat {} ""}}
 test.case snail.test.t1184 {test.assert.error {proc}}
+test.case snail.test.t1185 {test.assert.error {string.length {}}}
+test.case snail.test.t1186 {test.assert.error {string.cmp {} ""}}
+test.case snail.test.t1187 {test.assert.error {string.cmp "" {}}}
+test.case snail.test.t1188 {test.assert.error {string.casecmp "" {}}}
+test.case snail.test.t1189 {test.assert.error {string.casecmp "" {}}}
+test.case snail.test.t1190 {test.assert.error {+}}
+test.case snail.test.t1191 {test.assert.error {-}}
+test.case snail.test.t1192 {test.assert.eq -10 {- 10}}
+test.case snail.test.t1193 {test.assert.eq 10 {- -10}}
+test.case snail.test.t1194 {test.assert.eq 7 {- 10 3}}
+test.case snail.test.t1195 {test.assert.eq 3 {- 10 3 4}}
+test.case snail.test.t1196 {test.assert.error {*}}
+test.case snail.test.t1197 {test.assert.error {/}}
+test.case snail.test.t1198 {test.assert.eq 4 {/ 8 2}}
+test.case snail.test.t1199 {test.assert.eq 2 {/ 8 2 2}}
+test.case snail.test.t1200 {test.assert.eq 7 {/ 210 2 3 5}}
+test.case snail.test.t1201 {test.assert.error {< "0" 0}}
+test.case snail.test.t1202 {test.assert.error {< 0 "0"}}
+test.case snail.test.t1203 {test.assert.error {> 0 "0"}}
+test.case snail.test.t1204 {test.assert.error {> "0" 0}}
+test.case snail.test.t1205 {test.assert.error {<= 0 "0"}}
+test.case snail.test.t1206 {test.assert.error {<= "0" 0}}
+test.case snail.test.t1207 {test.assert.error {>= 0 "0"}}
+test.case snail.test.t1208 {test.assert.error {>= "0" 0}}
+test.case snail.test.t1209 {test.assert.null {puts 0}}
+test.case snail.test.t1210 {
+	set x123 456
+	test.assert.eq 456 {var.get x123}
+	test.assert {var.has x123}
+}
+test.case snail.test.t1211 {test.assert.error {string.casecmp 0 "0"}}
+test.case snail.test.t1212 {test.assert.null {loop {break}}}
