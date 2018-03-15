@@ -215,3 +215,49 @@ test.case snail.test.t1210 {
 }
 test.case snail.test.t1211 {test.assert.error {string.casecmp 0 "0"}}
 test.case snail.test.t1212 {test.assert.null {loop {break}}}
+test.case snail.test.t1213 {
+	test.assert.eq {20 42} {
+		set i 0
+		set r {}
+		loop {
+			set i [+ $i 1]
+			if {< $i 10} then {continue}
+			set i [* $i 2]
+			if {> $i 50} then {break}
+			set r [list.add $r $i]
+		}
+		pass $r
+	}
+}
+test.case snail.test.t1214 {
+	set orig [repl.prompt.get]
+	set new "TEST REPL PROMPT> "
+	test.assert.null {repl.prompt.set $new}
+	test.assert.eq $new {repl.prompt.get}
+	test.assert.null {repl.prompt.set $orig}
+	test.assert.eq $orig {repl.prompt.get}
+}
+test.case snail.test.t1215 {test.assert.error {catch "" e {}}}
+test.case snail.test.t1216 {test.assert.error {catch {} "" {}}}
+test.case snail.test.t1217 {test.assert.error {catch {} e ""}}
+test.case snail.test.t1218 {test.assert.error {file.read {}}}
+test.case snail.test.t1219 {test.assert.error {file.run {}}}
+test.case snail.test.t1220 {test.assert.error {list.concat "" {}}}
+test.case snail.test.t1221 {test.assert.error {list.concat}}
+test.case snail.test.t1222 {test.assert.error {string.concat}}
+test.case snail.test.t1223 {test.assert.error {string.starts.with "A" A}}
+test.case snail.test.t1224 {test.assert.error {string.starts.with A "A"}}
+test.case snail.test.t1225 {test.assert.null {while {pass t} {break}}}
+test.case snail.test.t1226 {test.assert.null {while {pass f} {continue}}}
+test.case snail.test.t1227 {test.assert.error {dict.size {}}}
+test.case snail.test.t1228 {test.assert.error {list.length %{}}}
+test.case snail.test.t1229 {test.assert.eq {} {dict.keys %{}}}
+test.case snail.test.t1230 {test.assert.error {dict.keys {}}}
+test.case snail.test.t1231 {test.assert.error {global.set "test" 1}}
+test.case snail.test.t1232 {test.assert.error {global.get "test"}}
+test.case snail.test.t1233 {test.assert.error {string.find {} ""}}
+test.case snail.test.t1234 {test.assert.error {string.find "" {}}}
+test.case snail.test.t1235 {test.assert.error {loop "BAD"}}
+test.case snail.test.t1236 {test.assert.error {loop {error "intentional"}}}
+test.case snail.test.t1237 {test.assert.error {if {pass t} {pass t}}}
+test.case snail.test.t1238 {test.assert.error {if {} {} {}}}
