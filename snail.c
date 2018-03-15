@@ -49,6 +49,7 @@ void snailRegisterNatives(snailInterp *snail) {
 #include "snailNativeImpl.h"
 
 /***---FUNCTIONS---***/
+#include "snailFuncsChannel.h"
 #include "snailFuncs.h"
 
 /***---MAIN FUNCTION---***/

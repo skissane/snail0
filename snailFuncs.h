@@ -631,7 +631,10 @@ snailInterp *snailCreate(void) {
 	snail->globals = snailHashTableCreate(snailInitialGlobalTableSize);
 	snail->commands =  snailHashTableCreate(snailCommandTableSize);
 	snail->repl = snailReplStateCreate();
+	snail->channelDrivers = snailHashTableCreate(16);
+	snail->channels = snailHashTableCreate(16);
 	snailRegisterNatives(snail);
+	snailChannelSetup(snail);
 	snailRunInitScript(snail);
 	return snail;
 }
@@ -649,6 +652,8 @@ void snailDestroy(snailInterp *snail) {
 	snailHashTableDestroy(snail->globals,free);
 	snailHashTableDestroy(snail->commands, (void*)snailDestroyCommand);
 	snailReplStateDestroy(snail->repl);
+	snailHashTableDestroy(snail->channels, (void*)snailChannelDestroy);
+	snailHashTableDestroy(snail->channelDrivers, (void*)snailChannelDriverDestroy);
 	free(snail);
 }
 

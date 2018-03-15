@@ -4,6 +4,8 @@
 NATIVE(add, VARIADIC);
 NATIVE(break,0);
 NATIVE(catch,3);
+NATIVE(channel_read,2);
+NATIVE(channel_write,2);
 NATIVE(continue,0);
 NATIVE(dict, VARIADIC);
 NATIVE(dict_get,2);
@@ -29,6 +31,8 @@ NATIVE(gt, 2);
 NATIVE(gte, 2);
 NATIVE(if,VARIADIC);
 NATIVE(info_about_cmd,1);
+NATIVE(info_channel_drivers, 0);
+NATIVE(info_channels, 0);
 NATIVE(info_cmds, 0);
 NATIVE(info_cmds_count, 0);
 NATIVE(info_globals, 0);

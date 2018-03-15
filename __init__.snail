@@ -176,3 +176,24 @@ proc proc.exists {$name} {
 	module.load.for $name
 	not.null [info.about.cmd $name]
 }
+
+proc string.is.empty {$string} {
+	arg.must.quoted string
+	= 0 [string.length $string]
+}
+
+proc channel.read.line {$channel} {
+	set line ""
+	loop {
+		set r [channel.read $channel 1]
+		if {is.null $r} then {return [if {string.is.empty $line} then {null} else {pass $line}]}
+		if {= $r "\n"} then {return $line}
+		set line [string.concat $line $r]
+	}
+}
+
+proc prompt {$prompt} {
+	arg.must.quoted prompt
+	puts.nonewline $prompt
+	channel.read.line stdin
+}

@@ -11,8 +11,28 @@ typedef struct snailHashTable snailHashTable;
 typedef struct snailInterp snailInterp;
 typedef struct snailParseTool snailParseTool;
 typedef struct snailReplState snailReplState;
+typedef struct snailChannelDriver snailChannelDriver;
+typedef struct snailChannel snailChannel;
 
 typedef snailStatus snailNative (snailInterp *snail, char *name, int argCount, char **args);
+typedef char * snailChannel_READ (snailChannel *channel, void *buf, size_t len, size_t *read);
+typedef char * snailChannel_WRITE (snailChannel *channel, void *buf, size_t len, size_t *written);
+typedef char * snailChannel_OPEN (snailChannel *channel, void *driverArg);
+typedef char * snailChannel_DESTROY (snailChannel *channel);
+
+typedef struct snailChannelDriver {
+	char *name;
+	snailChannel_READ *f_READ;
+	snailChannel_WRITE *f_WRITE;
+	snailChannel_OPEN *f_OPEN;
+	snailChannel_DESTROY *f_DESTROY;
+} snailChannelDriver;
+
+typedef struct snailChannel {
+	char *name;
+	snailChannelDriver *driver;
+	void *driverInfo;
+} snailChannel;
 
 typedef struct snailBuffer {
 	int length;
@@ -59,6 +79,8 @@ typedef struct snailInterp {
 	snailHashTable *globals;
 	snailHashTable *commands;
 	snailReplState *repl;
+	snailHashTable *channelDrivers;
+	snailHashTable *channels;
 	int64_t startupTime;
 } snailInterp;
 

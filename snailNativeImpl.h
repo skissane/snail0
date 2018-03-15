@@ -1332,3 +1332,89 @@ NATIVE(eval_up,2) {
 	int64_t level = strtoll(args[0], NULL, 10);
 	return snailExecListUp(snail,level,args[1]);
 }
+
+NATIVE(info_channel_drivers, 0) {
+	snailBuffer *buf = snailBufferCreate(1024);
+	snailBufferAddChar(buf,'{');
+	char *name = snailHashTableFirst(snail->channelDrivers);
+	while (name != NULL) {
+		if (buf->length > 1)
+			snailBufferAddChar(buf, ' ');
+		snailBufferAddString(buf, name);
+		name = snailHashTableNext(snail->channelDrivers, name);
+	}
+	snailBufferAddChar(buf,'}');
+	snailBufferAddChar(buf, 0);
+	snailSetResult(snail, buf->bytes);
+	snailBufferDestroy(buf);
+	return snailStatusOk;
+}
+
+NATIVE(info_channels, 0) {
+	snailBuffer *buf = snailBufferCreate(1024);
+	snailBufferAddString(buf,"%{");
+	char *name = snailHashTableFirst(snail->channels);
+	while (name != NULL) {
+		if (buf->length > 2)
+			snailBufferAddChar(buf, ' ');
+		snailBufferAddString(buf, name);
+		snailBufferAddChar(buf, ' ');
+		snailChannel *channel = snailHashTableGet(snail->channels,name);
+		snailBufferAddString(buf, channel->driver->name);
+		name = snailHashTableNext(snail->channels, name);
+	}
+	snailBufferAddChar(buf,'}');
+	snailBufferAddChar(buf, 0);
+	snailSetResult(snail, buf->bytes);
+	snailBufferDestroy(buf);
+	return snailStatusOk;
+}
+
+NATIVE(channel_write,2) {
+	NATIVE_ARG_MUSTCLASS(0,'U');
+	NATIVE_ARG_MUSTCLASS(1,'Q');
+	char *channelName = args[0];
+	char *unquoted = snailTokenUnquote(args[1]);
+	size_t w = 0;
+	char *r=snailChannelWrite(snail, channelName, unquoted, strlen(unquoted), &w);
+	free(unquoted);
+	bool ok = r == NULL;
+	snailSetResult(snail,ok ? "" : r);
+	free(r);
+	return ok ? snailStatusOk : snailStatusError;
+}
+
+NATIVE(channel_read,2) {
+	NATIVE_ARG_MUSTCLASS(0,'U');
+	NATIVE_ARG_MUSTINT(1);
+	int64_t bytes = strtoll(args[1], NULL, 10);
+	if (bytes <= 0) {
+		snailSetResult(snail, "channel.read: $bytes must be greater than zero");
+		return snailStatusError;
+	}
+	char *channelName = args[0];
+	char *buf = snailMalloc(bytes);
+	size_t read = 0;
+	char *r = snailChannelRead(snail, channelName, buf, bytes, &read);
+	if (r != NULL) {
+		free(buf);
+		snailSetResult(snail,r);
+		free(r);
+		return snailStatusError;
+	}
+	if (read == 0) {
+		free(buf);
+		snailSetResult(snail,"");
+		return snailStatusOk;
+	}
+	snailBuffer *out = snailBufferCreate(read+1);
+	for (int i = 0; i < read; i++)
+		snailBufferAddChar(out, buf[i]);
+	snailBufferAddChar(out, 0);
+	free(buf);
+	char *quoted = snailMakeQuoted(out->bytes);
+	snailBufferDestroy(out);
+	snailSetResult(snail,quoted);
+	free(quoted);
+	return snailStatusOk;
+}

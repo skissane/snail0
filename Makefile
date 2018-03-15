@@ -1,7 +1,8 @@
 CFLAGS += -Wall -Werror -std=gnu11 -g
 
 snail: snail.c snailNativeImpl.h snailNativeProtos.h snailProtos.h \
-       snailTypes.h snailFuncs.h snailNativeNames.h snailInit.h
+       snailTypes.h snailFuncs.h snailNativeNames.h snailInit.h \
+       snailFuncsChannel.h
 	$(CC) snail.c -o $@ $(CFLAGS)
 
 bin2c: bin2c.c
