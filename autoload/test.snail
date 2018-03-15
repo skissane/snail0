@@ -121,6 +121,11 @@ proc test.generator {$suite} {
 		set generated [test.make $suite $code]
 		set body [token.list.body $generated]
 		puts ""
+		set caught [catching $code]
+		if {not.null $caught} then {
+			puts "-----CAUGHT ERROR-----"
+			puts $caught
+		}
 		puts "-----GENERATED TEST-----"
 		puts $body
 		puts ""

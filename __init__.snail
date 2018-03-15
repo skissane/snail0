@@ -239,3 +239,9 @@ proc token.list.body {$list} {
 	arg.must.list list
 	string.strip.circumfix [token.quote $list] "{" "}"
 }
+
+proc catching {$code} {
+	set caught [null]
+	catch {eval.up 1 $code} e {set caught $e}
+	pass $caught
+}
