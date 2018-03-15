@@ -162,3 +162,17 @@ proc help {} {
 	puts "For list of valid commands, type: help.cmds"
 	puts ""
 }
+
+proc module.load.for {$name} {
+	arg.must.symbol name
+	set module [module.name $name]
+	if {not.null $module} then {
+		if {module.exists.unloaded $module} then {module.load $module}
+	}
+}
+
+proc proc.exists {$name} {
+	arg.must.symbol name
+	module.load.for $name
+	not.null [info.about.cmd $name]
+}

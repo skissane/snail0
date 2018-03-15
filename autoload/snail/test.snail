@@ -1,3 +1,4 @@
-test.case snail.test.t1000 {
-	test.assert.eq 2 {+ 1 1}
-}
+test.case snail.test.t1000 {test.assert.eq 2 {+ 1 1}}
+test.case snail.test.t1001 {test.assert.error {file.run "/"}}
+test.case snail.test.t1002 {test.assert.error {file.read "/"}}
+test.case snail.test.t1003 {test.assert.error {error "intentionally induced"}}

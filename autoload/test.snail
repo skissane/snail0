@@ -26,6 +26,14 @@ proc test.assert {$test} {
 	null
 }
 
+proc test.assert.not {$test} {
+	arg.must.list test
+	if {eval.up 1 $test} then {
+		error [string.concat "Expected to be false, but was true: " $test]
+	}
+	null
+}
+
 proc test.assert.eq {$expect $test} {
 	arg.must.list test
 	set v [eval.up 1 $test]
@@ -33,4 +41,47 @@ proc test.assert.eq {$expect $test} {
 		error [string.concat "Expected {" $expect "} got {" $v "} running " $test]
 	}
 	null
+}
+
+proc test.assert.error {$test} {
+	arg.must.list test
+	set caught [null]
+	catch {eval.up 1 $test} e {set caught $e}
+	if {is.null $caught} then {
+		error [string.concat "Expected an error in " $test]
+	}
+	puts [string.concat "EXPECTED ERROR: " $caught]
+}
+
+proc test.make.name {$suite} {
+	arg.must.symbol suite
+	set index 1000
+	loop {
+		set name [token.unquote [string.concat $suite ".t" $index]]
+		if {not [proc.exists $name]} then {return $name}
+		set index [+ 1 $index]
+	}
+}
+
+proc test.make {$suite $code} {
+	arg.must.symbol suite
+	arg.must.list code
+	set name [test.make.name $suite]
+	set caught [null]
+	set result [null]
+	catch {set result [eval $code]} e {set caught $e}
+	if {is.null $caught} then {
+		if {= $result t} then {
+			set body [list test.assert $code]
+		} else {
+			if {= $result f} then {
+				set body [list test.assert.not $code]
+			} else {
+				set body [list test.assert.eq $result $code]
+			}
+		}
+	} else {
+		set body [list test.assert.error $code]
+	}
+	list test.case $name $body
 }

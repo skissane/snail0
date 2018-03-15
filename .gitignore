@@ -1,5 +1,9 @@
+*.cov.info
 *.dSYM
+*.gcda
+*.gcno
 *.o
 /bin2c
 /snail
 /snailInit.h
+/snail_cov_html

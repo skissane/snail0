@@ -1,0 +1,16 @@
+#!/bin/sh
+
+xopen() {
+	if [ "$(uname)" = "Darwin" ]; then
+		open "$1"
+	else
+		xdg-open "$1"
+	fi
+}
+
+rm -rf *.gcda *.gcno *.cov.info snail_cov_html
+CFLAGS="-fprofile-arcs -ftest-coverage" make clean snail &&
+	./snail - "test.run.suite snail.test" &&
+	lcov --directory . --base-directory . --capture -o snail.cov.info &&
+	genhtml snail.cov.info -o snail_cov_html &&
+	xopen snail_cov_html/index.html
