@@ -43,6 +43,15 @@ proc test.assert.eq {$expect $test} {
 	null
 }
 
+proc test.assert.null {$test} {
+	arg.must.list test
+	set v [eval.up 1 $test]
+	if {not.null $v} then {
+		error [string.concat "Expected null, got {" $v "} running " $test]
+	}
+	null
+}
+
 proc test.assert.error {$test} {
 	arg.must.list test
 	set caught [null]
@@ -73,15 +82,56 @@ proc test.make {$suite $code} {
 	if {is.null $caught} then {
 		if {= $result t} then {
 			set body [list test.assert $code]
+		} elseif {= $result f} then {
+			set body [list test.assert.not $code]
+		} elseif {is.null $result} then {
+			set body [list test.assert.null $code]
 		} else {
-			if {= $result f} then {
-				set body [list test.assert.not $code]
-			} else {
-				set body [list test.assert.eq $result $code]
-			}
+			set body [list test.assert.eq $result $code]
 		}
 	} else {
 		set body [list test.assert.error $code]
 	}
 	list test.case $name $body
+}
+
+proc test.generator {$suite} {
+	arg.must.symbol suite
+	set path [module.find.path $suite]
+	if {is.null $path} then {
+		error [string.concat "No source file found for test suite: " $suite]
+	}
+	puts "***** SNAIL TEST GENERATION CONSOLE *****"
+	puts ""
+	puts [string.concat "Test Suite: " $suite]
+	puts [string.concat "Path      : " $path]
+	puts ""
+	loop {
+		set code [prompt "Enter test (blank to finish)> "]
+		if {or {is.null $code} {string.is.blank $code}} then {
+			puts ""
+			return [null]
+		}
+		set code [token.unquote [string.concat "{" $code "}"]]
+		if {not [token.is.list $code]} then {
+			puts "ERROR: Bad syntax"
+			puts ""
+			continue
+		}
+		set generated [test.make $suite $code]
+		set body [token.list.body $generated]
+		puts ""
+		puts "-----GENERATED TEST-----"
+		puts $body
+		puts ""
+		if {prompt.yesno "Accept and save this test"} then {
+			puts ""
+			eval $generated
+			set text [file.read $path]
+			set text [string.concat $text [if {not [string.ends.with $text "\n"]} then {pass "\n"} else {pass ""}] $body "\n"]
+			file.write $path $text
+			puts [string.concat "SUCCESS: Wrote file " $path]
+		}
+		puts ""
+	}
 }

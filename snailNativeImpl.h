@@ -48,33 +48,39 @@ NATIVE(list, VARIADIC) {
 	return snailStatusOk;
 }
 
-NATIVE(string_is_bool, 1) {
+NATIVE(is_bool, 1) {
 	snailSetResultBool(snail, snailIsBool(args[0]));
 	return snailStatusOk;
 }
 
-NATIVE(string_is_true, 1) {
+NATIVE(is_true, 1) {
 	snailSetResultBool(snail, snailIsTrue(args[0]));
 	return snailStatusOk;
 }
 
-NATIVE(string_is_false, 1) {
+NATIVE(is_false, 1) {
 	snailSetResultBool(snail, snailIsFalse(args[0]));
 	return snailStatusOk;
 }
 
 NATIVE(string_is_blank, 1) {
-	snailSetResultBool(snail, snailIsBlank(args[0]));
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	char *unquoted = snailTokenUnquote(args[0]);
+	snailSetResultBool(snail, snailIsBlank(unquoted));
+	free(unquoted);
 	return snailStatusOk;
 }
 
-NATIVE(string_is_int, 1) {
+NATIVE(is_int, 1) {
 	snailSetResultBool(snail, snailIsInt(args[0]));
 	return snailStatusOk;
 }
 
 NATIVE(string_is_digits, 1) {
-	snailSetResultBool(snail, snailIsDigits(args[0]));
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	char *unquoted = snailTokenUnquote(args[0]);
+	snailSetResultBool(snail, snailIsDigits(unquoted));
+	free(unquoted);
 	return snailStatusOk;
 }
 
@@ -617,9 +623,9 @@ NATIVE(if,VARIADIC) {
 			cond = snailIsTrue(snail->result);
 			// Skip then
 			i += 2;
-			if (cond)
+			if (cond) {
 				return snailExecList(snail,args[i]);
-			i++;
+			}
 		}
 	}
 
@@ -1333,6 +1339,24 @@ NATIVE(eval_up,2) {
 	return snailExecListUp(snail,level,args[1]);
 }
 
+NATIVE(frame_cmd_up,1) {
+	NATIVE_ARG_MUSTINT(0);
+	int64_t level = strtoll(args[0], NULL, 10);
+	char *cmd = snailGetCmdUp(snail,level);
+	if (cmd == NULL) {
+		snailSetResult(snail,"no such level");
+		return snailStatusError;
+	}
+	if (snailTokenIsValid(cmd)) {
+		snailSetResult(snail,cmd);
+	} else {
+		char *q = snailMakeQuoted(cmd);
+		snailSetResult(snail,q);
+		free(q);
+	}
+	return snailStatusOk;
+}
+
 NATIVE(info_channel_drivers, 0) {
 	snailBuffer *buf = snailBufferCreate(1024);
 	snailBufferAddChar(buf,'{');
@@ -1417,4 +1441,150 @@ NATIVE(channel_read,2) {
 	snailSetResult(snail,quoted);
 	free(quoted);
 	return snailStatusOk;
+}
+
+NATIVE(string_upper,1) {
+	NATIVE_ARG_MUSTCLASS(0,'Q');
+	char *unquote = snailTokenUnquote(args[0]);
+	for (int i = 0; unquote[i] != 0; i++)
+		unquote[i] = toupper(unquote[i]);
+	char *quoted = snailMakeQuoted(unquote);
+	free(unquote);
+	snailSetResult(snail,quoted);
+	free(quoted);
+	return snailStatusOk;
+}
+
+NATIVE(string_lower,1) {
+	NATIVE_ARG_MUSTCLASS(0,'Q');
+	char *unquote = snailTokenUnquote(args[0]);
+	for (int i = 0; unquote[i] != 0; i++)
+		unquote[i] = tolower(unquote[i]);
+	char *quoted = snailMakeQuoted(unquote);
+	free(unquote);
+	snailSetResult(snail,quoted);
+	free(quoted);
+	return snailStatusOk;
+}
+
+NATIVE(string_char_at,2) {
+	NATIVE_ARG_MUSTCLASS(0,'Q');
+	NATIVE_ARG_MUSTINT(1);
+	int64_t off = strtoll(args[1], NULL, 10);
+	char *unquote = snailTokenUnquote(args[0]);
+	if (off < 0 || off >= strlen(unquote)) {
+		free(unquote);
+		snailSetResult(snail,"");
+		return snailStatusOk;
+	}
+	char *s = snailU64ToStr(unquote[off]);
+	free(unquote);
+	snailSetResult(snail,s);
+	free(s);
+	return snailStatusOk;
+}
+
+NATIVE(string_chr,1) {
+	NATIVE_ARG_MUSTINT(0);
+	char buf[2];
+	buf[0] = strtoll(args[0], NULL, 10);
+	buf[1] = 0;
+	char *q = snailMakeQuoted(buf);
+	snailSetResult(snail,q);
+	free(q);
+	return snailStatusOk;
+}
+
+NATIVE(string_trim,1) {
+	NATIVE_ARG_MUSTCLASS(0,'Q');
+	char *u = snailTokenUnquote(args[0]);
+	char *trim = snailTrimString(u);
+	free(u);
+	char *q = snailMakeQuoted(trim);
+	free(trim);
+	snailSetResult(snail,q);
+	free(q);
+	return snailStatusOk;
+}
+
+NATIVE(and,VARIADIC) {
+	for (int i = 0; i < argCount; i++)
+		NATIVE_ARG_MUSTCLASS(0,'L');
+	for (int i = 0; i < argCount; i++) {
+		snailStatus ss = snailExecList(snail,args[i]);
+		if (ss != snailStatusOk)
+			return ss;
+		if (!snailIsBool(snail->result)) {
+			snailSetResult(snail,"and condition not boolean");
+			return snailStatusError;
+		}
+		if (!snailIsTrue(snail->result)) {
+			snailSetResultBool(snail, false);
+			return snailStatusOk;
+		}
+	}
+	snailSetResultBool(snail, true);
+	return snailStatusOk;
+}
+
+NATIVE(or,VARIADIC) {
+	for (int i = 0; i < argCount; i++)
+		NATIVE_ARG_MUSTCLASS(0,'L');
+	for (int i = 0; i < argCount; i++) {
+		snailStatus ss = snailExecList(snail,args[i]);
+		if (ss != snailStatusOk)
+			return ss;
+		if (!snailIsBool(snail->result)) {
+			snailSetResult(snail,"or condition not boolean");
+			return snailStatusError;
+		}
+		if (snailIsTrue(snail->result)) {
+			snailSetResultBool(snail, true);
+			return snailStatusOk;
+		}
+	}
+	snailSetResultBool(snail, false);
+	return snailStatusOk;
+}
+
+NATIVE(string_ends_with, 2) {
+	NATIVE_ARG_MUSTCLASS(0,'Q');
+	NATIVE_ARG_MUSTCLASS(1,'Q');
+	char *target = snailTokenUnquote(args[0]);
+	char *ends = snailTokenUnquote(args[1]);
+	int l_target = strlen(target);
+	int l_ends = strlen(ends);
+	if (l_target < l_ends) {
+		free(target);
+		free(ends);
+		snailSetResultBool(snail, false);
+		return snailStatusOk;
+	}
+	for (int i = 0; i < l_ends; i++) {
+		if (target[l_target - l_ends + i] != ends[i]) {
+			free(target);
+			free(ends);
+			snailSetResultBool(snail, false);
+			return snailStatusOk;
+		}
+	}
+	free(target);
+	free(ends);
+	snailSetResultBool(snail, true);
+	return snailStatusOk;
+}
+
+NATIVE(file_write,2) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	NATIVE_ARG_MUSTCLASS(1, 'Q');
+	char *fileName = snailTokenUnquote(args[0]);
+	char *text = snailTokenUnquote(args[1]);
+	char *error = snailWriteFile(fileName,text);
+	if (error == NULL) {
+		snailSetResult(snail,"");
+		return snailStatusOk;
+	}
+	snailSetResult(snail,error);
+	free(error);
+	return snailStatusError;
 }

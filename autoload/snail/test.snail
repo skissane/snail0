@@ -2,3 +2,184 @@ test.case snail.test.t1000 {test.assert.eq 2 {+ 1 1}}
 test.case snail.test.t1001 {test.assert.error {file.run "/"}}
 test.case snail.test.t1002 {test.assert.error {file.read "/"}}
 test.case snail.test.t1003 {test.assert.error {error "intentionally induced"}}
+test.case snail.test.t1004 {test.assert {string.is.blank ""}}
+test.case snail.test.t1005 {test.assert {string.is.blank " "}}
+test.case snail.test.t1006 {test.assert {string.is.blank "\t"}}
+test.case snail.test.t1007 {test.assert {string.is.blank "\n"}}
+test.case snail.test.t1008 {test.assert.not {string.is.blank "x"}}
+test.case snail.test.t1009 {test.assert.not {string.is.blank " x"}}
+test.case snail.test.t1010 {test.assert.not {string.is.blank "x "}}
+test.case snail.test.t1011 {test.assert.not {string.is.blank "two words"}}
+test.case snail.test.t1012 {test.assert.error {string.is.blank {}}}
+test.case snail.test.t1013 {test.assert.error {string.is.digits {}}}
+test.case snail.test.t1014 {test.assert.not {string.is.digits ""}}
+test.case snail.test.t1015 {test.assert {string.is.digits "0"}}
+test.case snail.test.t1016 {test.assert {string.is.digits "9"}}
+test.case snail.test.t1017 {test.assert.not {string.is.digits "0123456789"}}
+test.case snail.test.t1018 {test.assert.not {string.is.digits "a"}}
+test.case snail.test.t1019 {test.assert.not {string.is.digits "9a"}}
+test.case snail.test.t1020 {test.assert.not {string.is.digits "A9"}}
+test.case snail.test.t1021 {test.assert {is.bool t}}
+test.case snail.test.t1022 {test.assert {is.bool f}}
+test.case snail.test.t1023 {test.assert.not {is.bool ""}}
+test.case snail.test.t1024 {test.assert.not {is.bool [null]}}
+test.case snail.test.t1025 {test.assert.not {is.bool "t"}}
+test.case snail.test.t1026 {test.assert.not {is.bool "f"}}
+test.case snail.test.t1027 {test.assert {is.bool T}}
+test.case snail.test.t1028 {test.assert {is.bool F}}
+test.case snail.test.t1029 {test.assert.not {is.bool true}}
+test.case snail.test.t1030 {test.assert.not {is.bool false}}
+test.case snail.test.t1031 {test.assert.not {is.bool "t"}}
+test.case snail.test.t1032 {test.assert.not {is.bool "f"}}
+test.case snail.test.t1033 {test.assert.not {is.bool {}}}
+test.case snail.test.t1034 {test.assert.not {is.bool %{}}}
+test.case snail.test.t1035 {test.assert.null {channel.write stdout "Hello World!\n"}}
+test.case snail.test.t1036 {test.assert {if {pass f} then {pass f} elseif {pass f} then {pass f} elseif {pass t} then {pass t} else {pass f}}}
+test.case snail.test.t1037 {test.assert {is.true t}}
+test.case snail.test.t1038 {test.assert.not {is.true f}}
+test.case snail.test.t1039 {test.assert.not {is.false t}}
+test.case snail.test.t1040 {test.assert {is.false f}}
+test.case snail.test.t1041 {test.assert.not {is.int foo}}
+test.case snail.test.t1042 {test.assert {is.int 0}}
+test.case snail.test.t1043 {test.assert {is.int -99}}
+test.case snail.test.t1044 {test.assert.not {is.int "0"}}
+test.case snail.test.t1045 {test.assert.not {is.int "-99"}}
+test.case snail.test.t1046 {test.assert {is.int 123456}}
+test.case snail.test.t1047 {test.assert.eq 0 {string.length ""}}
+test.case snail.test.t1048 {test.assert.eq 1 {string.length "A"}}
+test.case snail.test.t1049 {test.assert.eq 3 {string.length "ABC"}}
+test.case snail.test.t1050 {test.assert.eq 0 {string.cmp "" ""}}
+test.case snail.test.t1051 {test.assert.eq 0 {string.cmp "A" "A"}}
+test.case snail.test.t1052 {test.assert.eq -1 {string.cmp "A" "B"}}
+test.case snail.test.t1053 {test.assert.eq 1 {string.cmp "B" "A"}}
+test.case snail.test.t1054 {test.assert.eq -1 {string.cmp "ABC0" "ABC1"}}
+test.case snail.test.t1055 {test.assert.eq 1 {string.cmp "ABC1" "ABC0"}}
+test.case snail.test.t1056 {test.assert.eq -1 {string.cmp "A" "a"}}
+test.case snail.test.t1057 {test.assert.eq 1 {string.cmp "a" "A"}}
+test.case snail.test.t1058 {test.assert.eq 0 {string.casecmp "A" "a"}}
+test.case snail.test.t1059 {test.assert.eq -1 {string.casecmp "a" "B"}}
+test.case snail.test.t1060 {test.assert.eq 1 {string.casecmp "B" "a"}}
+test.case snail.test.t1061 {test.assert.error {+ {} {}}}
+test.case snail.test.t1062 {test.assert.error {- {} {}}}
+test.case snail.test.t1063 {test.assert.eq 4 {* 2 2}}
+test.case snail.test.t1064 {test.assert.error {* 10 "10"}}
+test.case snail.test.t1065 {test.assert.eq 5 {/ 10 2}}
+test.case snail.test.t1066 {test.assert.error {/ 10 0}}
+test.case snail.test.t1067 {test.assert.error {/ "10" "2"}}
+test.case snail.test.t1068 {test.assert {< -5 5}}
+test.case snail.test.t1069 {test.assert.not {< 5 -5}}
+test.case snail.test.t1070 {test.assert {> 5 -5}}
+test.case snail.test.t1071 {test.assert.not {> -5 5}}
+test.case snail.test.t1072 {test.assert.not {> 1 2}}
+test.case snail.test.t1073 {test.assert {> 2 1}}
+test.case snail.test.t1074 {test.assert {<= -5 0}}
+test.case snail.test.t1075 {test.assert {>= 0 0}}
+test.case snail.test.t1076 {test.assert.not {> 0 0}}
+test.case snail.test.t1077 {test.assert.not {< 0 0}}
+test.case snail.test.t1078 {test.assert {is.int [info.cmds.count]}}
+test.case snail.test.t1079 {test.assert.eq 0 {list.length {}}}
+test.case snail.test.t1080 {test.assert.eq 3 {list.length {a b c}}}
+test.case snail.test.t1081 {test.assert.eq {1 2 3} {list.sort {3 1 2}}}
+test.case snail.test.t1082 {test.assert.error {list.sort ""}}
+test.case snail.test.t1083 {test.assert.eq 4 {list.index {1 9 8 4} 3}}
+test.case snail.test.t1084 {test.assert.eq 9 {list.index {1 9 8 4} 1}}
+test.case snail.test.t1085 {test.assert.null {list.index {} 0}}
+test.case snail.test.t1086 {test.assert.error {list.index "" 0}}
+test.case snail.test.t1087 {test.assert.error {set.up -1 x 0}}
+test.case snail.test.t1088 {test.assert.error {var.get.up -1 x}}
+test.case snail.test.t1089 {test.assert.eq L {token.classify [info.vars]}}
+test.case snail.test.t1090 {test.assert.null {unsupported.parse.dump "{}"}}
+test.case snail.test.t1091 {test.assert.eq Q {token.classify [repl.prompt.get]}}
+test.case snail.test.t1092 {test.assert.error {eval ""}}
+test.case snail.test.t1093 {test.assert.error {proc "" {} {}}}
+test.case snail.test.t1094 {test.assert.error {if}}
+test.case snail.test.t1095 {test.assert.error {if t then f}}
+test.case snail.test.t1096 {test.assert.error {if {error "intentionally induced"} then {pass t}}}
+test.case snail.test.t1097 {test.assert {is.int [time.now]}}
+test.case snail.test.t1098 {test.assert {> [time.now] 0}}
+test.case snail.test.t1099 {test.assert {is.int [time.startup]}}
+test.case snail.test.t1100 {test.assert {> [time.startup] 0}}
+test.case snail.test.t1101 {test.assert {token.is.quoted [file.read [module.find.path snail.test]]}}
+test.case snail.test.t1102 {test.assert.eq {1 2 3 4} {list.add {1 2 3} 4}}
+test.case snail.test.t1103 {test.assert.error {list.add "{1 2 3}" 4}}
+test.case snail.test.t1104 {test.assert.eq {1 2 3 4} {list.concat {1} {2} {3} {4}}}
+test.case snail.test.t1105 {test.assert.eq "x{}" {string.concat "x" {}}}
+test.case snail.test.t1106 {test.assert {is.int [frame.count]}}
+test.case snail.test.t1107 {test.assert {> [frame.count] 0}}
+test.case snail.test.t1108 {test.assert {and}}
+test.case snail.test.t1109 {test.assert.not {or}}
+test.case snail.test.t1110 {test.assert {or {pass t} {error "shouldn't run"}}}
+test.case snail.test.t1111 {test.assert.not {and {pass f} {error "shouldn't run"}}}
+test.case snail.test.t1112 {test.assert {and {pass t} {pass t}}}
+test.case snail.test.t1113 {test.assert.not {and {pass t} {pass f}}}
+test.case snail.test.t1114 {test.assert {or {pass f} {pass t}}}
+test.case snail.test.t1115 {test.assert {and {pass t}}}
+test.case snail.test.t1116 {test.assert.not {and {pass f}}}
+test.case snail.test.t1117 {test.assert {or {pass t}}}
+test.case snail.test.t1118 {test.assert.not {or {pass f}}}
+test.case snail.test.t1119 {test.assert.error {file.write "." ""}}
+test.case snail.test.t1120 {test.assert {string.ends.with "abc" "c"}}
+test.case snail.test.t1121 {test.assert {string.ends.with "" ""}}
+test.case snail.test.t1122 {test.assert {string.ends.with "abc" ""}}
+test.case snail.test.t1123 {test.assert {string.ends.with "hello" "lo"}}
+test.case snail.test.t1124 {test.assert {string.starts.with "hello" "hell"}}
+test.case snail.test.t1125 {test.assert.not {string.starts.with "abc" "b"}}
+test.case snail.test.t1126 {test.assert.not {string.ends.with "abc" "d"}}
+test.case snail.test.t1127 {test.assert.eq "" {string.trim ""}}
+test.case snail.test.t1128 {test.assert.eq "xyz" {string.trim " xyz\t\t"}}
+test.case snail.test.t1129 {test.assert.eq "xyz" {string.trim "xyz"}}
+test.case snail.test.t1130 {test.assert.eq "A" {string.chr 65}}
+test.case snail.test.t1131 {test.assert.eq 65 {string.char.at "APPLE" 0}}
+test.case snail.test.t1132 {test.assert.eq 76 {string.char.at "APPLE" 3}}
+test.case snail.test.t1133 {test.assert.eq "hello" {string.lower "Hello"}}
+test.case snail.test.t1134 {test.assert.eq "HELLO" {string.upper "Hello"}}
+test.case snail.test.t1135 {test.assert {token.is.dict [info.channels]}}
+test.case snail.test.t1136 {test.assert {dict.has [info.channels] stdin}}
+test.case snail.test.t1137 {test.assert {dict.has [info.channels] stdout}}
+test.case snail.test.t1138 {test.assert {dict.has [info.channels] stderr}}
+test.case snail.test.t1139 {test.assert {token.is.list [info.channel.drivers]}}
+test.case snail.test.t1140 {test.assert.eq "BarBaz" {string.skip "FooBarBaz" 3}}
+test.case snail.test.t1141 {test.assert.eq "Foo" {string.left "FooBarBaz" 3}}
+test.case snail.test.t1142 {test.assert {token.is.list [info.globals]}}
+test.case snail.test.t1143 {test.assert {> [list.length [info.channel.drivers]] 0}}
+test.case snail.test.t1144 {test.assert.eq proc {dict.get [info.about.cmd proc] name}}
+test.case snail.test.t1145 {test.assert.eq dir {dict.get [file.stat "."] type}}
+test.case snail.test.t1146 {test.assert.eq 4 {dict.size [dict.set.all %{x 1 y 2 z 3} %{x 99 a 15 y 6}]}}
+test.case snail.test.t1147 {test.assert.eq 99 {dict.get [dict.set.all %{x 1 y 2 z 3} %{x 99 a 15 y 6}] x}}
+test.case snail.test.t1148 {test.assert {dict.has %{x 1} x}}
+test.case snail.test.t1149 {test.assert.not {dict.has %{x 1} y}}
+test.case snail.test.t1150 {test.assert.eq 0 {dict.size %{}}}
+test.case snail.test.t1151 {test.assert.eq 1 {dict.size %{x 1}}}
+test.case snail.test.t1152 {test.assert.eq {x y z} {list.sort [dict.keys %{x 1 y 2 z 3}]}}
+test.case snail.test.t1153 {test.assert.eq %{x 1} {dict x 1}}
+test.case snail.test.t1154 {test.assert.error {dict x 1 y}}
+test.case snail.test.t1155 {test.assert.eq %{x 99} {dict x 1 x 99}}
+test.case snail.test.t1156 {test.assert {token.is.list [frame.cmds]}}
+test.case snail.test.t1157 {test.assert {> [list.length [frame.cmds]] 0}}
+test.case snail.test.t1158 {test.assert.eq 0 {nvl 0}}
+test.case snail.test.t1159 {test.assert.null {nvl [null]}}
+test.case snail.test.t1160 {test.assert.eq 99 {nvl [null] 99}}
+test.case snail.test.t1161 {test.assert.eq 99 {nvl [null] [null] 99 [null]}}
+test.case snail.test.t1162 {test.assert.null {nvl [null] [null] [null] [null]}}
+test.case snail.test.t1163 {test.assert.error {list.length ""}}
+test.case snail.test.t1164 {test.assert.null {puts.nonewline "This should print a single line\n"}}
+test.case snail.test.t1165 {test.assert.error {and {error "intentional error"}}}
+test.case snail.test.t1166 {test.assert.error {or {error "intentional error"}}}
+test.case snail.test.t1167 {test.assert.error {and {pass 0}}}
+test.case snail.test.t1168 {test.assert.error {or {pass 0}}}
+test.case snail.test.t1169 {test.assert.eq "1 2 3" {token.list.body {1 2 3}}}
+test.case snail.test.t1170 {test.assert.not {string.ends.with "X" "XYZ"}}
+test.case snail.test.t1171 {test.assert.null {string.char.at "" 0}}
+test.case snail.test.t1172 {test.assert {token.is.symbol [frame.cmd.up 0]}}
+test.case snail.test.t1173 {test.assert.error {frame.cmd.up -1}}
+test.case snail.test.t1174 {test.assert.eq "" {string.left "x" -1}}
+test.case snail.test.t1175 {test.assert.eq "x" {string.left "x" 30}}
+test.case snail.test.t1176 {test.assert.null {string.find.rev "abc" "d"}}
+test.case snail.test.t1177 {test.assert.eq 2 {string.find.rev "bob" "b"}}
+test.case snail.test.t1178 {test.assert.eq 0 {string.find.at "bob" "b" 0}}
+test.case snail.test.t1179 {test.assert.eq 2 {string.find.at "bob" "b" 1}}
+test.case snail.test.t1180 {test.assert.eq 0 {string.find.at "cowdogcow" "cow" 0}}
+test.case snail.test.t1181 {test.assert.eq 6 {string.find.at "cowdogcow" "cow" 1}}
+test.case snail.test.t1182 {test.assert {dict.has [info.about.cmd help] script}}
+test.case snail.test.t1183 {test.assert.error {list.concat {} ""}}
+test.case snail.test.t1184 {test.assert.error {proc}}

@@ -37,7 +37,7 @@ void snailBufferAddChar(snailBuffer *buf, char ch) {
 	buf->bytes[buf->length++] = ch;
 }
 
-void snailBufferAddString(snailBuffer *buf, char *str) {
+void snailBufferAddString(snailBuffer *buf, const char *str) {
 	int length = strlen(str);
 	snailBufferGrow(buf, buf->length + length + 1);
 	while (*str != 0) {
@@ -1546,6 +1546,69 @@ const char *snailStringFindRev(const char *haystack, const char *needle) {
 		return haystack + i;
 nextOuter:
 		;
+	}
+	return NULL;
+}
+
+char *snailGetCmdUp(snailInterp *snail, int level) {
+	if (level < 0)
+		return NULL;
+	int off = snail->frames->length-1 - level;
+	if (off < 0)
+		return NULL;
+	snailCallFrame *frame = snail->frames->elems[off];
+	return frame->cmdName;
+}
+
+char *snailWriteFile(const char *filename, char *text) {
+	FILE *f;
+	if(!(f = fopen(filename, "w"))) {
+		int e = errno;
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"snailWriteFile: I/O error ");
+		char *s = snailI64ToStr(e);
+		snailBufferAddString(msg,s);
+		free(s);
+		snailBufferAddString(msg," attempting to open ");
+		snailBufferAddString(msg,filename);
+		snailBufferAddChar(msg,0);
+		char *r = snailDupString(msg->bytes);
+		snailBufferDestroy(msg);
+		return r;
+	}
+	size_t len = strlen(text);
+	if (fwrite(text, 1, len, f) != len) {
+		int e = errno;
+		fclose(f);
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"snailWriteFile: I/O error ");
+		char *s = snailI64ToStr(e);
+		snailBufferAddString(msg,s);
+		free(s);
+		snailBufferAddString(msg," attempting to write ");
+		char *s_len = snailI64ToStr(len);
+		snailBufferAddString(msg,s_len);
+		free(s_len);
+		snailBufferAddString(msg," bytes to file ");
+		snailBufferAddString(msg,filename);
+		snailBufferAddChar(msg,0);
+		char *r = snailDupString(msg->bytes);
+		snailBufferDestroy(msg);
+		return r;
+	}
+	if (fclose(f)!=0) {
+		int e = errno;
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"snailWriteFile: I/O error ");
+		char *s = snailI64ToStr(e);
+		snailBufferAddString(msg,s);
+		free(s);
+		snailBufferAddString(msg," attempting to close handle to file ");
+		snailBufferAddString(msg,filename);
+		snailBufferAddChar(msg,0);
+		char *r = snailDupString(msg->bytes);
+		snailBufferDestroy(msg);
+		return r;
 	}
 	return NULL;
 }

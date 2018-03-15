@@ -47,19 +47,19 @@ proc token.is.var {$token} {= [token.classify $token] V}
 
 proc arg.must.quoted {$name} {
 	if {not [token.is.quoted [var.get.up 1 $name]]} then {
-		error [string.concat "argument $" $name " must be quoted string"]
+		error [string.concat "argument $" $name " must be quoted string (in: " [frame.cmd.up 1] ")"]
 	}
 }
 
 proc arg.must.symbol {$name} {
 	if {not [token.is.symbol [var.get.up 1 $name]]} then {
-		error [string.concat "argument $" $name " must be a symbol"]
+		error [string.concat "argument $" $name " must be a symbol (in: " [frame.cmd.up 1] ")"]
 	}
 }
 
 proc arg.must.list {$name} {
 	if {not [token.is.list [var.get.up 1 $name]]} then {
-		error [string.concat "argument $" $name " must be a list"]
+		error [string.concat "argument $" $name " must be a list (in: " [frame.cmd.up 1] ")"]
 	}
 }
 
@@ -196,4 +196,46 @@ proc prompt {$prompt} {
 	arg.must.quoted prompt
 	puts.nonewline $prompt
 	channel.read.line stdin
+}
+
+proc prompt.yesno {$prompt} {
+	loop {
+		set response [prompt [string.concat $prompt " (Y/N)? "]]
+		if {is.null $response} then {
+			puts ""
+			puts "Got EOF - assuming response NO"
+			return f
+		}
+		set response [string.upper [string.trim $response]]
+		if {= $response "Y"} then {return t}
+		if {= $response "YES"} then {return t}
+		if {= $response "N"} then {return f}
+		if {= $response "NO"} then {return f}
+		puts "Invalid response - please answer YES or NO"
+	}
+}
+
+proc string.strip.prefix {$str $prefix} {
+	if {string.starts.with $str $prefix} then {
+		string.skip $str [string.length $prefix]
+	} else {
+		pass $str
+	}
+}
+
+proc string.strip.suffix {$str $suffix} {
+	if {string.ends.with $str $suffix} then {
+		string.sub $str 0 [- [string.length $str] [string.length $suffix]]
+	} else {
+		pass $str
+	}
+}
+
+proc string.strip.circumfix {$str $prefix $suffix} {
+	string.strip.suffix [string.strip.prefix $str $prefix] $suffix
+}
+
+proc token.list.body {$list} {
+	arg.must.list list
+	string.strip.circumfix [token.quote $list] "{" "}"
 }
