@@ -281,3 +281,5 @@ proc uuid.generate {} {
 	}
 	string.concat [rand.hex 8] "-" [rand.hex 4] "-4" [rand.hex 3] "-" $y [rand.hex 3] "-" [rand.hex 12]
 }
+
+proc list.contains {$list $elem} {not.null [list.find $list $elem]}

@@ -450,6 +450,11 @@ nextWord:
 			word = NULL;
 			goto nextWord;
 		}
+	case snailParseResultIncomplete:
+		snailSetResult(snail, "unexpected EOF");
+		snailParseDestroy(tool);
+		snailArrayDestroy(words, free);
+		return snailStatusError;
 	default:
 		printf("Parse unknown result [%d]\n", result);
 		snailPanic("Parse unknown result");
@@ -652,7 +657,7 @@ void snailDestroy(snailInterp *snail) {
 	snailHashTableDestroy(snail->globals,free);
 	snailHashTableDestroy(snail->commands, (void*)snailDestroyCommand);
 	snailReplStateDestroy(snail->repl);
-	snailHashTableDestroy(snail->channels, (void*)snailChannelDestroy);
+	snailHashTableDestroy(snail->channels, (void*)snailChannelClose);
 	snailHashTableDestroy(snail->channelDrivers, (void*)snailChannelDriverDestroy);
 	free(snail);
 }
@@ -1627,4 +1632,10 @@ void snailRandomBytes(void *buf, size_t count) {
 		snailPanic("RNG failure [reading from random device]");
 	if (fclose(fh)!=0)
 		snailPanic("RNG failure [closing random device]");
+}
+
+void snailBufferAddI64(snailBuffer *buf, int64_t n) {
+	char *s = snailI64ToStr(n);
+	snailBufferAddString(buf,s);
+	free(s);
 }

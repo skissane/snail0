@@ -18,14 +18,14 @@ typedef snailStatus snailNative (snailInterp *snail, char *name, int argCount, c
 typedef char * snailChannel_READ (snailChannel *channel, void *buf, size_t len, size_t *read);
 typedef char * snailChannel_WRITE (snailChannel *channel, void *buf, size_t len, size_t *written);
 typedef char * snailChannel_OPEN (snailChannel *channel, void *driverArg);
-typedef char * snailChannel_DESTROY (snailChannel *channel);
+typedef char * snailChannel_CLOSE (snailChannel *channel);
 
 typedef struct snailChannelDriver {
 	char *name;
 	snailChannel_READ *f_READ;
 	snailChannel_WRITE *f_WRITE;
 	snailChannel_OPEN *f_OPEN;
-	snailChannel_DESTROY *f_DESTROY;
+	snailChannel_CLOSE *f_CLOSE;
 } snailChannelDriver;
 
 typedef struct snailChannel {
@@ -82,6 +82,7 @@ typedef struct snailInterp {
 	snailHashTable *channelDrivers;
 	snailHashTable *channels;
 	int64_t startupTime;
+	int64_t autoId;
 } snailInterp;
 
 typedef struct snailReplState {

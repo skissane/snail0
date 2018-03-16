@@ -43,11 +43,32 @@ char * snailChannel_WRITE_stdio (snailChannel *channel, void *buf, size_t len, s
 	return rc == len ? NULL : snailDupString("I/O error writing on channel");
 }
 
-void snailChannelDestroy(snailChannel *channel) {
-	if (channel->driver->f_DESTROY != NULL)
-		channel->driver->f_DESTROY(channel);
+char * snailChannel_CLOSE_stdio (snailChannel *channel) {
+	FILE *fh = channel->driverInfo;
+	if (fh == NULL) {
+		return NULL;
+	}
+	if (fclose(fh) == 0)
+		return NULL;
+	int e = errno;
+	snailBuffer *msg = snailBufferCreate(16);
+	snailBufferAddString(msg,"OS error #");
+	snailBufferAddI64(msg,e);
+	snailBufferAddString(msg," while closing channel ");
+	snailBufferAddString(msg,channel->name);
+	snailBufferAddChar(msg,0);
+	char *r = snailDupString(msg->bytes);
+	snailBufferDestroy(msg);
+	return r;
+}
+
+char * snailChannelClose(snailChannel *channel) {
+	char *msg = NULL;
+	if (channel->driver->f_CLOSE != NULL)
+		msg = channel->driver->f_CLOSE(channel);
 	free(channel->name);
 	free(channel);
+	return msg;
 }
 
 void snailChannelDriverDestroy(snailChannelDriver *driver) {
@@ -114,7 +135,7 @@ void snailChannelSetup(snailInterp *snail) {
 	STDIO->f_OPEN = snailChannel_OPEN_stdio;
 	STDIO->f_READ = snailChannel_READ_stdio;
 	STDIO->f_WRITE = snailChannel_WRITE_stdio;
-	STDIO->f_DESTROY = NULL;
+	STDIO->f_CLOSE = snailChannel_CLOSE_stdio;
 	char *msg = snailChannelDriverRegister(snail,STDIO);
 	if (msg != NULL)
 		snailPanic(msg);
@@ -159,4 +180,14 @@ char *snailChannelRead(snailInterp *snail, char *channelName, void *buf, size_t 
 		return r;
 	}
 	return channel->driver->f_READ(channel, buf, len, read);
+}
+
+char *snailChannelMakeName(snailInterp *snail) {
+	snailBuffer *buf = snailBufferCreate(16);
+	snailBufferAddChar(buf,'C');
+	snailBufferAddI64(buf,++snail->autoId);
+	snailBufferAddChar(buf,0);
+	char *name = snailDupString(buf->bytes);
+	snailBufferDestroy(buf);
+	return name;
 }

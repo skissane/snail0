@@ -522,6 +522,7 @@ NATIVE(proc,3) {
 	cmd->script = pbody;
 	snailHashTablePut(snail->commands, pname, cmd);
 	snailArrayDestroy(pargs,free);
+	snailSetResult(snail,"");
 	return snailStatusOk;
 }
 
@@ -740,6 +741,7 @@ NATIVE(list_add, 2) {
 	snailArrayAdd(list, snailDupString(args[1]));
 	char *result = snailQuoteList(list);
 	snailSetResult(snail, result);
+	free(result);
 	snailArrayDestroy(list, free);
 	return snailStatusOk;
 }
@@ -1611,7 +1613,158 @@ NATIVE(to_hex,1) {
 	NATIVE_ARG_MUSTINT(0);
 	int64_t arg = strtoll(args[0], NULL, 10);
 	char *r = snailU64ToStr16(arg);
-	snailSetResult(snail,r);
+	char *q = snailMakeQuoted(r);
 	free(r);
+	snailSetResult(snail,q);
+	free(q);
 	return snailStatusOk;
+}
+
+NATIVE(proc_delete,1) {
+	if (snailTokenClassify(args[0]) != 'U') {
+		snailSetResult(snail,"bad procedure name");
+		return snailStatusError;
+	}
+	snailCommand *cmd = snailHashTableGet(snail->commands,args[0]);
+	if (cmd == NULL) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"proc.delete: proc not found: ");
+		snailBufferAddString(msg,args[0]);
+		snailBufferAddChar(msg,0);
+		snailSetResult(snail,msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+	if (cmd->native) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"proc.delete: refusing to allow deletion of native proc: ");
+		snailBufferAddString(msg,args[0]);
+		snailBufferAddChar(msg,0);
+		snailSetResult(snail,msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+	snailHashTableDelete(snail->commands,args[0]);
+	free(cmd->name);
+	free(cmd->args);
+	free(cmd->script);
+	free(cmd);
+	snailSetResult(snail,"");
+	return snailStatusOk;
+}
+
+NATIVE(list_find,2) {
+	snailArray *list = snailUnquoteList(args[0]);
+	if (list == NULL) {
+		snailSetResult(snail, "list.length: argument is not a valid list");
+		return snailStatusError;
+	}
+	for (int i = 0; i < list->length; i++) {
+		if (strcmp(list->elems[i],args[1]) == 0) {
+			snailSetResultInt(snail,i);
+			snailArrayDestroy(list,free);
+			return snailStatusOk;
+		}
+	}
+	snailArrayDestroy(list,free);
+	snailSetResult(snail,"");
+	return snailStatusOk;
+}
+
+NATIVE(file_delete,1) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	char *u = snailTokenUnquote(args[0]);
+	int rc = unlink(u);
+	int e = errno;
+	free(u);
+	if (rc == 0) {
+		snailSetResult(snail,"");
+		return snailStatusOk;
+	}
+	snailBuffer *msg = snailBufferCreate(16);
+	snailBufferAddString(msg,"file.delete: OS error #");
+	snailBufferAddI64(msg,e);
+	snailBufferAddString(msg," trying to delete file: ");
+	snailBufferAddString(msg,args[0]);
+	snailBufferAddChar(msg,0);
+	snailSetResult(snail,msg->bytes);
+	snailBufferDestroy(msg);
+	return snailStatusError;
+}
+
+NATIVE(channel_close,1) {
+	NATIVE_ARG_MUSTCLASS(0, 'U');
+	if (strcmp(args[0],"stdin")==0||strcmp(args[0],"stdout")==0||strcmp(args[0],"stderr")==0) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"channel.close: disallowing closure of protected channel ");
+		snailBufferAddString(msg,args[0]);
+		snailBufferAddChar(msg,0);
+		snailSetResult(snail,msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+	snailChannel * channel = snailHashTableDelete(snail->channels,args[0]);
+	if (channel == NULL) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"channel.close: no such channel ");
+		snailBufferAddString(msg,args[0]);
+		snailBufferAddChar(msg,0);
+		snailSetResult(snail,msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+	char *msg = snailChannelClose(channel);
+	if (msg == NULL) {
+		snailSetResult(snail,"");
+		return snailStatusOk;
+	}
+	snailSetResult(snail,msg);
+	free(msg);
+	return snailStatusError;
+}
+
+NATIVE(file_open,2) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	NATIVE_ARG_MUSTCLASS(1, 'Q');
+	char *path = snailTokenUnquote(args[0]);
+	char *mode = snailTokenUnquote(args[1]);
+	FILE *fh = fopen(path,mode);
+	int e = errno;
+	free(path);
+	free(mode);
+	if (fh == NULL) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"file.open: OS error #");
+		snailBufferAddI64(msg,e);
+		snailBufferAddString(msg," attempting to open file ");
+		snailBufferAddString(msg,args[0]);
+		snailBufferAddString(msg," in mode ");
+		snailBufferAddString(msg,args[1]);
+		snailBufferAddChar(msg,0);
+		snailSetResult(snail,msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+	char *channelName = snailChannelMakeName(snail);
+	char *error = snailChannelRegister(snail, channelName, "STDIO", fh);
+	if (error == NULL) {
+		snailSetResult(snail,channelName);
+		free(channelName);
+		return snailStatusOk;
+	}
+	snailBuffer *msg = snailBufferCreate(16);
+	snailBufferAddString(msg,"file.open: channel error ");
+	snailBufferAddI64(msg,e);
+	snailBufferAddString(msg," attempting to open file ");
+	snailBufferAddString(msg,args[0]);
+	snailBufferAddString(msg," in mode ");
+	snailBufferAddString(msg,args[1]);
+	snailBufferAddString(msg,": ");
+	snailBufferAddString(msg,error);
+	snailBufferAddChar(msg,0);
+	snailSetResult(snail,msg->bytes);
+	snailBufferDestroy(msg);
+	free(error);
+	free(channelName);
+	return snailStatusError;
 }

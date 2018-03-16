@@ -264,3 +264,299 @@ test.case snail.test.t1238 {test.assert.error {if {} {} {}}}
 test.case snail.test.t1239 {test.assert.not {proc.exists [token.unquote [string.concat "nonexistent.proc." [rand.hex 8]]]}}
 test.case snail.test.t1240 {test.assert.eq 64 {string.length [rand.hex 32]}}
 test.case snail.test.t1241 {test.assert {is.int [rand.u32]}}
+test.case snail.test.t1242 {
+	set name [token.unquote [string.concat "V" [rand.hex 8]]]
+	set value [rand.hex 8]
+	test.assert.not {var.has $name}
+	set $name $value
+	test.assert {var.has $name}
+	test.assert.eq $value {var.get $name}
+	var.del $name
+	test.assert.not {var.has $name}
+	test.assert.error {var.get $name}
+}
+test.case snail.test.t1243 {test.assert.error {proc.delete proc.delete}}
+test.case snail.test.t1244 {
+	set name [token.unquote [string.concat "V" [rand.hex 8]]]
+	set value [rand.hex 8]
+	test.assert.not {proc.exists $name}
+	test.assert.error [list $name]
+	test.assert.null {proc $name {} [list pass $value]}
+	test.assert {proc.exists $name}
+	test.assert.eq $value [list $name]
+	test.assert.null {proc.delete $name}
+	test.assert.not {proc.exists $name}
+	test.assert.error [list $name]
+}
+test.case snail.test.t1245 {test.assert.error {proc.delete [token.unquote [string.concat "proc.nonexistent." [rand.hex 8]]]}}
+test.case snail.test.t1246 {
+	puts.nonewline "This should "
+	puts.nonewline "all be "
+	puts.nonewline "on one line "
+	puts.nonewline 1234567890
+	puts.nonewline "\n"
+}
+test.case snail.test.t1247 {test.assert.eq 0 {list.find {a b c} a}}
+test.case snail.test.t1248 {test.assert.eq 1 {list.find {a b c} b}}
+test.case snail.test.t1249 {test.assert.eq 2 {list.find {a b c} c}}
+test.case snail.test.t1250 {test.assert.eq 2 {list.find {a b c a b c} c}}
+test.case snail.test.t1251 {test.assert.null {list.find {a b c} x}}
+test.case snail.test.t1252 {test.assert.null {list.find {a b c} [null]}}
+test.case snail.test.t1253 {test.assert.null {list.find {} x}}
+test.case snail.test.t1254 {test.assert {list.contains {a b c} a}}
+test.case snail.test.t1255 {test.assert.not {list.contains {} a}}
+test.case snail.test.t1256 {test.assert {list.contains {a b c} c}}
+test.case snail.test.t1257 {test.assert.error {list.find "x" x}}
+test.case snail.test.t1258 {test.assert.error {list.find "x" "x"}}
+test.case snail.test.t1259 {test.assert.eq "0" {to.hex 0}}
+test.case snail.test.t1260 {test.assert.eq "FE" {to.hex 254}}
+test.case snail.test.t1261 {test.assert.eq "A" {to.hex 10}}
+test.case snail.test.t1262 {test.assert.eq "499602D2" {to.hex 1234567890}}
+test.case snail.test.t1263 {test.assert.error {to.hex "0"}}
+test.case snail.test.t1264 {test.assert.error {proc.delete {}}}
+test.case snail.test.t1265 {test.assert.eq "" {rand.hex 0}}
+test.case snail.test.t1266 {test.assert.error {rand.hex -1}}
+test.case snail.test.t1267 {test.assert.error {or t t}}
+test.case snail.test.t1268 {test.assert.error {and t t}}
+test.case snail.test.t1269 {test.assert.error {rand.hex "0"}}
+test.case snail.test.t1270 {test.assert.error {string.trim {}}}
+test.case snail.test.t1271 {test.assert.eq "" {string.chr 0}}
+test.case snail.test.t1272 {test.assert.error {string.chr "65"}}
+test.case snail.test.t1273 {test.assert.error {string.lower {}}}
+test.case snail.test.t1274 {test.assert.error {string.upper {}}}
+test.case snail.test.t1275 {test.assert.eq "" {string.skip "A" 99}}
+test.case snail.test.t1276 {test.assert.eq "ELLO" {string.sub "HELLO" 1 99}}
+test.case snail.test.t1277 {test.assert.eq "" {string.sub "HELLO" 99 1}}
+test.case snail.test.t1278 {test.assert.error {string.left hello 1}}
+test.case snail.test.t1279 {test.assert.error {string.left "hello" "1"}}
+test.case snail.test.t1280 {test.assert.error {string.find.rev foobarfoo "o"}}
+test.case snail.test.t1281 {test.assert.error {string.find.rev "foobarfoo" o}}
+test.case snail.test.t1282 {test.assert.error {string.replace foobarbaz "bar" "quux"}}
+test.case snail.test.t1283 {test.assert.error {string.replace "foobarbaz" bar "quux"}}
+test.case snail.test.t1284 {test.assert.error {string.replace "foobarbaz" "bar" quux}}
+test.case snail.test.t1285 {test.assert.eq "fooquuxbaz" {string.replace "foobarbaz" "bar" "quux"}}
+test.case snail.test.t1286 {test.assert.null {global.get [token.unquote [string.concat "nonexistent.global." [rand.hex 8]]]}}
+test.case snail.test.t1287 {test.assert.null {info.about.cmd [token.unquote [string.concat "nonexistent.proc." [rand.hex 8]]]}}
+test.case snail.test.t1288 {test.assert.error {info.about.cmd {}}}
+test.case snail.test.t1289 {test.assert.error {file.stat {}}}
+test.case snail.test.t1290 {test.assert.error {dict.set.all %{a 1} {a 2}}}
+test.case snail.test.t1291 {test.assert.error {dict.set.all {a 1} %{a 2}}}
+test.case snail.test.t1292 {test.assert.error {nvl}}
+test.case snail.test.t1293 {test.assert.error {foreach {} {} {}}}
+test.case snail.test.t1294 {test.assert.error {foreach foo foo foo}}
+test.case snail.test.t1295 {test.assert.error {foreach foo {} foo}}
+test.case snail.test.t1296 {test.assert.error {if {pass t} then then}}
+test.case snail.test.t1297 {test.assert.error {if {pass t} then {pass t} elseif}}
+test.case snail.test.t1298 {test.assert.error {if {pass t} then {pass t} elseif {pass t}}}
+test.case snail.test.t1299 {test.assert.error {if {pass t} then {pass t} elseif {pass t} then}}
+test.case snail.test.t1300 {test.assert.error {if {pass t} then {pass t} elseif {pass t} then {pass t} else}}
+test.case snail.test.t1301 {test.assert.error {if {pass "t"} then {pass "t"}}}
+test.case snail.test.t1302 {
+	set temp.proc.name [token.unquote [string.concat "temp.proc." [rand.hex 8]]]
+	set temp.var.name [token.unquote [string.concat "temp.var." [rand.hex 8]]]
+	set value [rand.hex 8]
+	test.assert.null {proc $temp.proc.name {$k $v} {set.up 1 $k $v}}
+	test.assert.not {var.has $temp.var.name}
+	test.assert.null [list $temp.proc.name $temp.var.name $value]
+	test.assert {var.has $temp.var.name}
+	test.assert.eq $value {var.get $temp.var.name}
+	test.assert.null {proc.delete $temp.proc.name}
+}
+test.case snail.test.t1303 {
+	test.assert.null {set temp.var1.name [token.unquote [string.concat "temp.var1." [rand.hex 8]]]}
+	test.assert.null {set temp.var2.name [token.unquote [string.concat "temp.var2." [rand.hex 8]]]}
+	test.assert.null {set value1 [rand.hex 8]}
+	test.assert.null {set value2 [rand.hex 8]}
+
+	test.assert.not {list.contains [info.vars] $temp.var1.name}
+	test.assert.not {list.contains [info.vars] $temp.var2.name}
+	test.assert.error {var.get $temp.var1.name}
+	test.assert.error {var.get $temp.var2.name}
+
+	test.assert.null {set $temp.var1.name $value1}
+	test.assert {list.contains [info.vars] $temp.var1.name}
+	test.assert.not {list.contains [info.vars] $temp.var2.name}
+	test.assert.eq $value1 {var.get $temp.var1.name}
+	test.assert.error {var.get $temp.var2.name}
+
+	test.assert.null {set $temp.var2.name $value2}
+	test.assert {list.contains [info.vars] $temp.var1.name}
+	test.assert {list.contains [info.vars] $temp.var2.name}
+	test.assert.eq $value1 {var.get $temp.var1.name}
+	test.assert.eq $value2 {var.get $temp.var2.name}
+
+	test.assert {var.del $temp.var1.name}
+	test.assert.not {var.del $temp.var1.name}
+	test.assert.not {list.contains [info.vars] $temp.var1.name}
+	test.assert {list.contains [info.vars] $temp.var2.name}
+	test.assert.error {var.get $temp.var1.name}
+	test.assert.eq $value2 {var.get $temp.var2.name}
+
+	test.assert {var.del $temp.var2.name}
+	test.assert.not {var.del $temp.var2.name}
+	test.assert.not {list.contains [info.vars] $temp.var1.name}
+	test.assert.not {list.contains [info.vars] $temp.var2.name}
+	test.assert.error {var.get $temp.var1.name}
+	test.assert.error {var.get $temp.var2.name}
+}
+test.case snail.test.t1304 {test.assert {token.is.list {info.vars}}}
+test.case snail.test.t1305 {test.assert.error {repl.prompt.set {}}}
+test.case snail.test.t1306 {test.assert.error {set.up "0" x 33}}
+test.case snail.test.t1307 {test.assert.error {var.get.up "0" x}}
+test.case snail.test.t1308 {test.assert.error {proc x "" {}}}
+test.case snail.test.t1309 {test.assert.error {proc x {} ""}}
+test.case snail.test.t1310 {
+	set temp.proc.name [token.unquote [string.concat "temp.proc." [rand.hex 8]]]
+	test.assert.null {proc $temp.proc.name {} {}}
+	test.assert.eq 0 {dict.get [info.about.cmd $temp.proc.name] arity}
+	test.assert.eq {} {dict.get [info.about.cmd $temp.proc.name] args}
+	test.assert.error {proc $temp.proc.name {} {}}
+	test.assert.null {proc.delete $temp.proc.name}
+	test.assert.null {info.about.cmd $temp.proc.name}
+	test.assert.error {proc.delete $temp.proc.name}
+}
+test.case snail.test.t1311 {
+	set temp.proc.name [token.unquote [string.concat "temp.proc." [rand.hex 8]]]
+	test.assert.null {proc $temp.proc.name {& $x} {}}
+	test.assert.eq -1 {dict.get [info.about.cmd $temp.proc.name] arity}
+	test.assert.eq {& $x} {dict.get [info.about.cmd $temp.proc.name] args}
+	test.assert.null {proc.delete $temp.proc.name}
+	test.assert.null {info.about.cmd $temp.proc.name}
+	test.assert.error {proc.delete $temp.proc.name}
+}
+test.case snail.test.t1312 {test.assert.error {string.ends.with a "a"}}
+test.case snail.test.t1313 {test.assert.error {string.ends.with "a" a}}
+test.case snail.test.t1314 {test.assert.error {string.char.at a 0}}
+test.case snail.test.t1315 {test.assert.error {string.char.at "a" "0"}}
+test.case snail.test.t1316 {test.assert.null {string.char.at "a" -1}}
+test.case snail.test.t1317 {test.assert.error {channel.read {} 0}}
+test.case snail.test.t1318 {test.assert.error {channel.read stdin "0"}}
+test.case snail.test.t1319 {test.assert.error {channel.read stdin 0}}
+test.case snail.test.t1320 {test.assert.error {channel.read [token.unquote [string.concat "nonexistent.channel." [rand.hex 8]]] 1}}
+test.case snail.test.t1321 {test.assert.error {channel.write {} "foo"}}
+test.case snail.test.t1322 {test.assert.error {channel.write stdout {}}}
+test.case snail.test.t1323 {test.assert.error {channel.write [token.unquote [string.concat "nonexistent.channel." [rand.hex 8]]] "foo"}}
+test.case snail.test.t1324 {
+	set temp.proc.name [token.unquote [string.concat "temp.proc." [rand.hex 8]]]
+	test.assert.null {proc $temp.proc.name {? $x} {}}
+	test.assert.eq -1 {dict.get [info.about.cmd $temp.proc.name] arity}
+	test.assert.eq {? $x} {dict.get [info.about.cmd $temp.proc.name] args}
+	test.assert.null {proc.delete $temp.proc.name}
+	test.assert.null {info.about.cmd $temp.proc.name}
+	test.assert.error {proc.delete $temp.proc.name}
+}
+test.case snail.test.t1325 {test.assert.error {file.write "." {}}}
+test.case snail.test.t1326 {test.assert.error {file.write {} ""}}
+test.case snail.test.t1327 {test.assert.error {eval.up "0" {null}}}
+test.case snail.test.t1328 {test.assert.error {eval.up 0 null}}
+test.case snail.test.t1329 {test.assert.error {string.sub foobarbaz 3 3}}
+test.case snail.test.t1330 {test.assert.error {string.sub "foobarbaz" "3" 3}}
+test.case snail.test.t1331 {test.assert.error {string.sub "foobarbaz" 3 "3"}}
+test.case snail.test.t1332 {test.assert.error {string.skip {} 1}}
+test.case snail.test.t1333 {test.assert.error {string.skip "abc" "1"}}
+test.case snail.test.t1334 {test.assert.error {string.find.at "" "" "0"}}
+test.case snail.test.t1335 {test.assert.error {string.find.at "" {} 0}}
+test.case snail.test.t1336 {test.assert.eq "(top)" {frame.cmd.up [- [frame.count] 1]}}
+test.case snail.test.t1337 {test.assert.eq "" {string.sub "foobarbaz" -1 10}}
+test.case snail.test.t1338 {test.assert.eq "" {string.skip "foobarbaz" -1}}
+test.case snail.test.t1339 {test.assert.error {if {pass t} then {pass t} elseif t}}
+test.case snail.test.t1340 {test.assert.error {if {pass t} then {pass t} elseif {pass t} else}}
+test.case snail.test.t1341 {test.assert.error {if {pass t} then {pass t} elseif {pass t} then t}}
+test.case snail.test.t1342 {test.assert.error {if {pass t} then {pass t} else t}}
+test.case snail.test.t1343 {test.assert.error {if {pass t} then {pass t} else {pass t} else}}
+test.case snail.test.t1344 {test.assert.error {if {pass t} then {pass t} then {pass t}}}
+test.case snail.test.t1345 {test.assert.error {if {pass f} then {pass f} elseif {pass "t"} then {pass t}}}
+test.case snail.test.t1346 {test.assert.error {if {pass f} then {pass f} elseif {error "intentionally induced"} then {pass f}}}
+test.case snail.test.t1347 {test.assert.null {foreach x {1 2 3} {break}}}
+test.case snail.test.t1348 {test.assert.null {foreach x {1 2 3} {continue}}}
+test.case snail.test.t1349 {test.assert.error {list.at {a b c} "0"}}
+test.case snail.test.t1350 {test.assert.error {while f {pass f}}}
+test.case snail.test.t1351 {test.assert.error {while {pass f} f}}
+test.case snail.test.t1352 {while {return [null]} {null}}
+test.case snail.test.t1353 {
+	set temp [string.concat [rand.hex 8] ".tmp"]
+	test.assert.not {file.exists $temp}
+	test.assert.error {file.read $temp}
+	test.assert.error {file.delete $temp}
+	set value1 [rand.hex 32]
+	test.assert.null {file.write $temp $value1}
+	test.assert {file.exists $temp}
+	test.assert.eq $value1 {file.read $temp}
+	set value2 [rand.hex 32]
+	test.assert.null {file.write $temp $value2}
+	test.assert {file.exists $temp}
+	test.assert.eq $value2 {file.read $temp}
+	test.assert.null {file.delete $temp}
+	test.assert.not {file.exists $temp}
+	test.assert.error {file.read $temp}
+	test.assert.error {file.delete $temp}
+}
+test.case snail.test.t1354 {test.assert {not [= [rand.hex 256] [rand.hex 256]]}}
+test.case snail.test.t1355 {test.assert.error {file.delete ""}}
+test.case snail.test.t1356 {test.assert.error {file.delete {}}}
+test.case snail.test.t1357 {test.assert.error {frame.cmd.up "0"}}
+test.case snail.test.t1358 {test.assert.error {string.find.at foo "o" 2}}
+test.case snail.test.t1359 {test.assert.null {string.find.at "foo" "o" -1}}
+test.case snail.test.t1360 {test.assert.null {string.find.at "foo" "o" 99}}
+test.case snail.test.t1361 {test.assert.null {string.find.at "foobarbaz" "foo" 1}}
+test.case snail.test.t1362 {test.assert.eq 0 {string.find.at "foobarbazfoo" "foo" 0}}
+test.case snail.test.t1363 {test.assert.eq 9 {string.find.at "foobarbazfoo" "foo" 1}}
+test.case snail.test.t1364 {test.assert.error {list.at {a b c} -1}}
+test.case snail.test.t1365 {
+	set i 0
+	while {pass t} {
+		set i [+ 1 $i]
+		if {< $i 10} then {continue}
+		break
+	}
+	test.assert.eq 10 {pass $i}
+}
+test.case snail.test.t1366 {
+	set temp [string.concat [rand.hex 8] ".tmp"]
+	set value1 [rand.hex 256]
+	set value2 [rand.hex 256]
+	file.write $temp [token.list.body [list pass $value1]]
+	test.assert.eq $value1 {file.run $temp}
+	file.write $temp [token.list.body [list pass $value2]]
+	test.assert.eq $value2 {file.run $temp}
+	file.write $temp "{"
+	test.assert.error {file.run $temp}
+	file.delete $temp
+	test.assert.not {file.exists $temp}
+	test.assert.error {file.run $temp}
+}
+test.case snail.test.t1367 {test.assert.error {file.open [string.concat [rand.hex 8] ".tmp"] "r"}}
+test.case snail.test.t1368 {test.assert.error {file.open [string.concat [rand.hex 8] ".tmp"] "rw"}}
+test.case snail.test.t1369 {
+	set name [string.concat [rand.hex 8] ".tmp"]
+	set channel [file.open $name "w"]
+	test.assert {token.is.symbol $channel}
+	test.assert {dict.has [info.channels] $channel}
+	test.assert.null {channel.close $channel}
+	test.assert.not {dict.has [info.channels] $channel}
+	test.assert.error {channel.close $channel}
+	test.assert.null {file.delete $name}
+	test.assert.error {file.delete $name}
+}
+test.case snail.test.t1370 {test.assert.error {channel.close stdout}}
+test.case snail.test.t1371 {test.assert.error {channel.close stdin}}
+test.case snail.test.t1372 {test.assert.error {channel.close stderr}}
+test.case snail.test.t1373 {test.assert.error {channel.close [token.unquote [string.concat "nonexistent.channel." [rand.hex 16]]]}}
+test.case snail.test.t1374 {
+	set name [string.concat [rand.hex 8] ".tmp"]
+	set value [rand.hex 128]
+	test.assert.null {file.write $name $value}
+	set channel [file.open $name "r"]
+	test.assert.eq $value {channel.read $channel 256}
+	test.assert.null {channel.read $channel 256}
+	test.assert.null {channel.read $channel 256}
+	test.assert.null {channel.close $channel}
+	test.assert.error {channel.close $channel}
+	test.assert.null {file.delete $name}
+	test.assert.error {file.delete $name}
+}
+test.case snail.test.t1375 {test.assert.error {channel.close {}}}
+test.case snail.test.t1376 {test.assert.error {file.open {} "r"}}
+test.case snail.test.t1377 {test.assert.error {file.open "" {}}}
+test.case snail.test.t1378 {test.assert.error {file.open "" "r"}}
+test.case snail.test.t1379 {test.assert.error {file.open "r" ""}}
