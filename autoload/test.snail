@@ -5,7 +5,27 @@ proc test.run.case {$name} {
 	set caught [null]
 	catch {eval [list $name]} e {set caught $e}
 	set duration [- [time.now] $start]
-	list $name [if {is.null $caught} then {pass PASS} else {pass FAIL}] $duration [nvl $caught ""]
+	set r [list [if {is.null $caught} then {pass PASS} else {pass FAIL}] $name $duration [nvl $caught ""]]
+	puts [string.concat "|" [token.list.body $r]]
+	pass $r
+}
+
+proc test.summary {$results} {
+	set h %{}
+	foreach r $results {
+		set status [list.at $r 0]
+		set h [dict.set $h $status [+ 1 [nvl [dict.get $h $status] 0]]]
+	}
+	set total 0
+	foreach status [dict.keys $h] {
+		set total [+ $total [dict.get $h $status]]
+	}
+	set h [dict.set $h TOTAL $total]
+	set summary "Summary:"
+	foreach status [list.sort [dict.keys $h]] {
+		set summary [string.concat $summary " " $status "=" [dict.get $h $status]]
+	}
+	puts $summary
 }
 
 proc test.run.cases {$cases} {
@@ -13,7 +33,7 @@ proc test.run.cases {$cases} {
 	foreach name $cases {
 		set r [list.add $r [test.run.case $name]]
 	}
-	pass $r
+	test.summary $r
 }
 
 proc test.run.suite {$package} {test.run.cases [module.cmds $package]}
@@ -59,7 +79,6 @@ proc test.assert.error {$test} {
 	if {is.null $caught} then {
 		error [string.concat "Expected an error in " $test]
 	}
-	puts [string.concat "EXPECTED ERROR: " $caught]
 }
 
 proc test.make.name {$suite} {
