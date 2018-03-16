@@ -1,0 +1,3 @@
+#!/bin/sh
+make snail &&
+	./snail - "test.run.suite snail.test"

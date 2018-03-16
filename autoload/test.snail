@@ -26,6 +26,7 @@ proc test.summary {$results} {
 		set summary [string.concat $summary " " $status "=" [dict.get $h $status]]
 	}
 	puts $summary
+	pass $h
 }
 
 proc test.run.cases {$cases} {
@@ -33,10 +34,16 @@ proc test.run.cases {$cases} {
 	foreach name $cases {
 		set r [list.add $r [test.run.case $name]]
 	}
-	test.summary $r
+	pass $r
 }
 
-proc test.run.suite {$package} {test.run.cases [module.cmds $package]}
+proc test.run.suite {$module} {
+	set r [test.run.cases [module.cmds $module]]
+	set s [test.summary $r]
+	if {dict.has $s FAIL} then {
+		error [string.concat "Tests failed in suite " $module]
+	}
+}
 
 proc test.assert {$test} {
 	arg.must.list test
