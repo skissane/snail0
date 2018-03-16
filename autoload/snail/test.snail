@@ -261,3 +261,6 @@ test.case snail.test.t1235 {test.assert.error {loop "BAD"}}
 test.case snail.test.t1236 {test.assert.error {loop {error "intentional"}}}
 test.case snail.test.t1237 {test.assert.error {if {pass t} {pass t}}}
 test.case snail.test.t1238 {test.assert.error {if {} {} {}}}
+test.case snail.test.t1239 {test.assert.not {proc.exists [token.unquote [string.concat "nonexistent.proc." [rand.hex 8]]]}}
+test.case snail.test.t1240 {test.assert.eq 64 {string.length [rand.hex 32]}}
+test.case snail.test.t1241 {test.assert {is.int [rand.u32]}}

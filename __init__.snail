@@ -63,6 +63,12 @@ proc arg.must.list {$name} {
 	}
 }
 
+proc arg.must.int {$name} {
+	if {not [is.int [var.get.up 1 $name]]} then {
+		error [string.concat "argument $" $name " must be an integer (in: " [frame.cmd.up 1] ")"]
+	}
+}
+
 proc file.is.blk {$path} {file.is.type $path blk}
 proc file.is.chr {$path} {file.is.type $path chr}
 proc file.is.dir {$path} {file.is.type $path dir}
@@ -244,4 +250,34 @@ proc catching {$code} {
 	set caught [null]
 	catch {eval.up 1 $code} e {set caught $e}
 	pass $caught
+}
+
+proc string.lpad {$string $char $len} {
+	arg.must.quoted string
+	arg.must.quoted char
+	arg.must.int len
+	set r $string
+	while {< [string.length $r] $len} {
+		set r [string.concat $char $r]
+	}
+	pass $r
+}
+
+proc string.rpad {$string $char $len} {
+	arg.must.quoted string
+	arg.must.quoted char
+	arg.must.int len
+	set r $string
+	while {< [string.length $r] $len} {
+		set r [string.concat $r $char]
+	}
+	pass $r
+}
+
+proc uuid.generate {} {
+	loop {
+		set y [string.skip [rand.hex 1] 1]
+		if {or {= $y "8"} {= $y "9"} {= $y "A"} {= $y "B"}} then {break}
+	}
+	string.concat [rand.hex 8] "-" [rand.hex 4] "-4" [rand.hex 3] "-" $y [rand.hex 3] "-" [rand.hex 12]
 }

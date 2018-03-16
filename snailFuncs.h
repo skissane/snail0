@@ -774,6 +774,12 @@ char *snailI64ToStr(int64_t n) {
 	return s;
 }
 
+char *snailU64ToStr16(uint64_t n) {
+	char *s = snailMalloc(20);
+	snprintf(s, 20, "%llX", n);
+	return s;
+}
+
 bool snailArgCountExactly(snailInterp *snail, char *cmdName, int must, int actual) {
 	if (must == actual)
 		return true;
@@ -1611,4 +1617,14 @@ char *snailWriteFile(const char *filename, char *text) {
 		return r;
 	}
 	return NULL;
+}
+
+void snailRandomBytes(void *buf, size_t count) {
+	FILE *fh = fopen("/dev/urandom","r");
+	if (fh == NULL)
+		snailPanic("RNG failure [opening random device]");
+	if (fread(buf, 1, count, fh) != count)
+		snailPanic("RNG failure [reading from random device]");
+	if (fclose(fh)!=0)
+		snailPanic("RNG failure [closing random device]");
 }

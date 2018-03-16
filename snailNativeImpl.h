@@ -1570,3 +1570,48 @@ NATIVE(file_write,2) {
 	free(error);
 	return snailStatusError;
 }
+
+NATIVE(rand_hex,1) {
+	NATIVE_ARG_MUSTINT(0);
+	int64_t count = strtoll(args[0], NULL, 10);
+	if (count < 0) {
+		snailSetResult(snail,"rand.hex: byte count is negative");
+		return snailStatusError;
+	}
+	if (count == 0) {
+		snailSetResult(snail,"\"\"");
+		return snailStatusOk;
+	}
+	uint8_t *buf = snailMalloc(count);
+	snailRandomBytes(buf, count);
+	snailBuffer *r = snailBufferCreate(3 + (count*2));
+	snailBufferAddChar(r,'"');
+	char hex[3];
+	for (int i = 0; i < count; i++) {
+		snprintf(hex,3,"%02X", buf[i]);
+		snailBufferAddString(r,hex);
+	}
+	snailBufferAddChar(r,'"');
+	snailBufferAddChar(r,0);
+	snailSetResult(snail,r->bytes);
+	free(buf);
+	snailBufferDestroy(r);
+	return snailStatusOk;
+}
+
+
+NATIVE(rand_u32,0) {
+	uint32_t result;
+	snailRandomBytes(&result, sizeof(uint32_t));
+	snailSetResultInt(snail,result);
+	return snailStatusOk;
+}
+
+NATIVE(to_hex,1) {
+	NATIVE_ARG_MUSTINT(0);
+	int64_t arg = strtoll(args[0], NULL, 10);
+	char *r = snailU64ToStr16(arg);
+	snailSetResult(snail,r);
+	free(r);
+	return snailStatusOk;
+}
