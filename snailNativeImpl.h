@@ -303,24 +303,6 @@ NATIVE(list_sort, 1) {
 	return snailStatusOk;
 }
 
-NATIVE(list_index, 2) {
-	snailArray *list = snailUnquoteList(args[0]);
-	if (list == NULL) {
-		snailSetResult(snail, "list.index: argument is not a valid list");
-		return snailStatusError;
-	}
-	NATIVE_ARG_MUSTINT(1);
-	int index = strtoll(args[1], NULL, 10);
-	if (index < 0 || index >= list->length) {
-		snailArrayDestroy(list, free);
-		snailSetResult(snail, "");
-		return snailStatusOk;
-	}
-	snailSetResult(snail, list->elems[index]);
-	snailArrayDestroy(list, free);
-	return snailStatusOk;
-}
-
 NATIVE(set, 2) {
 	snailSetVar(snail, args[0], snailDupString(args[1]));
 	snailSetResult(snail, "");

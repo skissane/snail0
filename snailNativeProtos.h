@@ -49,7 +49,6 @@ NATIVE(list, VARIADIC);
 NATIVE(list_add, 2);
 NATIVE(list_at, 2);
 NATIVE(list_concat, VARIADIC);
-NATIVE(list_index, 2);
 NATIVE(list_length, 1);
 NATIVE(list_sort, 1);
 NATIVE(loop,1);

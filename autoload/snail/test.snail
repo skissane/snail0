@@ -81,10 +81,10 @@ test.case snail.test.t1079 {test.assert.eq 0 {list.length {}}}
 test.case snail.test.t1080 {test.assert.eq 3 {list.length {a b c}}}
 test.case snail.test.t1081 {test.assert.eq {1 2 3} {list.sort {3 1 2}}}
 test.case snail.test.t1082 {test.assert.error {list.sort ""}}
-test.case snail.test.t1083 {test.assert.eq 4 {list.index {1 9 8 4} 3}}
-test.case snail.test.t1084 {test.assert.eq 9 {list.index {1 9 8 4} 1}}
-test.case snail.test.t1085 {test.assert.null {list.index {} 0}}
-test.case snail.test.t1086 {test.assert.error {list.index "" 0}}
+test.case snail.test.t1083 {test.assert.eq 4 {list.at {1 9 8 4} 3}}
+test.case snail.test.t1084 {test.assert.eq 9 {list.at {1 9 8 4} 1}}
+test.case snail.test.t1085 {test.assert.error {list.at {} 0}}
+test.case snail.test.t1086 {test.assert.error {list.at "" 0}}
 test.case snail.test.t1087 {test.assert.error {set.up -1 x 0}}
 test.case snail.test.t1088 {test.assert.error {var.get.up -1 x}}
 test.case snail.test.t1089 {test.assert.eq L {token.classify [info.vars]}}
