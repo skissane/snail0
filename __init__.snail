@@ -347,8 +347,23 @@ proc dir.read {$path} {
 	loop {
 		set entry [channel.getline $channel]
 		if {is.null $entry} then {break}
+		if {= $entry "."} then {continue}
+		if {= $entry ".."} then {continue}
 		set r [list.add $r $entry]
 	}
 	channel.close $channel
 	pass $r
+}
+
+proc dir.walk {$path} {
+	set files [dir.read $path]
+	set underneath {}
+	foreach file $files {
+		set p [string.concat $path "/" $file]
+		if {not [file.is.dir $p]} then {continue}
+		foreach sub [dir.walk $p] {
+			set underneath [list.add $underneath [string.concat $file "/" $sub]]
+		}
+	}
+	list.sort [list.concat $files $underneath]
 }
