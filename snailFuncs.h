@@ -523,6 +523,7 @@ loopRepl:
 		if (snailIsBlank(buffer)) {
 			free(buffer);
 			printf("%s", snail->repl->prompt);
+			fflush(stdout);
 			goto loopRepl;
 		}
 		snailStatus status = snailExec(snail, buffer);
