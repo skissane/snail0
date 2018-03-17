@@ -769,19 +769,19 @@ void *snailHashTablePut(snailHashTable *ht, char *key, void *value) {
 
 char *snailU64ToStr(uint64_t n) {
 	char *s = snailMalloc(20);
-	snprintf(s, 20, "%llu", n);
+	snprintf(s, 20, "%" PRIu64, n);
 	return s;
 }
 
 char *snailI64ToStr(int64_t n) {
 	char *s = snailMalloc(20);
-	snprintf(s, 20, "%lld", n);
+	snprintf(s, 20, "%" PRId64, n);
 	return s;
 }
 
 char *snailU64ToStr16(uint64_t n) {
 	char *s = snailMalloc(20);
-	snprintf(s, 20, "%llX", n);
+	snprintf(s, 20, "%" PRIX64, n);
 	return s;
 }
 
