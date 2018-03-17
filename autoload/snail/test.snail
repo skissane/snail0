@@ -649,3 +649,12 @@ test.case snail.test.t1448 {
 	test.assert.null {file.delete $temp}
 }
 test.case snail.test.t1449 {test.assert.error {channel.getline "C1"}}
+test.case snail.test.t1450 {test.assert {token.is.list {dir.read "."}}}
+test.case snail.test.t1451 {test.assert.error {dir.read [string.concat [rand.hex 8] ".dir"]}}
+test.case snail.test.t1452 {test.assert.error {dir.open {}}}
+test.case snail.test.t1453 {
+	set channel [dir.open "."]
+	test.assert {token.is.symbol $channel}
+	test.assert {dict.has [info.channels] $channel}
+	test.assert.null {channel.close $channel}
+}

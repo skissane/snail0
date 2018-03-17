@@ -3,6 +3,7 @@
 /***---INCLUDES---***/
 #include <assert.h>
 #include <ctype.h>
+#include <dirent.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>

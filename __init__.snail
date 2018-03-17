@@ -340,3 +340,15 @@ proc list.generate {$n} {
 	}
 	pass $r
 }
+
+proc dir.read {$path} {
+	set channel [dir.open $path]
+	set r {}
+	loop {
+		set entry [channel.getline $channel]
+		if {is.null $entry} then {break}
+		set r [list.add $r $entry]
+	}
+	channel.close $channel
+	pass $r
+}

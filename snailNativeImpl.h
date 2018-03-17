@@ -1877,3 +1877,42 @@ NATIVE(channel_getline,1) {
 	free(quoted);
 	return snailStatusOk;
 }
+
+NATIVE(dir_open,1) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	char *path = snailTokenUnquote(args[0]);
+	DIR *fh = opendir(path);
+	int e = errno;
+	free(path);
+	if (fh == NULL) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"dir.open: OS error #");
+		snailBufferAddI64(msg,e);
+		snailBufferAddString(msg," attempting to open directory ");
+		snailBufferAddString(msg,args[0]);
+		snailBufferAddChar(msg,0);
+		snailSetResult(snail,msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+	char *channelName = snailChannelMakeName(snail);
+	char *error = snailChannelRegister(snail, channelName, "DIRENT", fh);
+	if (error == NULL) {
+		snailSetResult(snail,channelName);
+		free(channelName);
+		return snailStatusOk;
+	}
+	snailBuffer *msg = snailBufferCreate(16);
+	snailBufferAddString(msg,"dir.open: channel error ");
+	snailBufferAddI64(msg,e);
+	snailBufferAddString(msg," attempting to open directory ");
+	snailBufferAddString(msg,args[0]);
+	snailBufferAddString(msg,": ");
+	snailBufferAddString(msg,error);
+	snailBufferAddChar(msg,0);
+	snailSetResult(snail,msg->bytes);
+	snailBufferDestroy(msg);
+	free(error);
+	free(channelName);
+	return snailStatusError;
+}

@@ -18,6 +18,7 @@ NATIVE(dict_keys,1);
 NATIVE(dict_set,3);
 NATIVE(dict_set_all,2);
 NATIVE(dict_size,1);
+NATIVE(dir_open,1);
 NATIVE(div, VARIADIC);
 NATIVE(eq, 2);
 NATIVE(error, 1);
