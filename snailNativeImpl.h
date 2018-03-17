@@ -295,7 +295,7 @@ NATIVE(list_sort, 1) {
 		snailSetResult(snail, "list.sort: argument is not a valid list");
 		return snailStatusError;
 	}
-	snailArraySort(list, (snailArrayComparator*)strcmp);
+	snailArraySort(list, (snailArrayComparator*)snailNaturalCmp);
 	char *result = snailQuoteList(list);
 	snailArrayDestroy(list, free);
 	snailSetResult(snail, result);

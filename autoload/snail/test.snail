@@ -629,3 +629,7 @@ test.case snail.test.t1438 {test.assert.eq foo.bar.baz {token.unquote "foo.bar.b
 test.case snail.test.t1439 {test.assert.eq "" {string.replace "" "" ""}}
 test.case snail.test.t1440 {test.assert.eq "foo" {string.replace "foo" "" "bar"}}
 test.case snail.test.t1441 {test.assert.eq "foobaz" {string.replace "foobarbaz" "bar" ""}}
+test.case snail.test.t1442 {test.assert.eq {0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29} {list.sort {9 2 13 29 6 10 0 26 1 16 23 14 7 12 11 18 19 25 27 24 15 22 28 5 17 3 21 20 8 4}}}
+test.case snail.test.t1443 {test.assert.eq {2147483649 2147483650 33} {list.sort {2147483649 2147483650 33}}}
+test.case snail.test.t1444 {test.assert.eq {112147483650 2147483649 2147483650 33 42147483650 521474836491} {list.sort {2147483649 2147483650 33 42147483650 521474836491 112147483650}}}
+test.case snail.test.t1445 {test.assert.eq {2 30 100 xa1 ya2} {list.sort {100 2 xa1 ya2 30}}}

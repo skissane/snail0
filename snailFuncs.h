@@ -1008,7 +1008,7 @@ void snailSetResult(snailInterp *snail, char *result) {
 		snail->result = snailDupString(result);
 }
 
-bool snailIsBlank(char *str) {
+bool snailIsBlank(const char *str) {
 	for (;;) {
 		char ch = *str;
 		str++;
@@ -1040,7 +1040,7 @@ char *snailTrimString(char *str) {
 	return trim;
 }
 
-bool snailIsDigits(char *str) {
+bool snailIsDigits(const char *str) {
 	if (str[0] == 0)
 		return false;
 	if (str[0] == '0')
@@ -1052,7 +1052,7 @@ bool snailIsDigits(char *str) {
 	return true;
 }
 
-bool snailIsInt(char *str) {
+bool snailIsInt(const char *str) {
 	return (*str == '-' && snailIsDigits(str + 1)) || snailIsDigits(str);
 }
 
@@ -1098,15 +1098,15 @@ void snailSetResultInt(snailInterp *snail, int64_t result) {
 	free(str);
 }
 
-bool snailIsBool(char *str) {
+bool snailIsBool(const char *str) {
 	return snailIsTrue(str) || snailIsFalse(str);
 }
 
-bool snailIsTrue(char *str) {
+bool snailIsTrue(const char *str) {
 	return strcasecmp(str,"t") == 0;
 }
 
-bool snailIsFalse(char *str) {
+bool snailIsFalse(const char *str) {
 	return strcasecmp(str,"f") == 0;
 }
 
@@ -1714,4 +1714,18 @@ void snailArrayShuffle(snailArray *array) {
 		array->elems[i] = array->elems[j];
 		array->elems[j] = temp;
 	}
+}
+
+int snailNaturalCmp(const char *a, const char *b) {
+	if (!snailIsInt(a) || !snailIsInt(b))
+		return strcmp(a,b);
+	int32_t na = strtol(a,NULL,10);
+	int32_t nb = strtol(b,NULL,10);
+	char sa[12];
+	char sb[12];
+	sprintf(sa, "%" PRId32,na);
+	sprintf(sb, "%" PRId32,nb);
+	if (strcmp(a,sa)!=0 || strcmp(b,sb)!=0)
+		return strcmp(a,b);
+	return na - nb;
 }

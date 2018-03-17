@@ -1,12 +1,12 @@
 /***---PROTOTYPES---***/
 bool snailArgCountExactly(snailInterp *snail, char *cmdName, int must, int actual);
 bool snailArgCountMinimum(snailInterp *snail, char *cmdName, int minimum, int actual);
-bool snailIsBlank(char *str);
-bool snailIsBool(char *str);
-bool snailIsDigits(char *str);
-bool snailIsFalse(char *str);
-bool snailIsInt(char *str);
-bool snailIsTrue(char *str);
+bool snailIsBlank(const char *str);
+bool snailIsBool(const char *str);
+bool snailIsDigits(const char *str);
+bool snailIsFalse(const char *str);
+bool snailIsInt(const char *str);
+bool snailIsTrue(const char *str);
 bool snailParseDump(char *script);
 bool snailRunScript(snailInterp *snail, char *script);
 bool snailSetUpVar(snailInterp *snail, int level, char *name, char *value);
@@ -49,6 +49,7 @@ char *snailWriteFile(const char *filename, char *text);
 char snailTokenClassify(char *script);
 const char *snailStringFindRev(const char *haystack, const char *needle);
 int snailArraySortCmp(void *thunk, const void **a, const void **b);
+int snailNaturalCmp(const char *a, const char *b);
 int snailRunFile(snailInterp *snail, char *fileName);
 int64_t snailTimeNow(void);
 noreturn void snailPanic(char *msg);
