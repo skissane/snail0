@@ -283,3 +283,47 @@ proc uuid.generate {} {
 }
 
 proc list.contains {$list $elem} {not.null [list.find $list $elem]}
+
+proc math.bits.u32 {$n} {- 32 [math.clz.u32 $n]}
+
+proc repeat {$times $code} {
+	set i 0
+	while {< $i $times} {
+		eval.up 1 $code
+		set i [+ 1 $i]
+	}
+}
+
+proc list.repeat {$times $code} {
+	set r {}
+	repeat $times {set r [list.add $r [eval.up 1 $code]]}
+	pass $r
+}
+
+proc histogram {$list} {
+	set r %{}
+	foreach e $list {
+		set r [dict.set $r $e [+ 1 [nvl [dict.get $r $e] 0]]]
+	}
+	pass $r
+}
+
+proc dict.as.sorted.list {$dict} {
+	set r {}
+	foreach key [list.sort [dict.keys $dict]] {
+		set r [list.concat $r [list $key [dict.get $dict $key]]]
+	}
+	pass $r
+}
+
+proc dict.values {$dict} {
+	set r {}
+	foreach key [list.sort [dict.keys $dict]] {
+		set r [list.add $r [dict.get $dict $key]]
+	}
+	pass $r
+}
+
+proc math.abs {$n} {
+	if {< $n 0} then {- $n} else {pass $n}
+}

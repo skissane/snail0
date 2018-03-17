@@ -1768,3 +1768,76 @@ NATIVE(file_open,2) {
 	free(channelName);
 	return snailStatusError;
 }
+
+NATIVE(rand_u32_uniform,1) {
+	NATIVE_ARG_MUSTINT(0);
+	uint32_t arg = strtoul(args[0], NULL, 10);
+	if (args[0][0] == '-' || arg < 2) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"rand.u32.random: upper bound ");
+		snailBufferAddString(msg,args[0]);
+		snailBufferAddString(msg," is too small");
+		snailBufferAddChar(msg,0);
+		snailSetResult(snail,msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+	uint32_t bits = 32 - __builtin_clz(arg);
+	uint32_t mask = snail2PowMinus1U32(bits);
+	for (;;) {
+		uint32_t result;
+		snailRandomBytes(&result, sizeof(uint32_t));
+		snailSetResultInt(snail,result % arg);
+		result &= mask;
+		if (result < arg) {
+			snailSetResultInt(snail,result);
+			return snailStatusOk;
+		}
+	}
+	return snailStatusOk;
+}
+
+NATIVE(math_clz_u32,1) {
+	NATIVE_ARG_MUSTINT(0);
+	if (args[0][0] == '-') {
+		snailSetResult(snail,"math.clz.u32: argument cannot be negative");
+		return snailStatusError;
+	}
+	uint32_t arg = strtoul(args[0], NULL, 10);
+	int32_t clz = __builtin_clz(arg);
+	snailSetResultInt(snail,clz);
+	return snailStatusOk;
+}
+
+NATIVE(math_shl_u32,2) {
+	NATIVE_ARG_MUSTINT(0);
+	NATIVE_ARG_MUSTINT(1);
+	if (args[0][0] == '-') {
+		snailSetResult(snail,"math.shl.u32: argument 0 cannot be negative");
+		return snailStatusError;
+	}
+	if (args[1][0] == '-') {
+		snailSetResult(snail,"math.shl.u32: argument 1 cannot be negative");
+		return snailStatusError;
+	}
+	uint32_t m = strtoul(args[0], NULL, 10);
+	uint32_t n = strtoul(args[1], NULL, 10);
+	uint32_t r = m << n;
+	snailSetResultInt(snail,r);
+	return snailStatusOk;
+}
+
+NATIVE(to_radix_i32,2) {
+	NATIVE_ARG_MUSTINT(0);
+	NATIVE_ARG_MUSTINT(1);
+	int32_t n = strtol(args[0],NULL,10);
+	int32_t radix = strtol(args[1],NULL,10);
+	char *r = snailI32ToStrRadix(n,radix);
+	if (r == NULL) {
+		snailSetResult(snail,"to.radix.i32: bad radix");
+		return snailStatusError;
+	}
+	snailSetResult(snail,r);
+	free(r);
+	return snailStatusOk;
+}

@@ -785,6 +785,47 @@ char *snailU64ToStr16(uint64_t n) {
 	return s;
 }
 
+uint32_t snail2PowMinus1U32(uint32_t n) {
+	return n ? (~(uint32_t)0) >> (32u - n) : 0;
+}
+
+void snailBufferReverse(snailBuffer *buf) {
+	if (buf->length <= 1)
+		return;
+	int i = buf->length - 1;
+	int j = 0;
+	while (i > j) {
+		char temp = buf->bytes[i];
+		buf->bytes[i] = buf->bytes[j];
+		buf->bytes[j] = temp;
+		i--;
+		j++;
+	}
+}
+
+char *snailI32ToStrRadix(int32_t n, uint8_t base) {
+	const char digits[] = "0123456789ABCDEF";
+	snailBuffer *buf = snailBufferCreate(16);
+	if (base < 2 || base > 16) {
+		return NULL;
+	}
+	if (n < 0) {
+		snailBufferAddChar(buf,'-');
+		n = -n;
+	}
+	if (n == 0)
+		snailBufferAddChar(buf,'0');
+	else {
+		for (int32_t i = 30; n && i; --i, n /= base)
+			snailBufferAddChar(buf, digits[n % base]);
+		snailBufferReverse(buf);
+	}
+	snailBufferAddChar(buf,0);
+	char *q = snailMakeQuoted(buf->bytes);
+	snailBufferDestroy(buf);
+	return q;
+}
+
 bool snailArgCountExactly(snailInterp *snail, char *cmdName, int must, int actual) {
 	if (must == actual)
 		return true;
@@ -1436,7 +1477,7 @@ char *snailQuoteList(snailArray *list) {
 }
 
 void snailArraySort(snailArray *list, snailArrayComparator *cmp) {
-	qsort_r(list->elems, list->length,  sizeof(void *), cmp, (void*)snailArraySortCmp);
+	snailQuickSort(list->elems, list->length,  sizeof(void *), cmp, (void*)snailArraySortCmp);
 }
 
 int snailArraySortCmp(void *thunk, const void **a, const void **b) {
@@ -1638,4 +1679,8 @@ void snailBufferAddI64(snailBuffer *buf, int64_t n) {
 	char *s = snailI64ToStr(n);
 	snailBufferAddString(buf,s);
 	free(s);
+}
+
+void snailQuickSort(void *base, size_t nElems, size_t width, void *thunk, snailQuickSortCmp *cmp) {
+	qsort_r(base, nElems, width, thunk, cmp);
 }

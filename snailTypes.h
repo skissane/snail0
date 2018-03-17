@@ -116,3 +116,4 @@ typedef struct snailArray {
 } snailArray;
 
 typedef int snailArrayComparator (const void *, const void *);
+typedef int snailQuickSortCmp (void *thunk, const void *a, const void *b);

@@ -1,0 +1,10 @@
+#!/bin/bash
+set -e
+set -u
+cd "$(dirname "$0")"
+rm -rf ./build
+mkdir -p ./build
+cp Dockerfile ./build
+git clone "$(git rev-parse --show-toplevel)" ./build/snail
+cd build
+docker build -t snail .

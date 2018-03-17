@@ -560,3 +560,44 @@ test.case snail.test.t1376 {test.assert.error {file.open {} "r"}}
 test.case snail.test.t1377 {test.assert.error {file.open "" {}}}
 test.case snail.test.t1378 {test.assert.error {file.open "" "r"}}
 test.case snail.test.t1379 {test.assert.error {file.open "r" ""}}
+test.case snail.test.t1380 {test.assert.eq 2 {math.shl.u32 1 1}}
+test.case snail.test.t1381 {test.assert.eq 0 {math.shl.u32 0 10}}
+test.case snail.test.t1382 {test.assert.eq 1024 {math.shl.u32 1 10}}
+test.case snail.test.t1383 {test.assert.eq 40 {math.shl.u32 5 3}}
+test.case snail.test.t1384 {test.assert.eq 37 {math.shl.u32 37 0}}
+test.case snail.test.t1385 {test.assert.error {math.shl.u32 37 -1}}
+test.case snail.test.t1386 {test.assert.error {math.shl.u32 -37 1}}
+test.case snail.test.t1387 {test.assert.error {math.shl.u32 0 {}}}
+test.case snail.test.t1388 {test.assert.error {math.shl.u32 {} 0}}
+test.case snail.test.t1389 {test.assert.eq 31 {math.clz.u32 0}}
+test.case snail.test.t1390 {test.assert.eq 31 {math.clz.u32 1}}
+test.case snail.test.t1391 {test.assert.eq 15 {math.clz.u32 65536}}
+test.case snail.test.t1392 {test.assert.eq 16 {math.clz.u32 65535}}
+test.case snail.test.t1393 {test.assert.error {math.clz.u32 -1}}
+test.case snail.test.t1394 {test.assert.error {math.clz.u32 "0"}}
+test.case snail.test.t1395 {test.assert.error {rand.u32.uniform -1}}
+test.case snail.test.t1396 {test.assert.error {rand.u32.uniform 0}}
+test.case snail.test.t1397 {test.assert.error {rand.u32.uniform 1}}
+test.case snail.test.t1398 {test.assert.error {rand.u32.uniform "2"}}
+test.case snail.test.t1399 {test.assert {is.int [rand.u32.uniform 2]}}
+test.case snail.test.t1400 {test.assert.null {repeat 50 {rand.u32.uniform 2049}}}
+test.case snail.test.t1401 {test.assert.eq "1000" {to.radix.i32 8 2}}
+test.case snail.test.t1402 {test.assert.eq "11111111" {to.radix.i32 255 2}}
+test.case snail.test.t1403 {test.assert.eq "377" {to.radix.i32 255 8}}
+test.case snail.test.t1404 {test.assert.eq "FF" {to.radix.i32 255 16}}
+test.case snail.test.t1405 {test.assert.eq "1111111111111111" {to.radix.i32 65535 2}}
+test.case snail.test.t1406 {test.assert.eq "177777" {to.radix.i32 65535 8}}
+test.case snail.test.t1407 {test.assert.eq "FFFF" {to.radix.i32 65535 16}}
+test.case snail.test.t1408 {test.assert.eq "10000000000000000" {to.radix.i32 65536 2}}
+test.case snail.test.t1409 {test.assert.eq "200000" {to.radix.i32 65536 8}}
+test.case snail.test.t1410 {test.assert.eq "10000" {to.radix.i32 65536 16}}
+test.case snail.test.t1411 {test.assert.eq "10001" {to.radix.i32 65537 16}}
+test.case snail.test.t1412 {test.assert.eq "200001" {to.radix.i32 65537 8}}
+test.case snail.test.t1413 {test.assert.eq "10000000000000001" {to.radix.i32 65537 2}}
+test.case snail.test.t1414 {test.assert.eq "0" {to.radix.i32 0 16}}
+test.case snail.test.t1415 {test.assert.error {to.radix.i32 0 17}}
+test.case snail.test.t1416 {test.assert.error {to.radix.i32 0 1}}
+test.case snail.test.t1417 {test.assert.error {to.radix.i32 0 0}}
+test.case snail.test.t1418 {test.assert.error {to.radix.i32 0 -1}}
+test.case snail.test.t1419 {test.assert.error {to.radix.i32 "10" 16}}
+test.case snail.test.t1420 {test.assert.error {to.radix.i32 10 "16"}}
