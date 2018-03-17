@@ -222,6 +222,20 @@ proc prompt.yesno {$prompt} {
 	}
 }
 
+proc prompt.int {$prompt} {
+	loop {
+		set response [prompt $prompt]
+		if {is.null $response} then {
+			return [null]
+		}
+		set response [string.trim $response]
+		if {is.int [token.unquote $response]} then {
+			return [token.unquote $response]
+		}
+		puts "Invalid response - please enter a NUMBER"
+	}
+}
+
 proc string.strip.prefix {$str $prefix} {
 	if {string.starts.with $str $prefix} then {
 		string.skip $str [string.length $prefix]
@@ -366,4 +380,32 @@ proc dir.walk {$path} {
 		}
 	}
 	list.sort [list.concat $files $underneath]
+}
+
+proc string.split {$string $delim} {
+	if {string.is.empty $string} then {return {}}
+	if {not [string.contains $string $delim]} then {return [list $string]}
+	set i 0
+	set last 0
+	set r {}
+	loop {
+		set idx [string.find.at $string $delim $i]
+		if {is.null $idx} then {
+			set elem [string.sub $string $last [string.length $string]]
+			set r [list.add $r $elem]
+			return $r
+		}
+		set elem [string.sub $string $last [- $idx $i]]
+		set r [list.add $r $elem]
+		set last [+ $idx [string.length $delim]]
+		set i [+ $idx [string.length $delim]]
+	}
+}
+
+proc string.join {$list $delim} {
+	set r ""
+	foreach e $list {
+		set r [string.concat $r [if {string.is.empty $r} then {pass ""} else {pass $delim}] $e]
+	}
+	pass $r
 }

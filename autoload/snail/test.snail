@@ -686,3 +686,11 @@ test.case snail.test.t1460 {
 	repl.history.max.set $saved
 	test.assert.eq $saved {repl.history.max.get}
 }
+test.case snail.test.t1461 {test.assert.eq {"foo" "bar" "baz" "quux"} {string.split "foo,bar,baz,quux" ","}}
+test.case snail.test.t1462 {test.assert.eq {"foo" "baz"} {string.split "foobarbaz" "bar"}}
+test.case snail.test.t1463 {test.assert.eq {} {string.split "" ","}}
+test.case snail.test.t1464 {test.assert.eq {"foobarbaz"} {string.split "foobarbaz" ","}}
+test.case snail.test.t1465 {test.assert.eq {"foo" "" "22"} {string.split "foo,,22" ","}}
+test.case snail.test.t1466 {test.assert.eq {"" ""} {string.split "," ","}}
+test.case snail.test.t1467 {test.assert.eq "foo,bar,baz" {string.join {"foo" "bar" "baz"} ","}}
+test.case snail.test.t1468 {test.assert.eq "" {string.join {} ","}}
