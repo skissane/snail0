@@ -24,7 +24,6 @@ void snailBufferGrow(snailBuffer *buf, int newSize) {
 	buf->allocated = newSize;
 }
 
-
 void snailBufferSet(snailBuffer *buf, char *str) {
 	snailBufferEmpty(buf);
 	size_t len = strlen(str);
@@ -526,6 +525,7 @@ loopRepl:
 			fflush(stdout);
 			goto loopRepl;
 		}
+		snailReplHistoryAdd(snail->repl, buffer);
 		snailStatus status = snailExec(snail, buffer);
 		snailPrintResult(snail,status);
 		printf("%s", snail->repl->prompt);
@@ -1440,7 +1440,7 @@ void snailReplStateDestroy(snailReplState *repl) {
 }
 
 void snailReplHistoryAdd(snailReplState *repl, char *buffer) {
-	snailArrayAdd(repl->history,snailDupString(buffer));
+	snailArrayAdd(repl->history,snailMakeQuoted(buffer));
 	if (repl->historyMax >= 0)
 		while (repl->history->length > repl->historyMax) {
 			free(snailArrayPop(repl->history));

@@ -658,3 +658,31 @@ test.case snail.test.t1453 {
 	test.assert {dict.has [info.channels] $channel}
 	test.assert.null {channel.close $channel}
 }
+test.case snail.test.t1454 {test.assert {token.is.list [repl.history.get]}}
+test.case snail.test.t1455 {test.assert {is.int [repl.history.max.get]}}
+test.case snail.test.t1456 {test.assert.error {repl.history.max.set "0"}}
+test.case snail.test.t1457 {test.assert.error {repl.history.max.set -1}}
+test.case snail.test.t1458 {test.assert.null {repl.history.clear}}
+test.case snail.test.t1459 {test.assert.error {repl.history.add {}}}
+test.case snail.test.t1460 {
+	set saved [repl.history.max.get]
+	test.assert.eq $saved {repl.history.max.get}
+	repl.history.clear
+	test.assert.eq {} {repl.history.get}
+	repl.history.max.set 37
+	test.assert.eq 37 {repl.history.max.get}
+	repl.history.max.set 38
+	test.assert.eq 38 {repl.history.max.get}
+	repl.history.max.set 0
+	test.assert.eq 0 {repl.history.max.get}
+	set test [rand.hex 8]
+	repl.history.add $test
+	test.assert.eq {} {repl.history.get}
+	repl.history.max.set 100
+	repl.history.add $test
+	test.assert.eq [list $test] {repl.history.get}
+	repl.history.clear
+	test.assert.eq {} {repl.history.get}
+	repl.history.max.set $saved
+	test.assert.eq $saved {repl.history.max.get}
+}

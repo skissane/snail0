@@ -1916,3 +1916,41 @@ NATIVE(dir_open,1) {
 	free(channelName);
 	return snailStatusError;
 }
+
+NATIVE(repl_history_get,0) {
+	char *result = snailQuoteList(snail->repl->history);
+	snailSetResult(snail, result);
+	free(result);
+	return snailStatusOk;
+}
+
+NATIVE(repl_history_max_get,0) {
+	snailSetResultInt(snail, snail->repl->historyMax);
+	return snailStatusOk;
+}
+
+NATIVE(repl_history_max_set,1) {
+	NATIVE_ARG_MUSTINT(0);
+	int32_t max = strtol(args[0],NULL,10);
+	if (max < 0) {
+		snailSetResult(snail, "repl.history.max.set: argument cannot be negative");
+		return snailStatusError;
+	}
+	snail->repl->historyMax = max;
+	return snailStatusOk;
+}
+
+NATIVE(repl_history_clear,0) {
+	snailArrayEmpty(snail->repl->history,free);
+	snailSetResult(snail,"");
+	return snailStatusOk;
+}
+
+NATIVE(repl_history_add,1) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	char *input = snailTokenUnquote(args[0]);
+	snailReplHistoryAdd(snail->repl,input);
+	free(input);
+	snailSetResult(snail,"");
+	return snailStatusOk;
+}
