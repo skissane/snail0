@@ -1684,8 +1684,51 @@ void snailBufferAddI64(snailBuffer *buf, int64_t n) {
 	free(s);
 }
 
+// Based on qsort routine in Paul Edwards' PDPCLIB. Which in turn is
+// based on that in libnix. Both are public domain.
 void snailQuickSort(void *base, size_t nElems, size_t width, void *thunk, snailQuickSortCmp *cmp) {
-	qsort_r(base, nElems, width, thunk, cmp);
+	char *base2 = (char *)base;
+	size_t i,a,b,c;
+	while (nElems > 1) {
+		a = 0;
+		b = nElems-1;
+		c = (a+b)/2; /* Middle element */
+		for (;;) {
+			while ((*cmp)(thunk,&base2[width*c],&base2[width*a]) > 0) {
+				a++; /* Look for one >= middle */
+			}
+			while ((*cmp)(thunk,&base2[width*c],&base2[width*b]) < 0) {
+				b--; /* Look for one <= middle */
+			}
+			if (a >= b) {
+				break; /* We found no pair */
+			}
+			for (i=0; i<width; i++) { /* swap them */
+				char tmp=base2[width*a+i];
+				base2[width*a+i]=base2[width*b+i];
+				base2[width*b+i]=tmp;
+			}
+			if (c == a) { /* Keep track of middle element */
+				c = b;
+			} else if (c == b) {
+				c = a;
+			}
+			a++; /* These two are already sorted */
+			b--;
+		} /* a points to first element of right interval now
+		     (b to last of left) */
+		b++;
+		if (b < nElems-b) { /* do recursion on smaller interval and
+				    iteration on larger one */
+			snailQuickSort(base2,b,width,thunk,cmp);
+			base2=&base2[width*b];
+			nElems=nElems-b;
+		} else {
+			snailQuickSort(&base2[width*b],nElems-b,width,thunk,cmp);
+			nElems=b;
+		}
+	}
+	return;
 }
 
 uint32_t snailRandomU32(void) {
