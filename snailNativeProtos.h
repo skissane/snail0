@@ -7,6 +7,7 @@ NATIVE(break,0);
 NATIVE(catch,3);
 NATIVE(channel_close,1);
 NATIVE(channel_flush,1);
+NATIVE(channel_getline,1);
 NATIVE(channel_read,2);
 NATIVE(channel_write,2);
 NATIVE(continue,0);

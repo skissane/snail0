@@ -635,3 +635,17 @@ test.case snail.test.t1445 {test.assert.eq {2 30 100 xa1 ya2} {list.sort {100 2 
 test.case snail.test.t1379 {test.assert.null {channel.flush stdout}}
 test.case snail.test.t1446 {test.assert.error {channel.flush [token.unquote [string.concat "nonexistent.channel." [rand.hex 8]]]}}
 test.case snail.test.t1447 {test.assert.error {channel.flush {}}}
+test.case snail.test.t1448 {
+	set temp [string.concat [rand.hex 8] ".tmp"]
+	set line1 [rand.hex 16]
+	set line2 [rand.hex 16]
+	set text [string.concat $line1 "\n" $line2]
+	test.assert.null {file.write $temp $text}
+	set channel [file.open $temp "r"]
+	test.assert.eq [string.concat $line1 "\n"] {channel.getline $channel}
+	test.assert.eq $line2 {channel.getline $channel}
+	test.assert.null {channel.getline $channel}
+	test.assert.null {channel.close $channel}
+	test.assert.null {file.delete $temp}
+}
+test.case snail.test.t1449 {test.assert.error {channel.getline "C1"}}

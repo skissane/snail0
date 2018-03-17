@@ -6,6 +6,31 @@ char * snailChannel_OPEN_stdio (snailChannel *channel, void *driverArg) {
 	return NULL;
 }
 
+char * snailChannel_GETLINE_stdio (snailChannel *channel, char **buf) {
+	FILE *fh = channel->driverInfo;
+	if (fh == NULL) {
+		return snailDupString("channel is closed");
+	}
+	flockfile(fh);
+	clearerr(fh);
+	size_t n = 0;
+	*buf = NULL;
+	ssize_t rc = getline(buf, &n, fh);
+	if (rc >= 0) {
+		funlockfile(fh);
+		return NULL;
+	}
+	free(*buf);
+	*buf = NULL;
+	if (ferror(fh)) {
+		clearerr(fh);
+		funlockfile(fh);
+		return snailDupString("I/O error during GETLINE on STDIO channel");
+	}
+	funlockfile(fh);
+	return NULL;
+}
+
 char * snailChannel_READ_stdio (snailChannel *channel, void *buf, size_t len, size_t *read) {
 	FILE *fh = channel->driverInfo;
 	if (fh == NULL) {
@@ -150,6 +175,7 @@ void snailChannelSetup(snailInterp *snail) {
 	STDIO->f_WRITE = snailChannel_WRITE_stdio;
 	STDIO->f_CLOSE = snailChannel_CLOSE_stdio;
 	STDIO->f_FLUSH = snailChannel_FLUSH_stdio;
+	STDIO->f_GETLINE = snailChannel_GETLINE_stdio;
 	char *msg = snailChannelDriverRegister(snail,STDIO);
 	if (msg != NULL)
 		snailPanic(msg);
@@ -221,3 +247,17 @@ char *snailChannelFlush(snailInterp *snail, char *channelName) {
 	return channel->driver->f_FLUSH(channel);
 }
 
+char *snailChannelGetLine(snailInterp *snail, char *channelName, char **bufOut) {
+	snailChannel *channel = snailHashTableGet(snail->channels,channelName);
+	if (channel == NULL) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"no such channel named '");
+		snailBufferAddString(msg,channelName);
+		snailBufferAddString(msg,"'");
+		snailBufferAddChar(msg,0);
+		char *r = snailDupString(msg->bytes);
+		snailBufferDestroy(msg);
+		return r;
+	}
+	return channel->driver->f_GETLINE(channel, bufOut);
+}

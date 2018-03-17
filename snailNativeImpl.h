@@ -1856,3 +1856,24 @@ NATIVE(channel_flush,1) {
 	free(r);
 	return ok ? snailStatusOk : snailStatusError;
 }
+
+NATIVE(channel_getline,1) {
+	NATIVE_ARG_MUSTCLASS(0,'U');
+	char *channelName = args[0];
+	char *buf = NULL;
+	char *r = snailChannelGetLine(snail, channelName, &buf);
+	if (r != NULL) {
+		snailSetResult(snail,r);
+		free(r);
+		return snailStatusError;
+	}
+	if (buf == NULL) {
+		snailSetResult(snail,"");
+		return snailStatusOk;
+	}
+	char *quoted = snailMakeQuoted(buf);
+	free(buf);
+	snailSetResult(snail,quoted);
+	free(quoted);
+	return snailStatusOk;
+}
