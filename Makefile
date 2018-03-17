@@ -12,9 +12,12 @@ snailInit.h: bin2c __init__.snail
 	cat __init__.snail | ./bin2c > snailInit.h
 
 clean:
-	rm -f snail *.o snailNativeProtos.h bin2c snailInit.h *.gcda *.gcno *.cov.info
+	rm -f snail *.o snailNativeProtos.h bin2c snailInit.h *.gcda *.gcno *.cov.info *.exe
 
 snailNativeProtos.h: snailNativeImpl.h makeNativeProtos.sh
 	sh ./makeNativeProtos.sh
 
-.PHONY: clean
+djgpp: clean bin2c
+	CC=i586-pc-msdosdjgpp-gcc make
+
+.PHONY: clean djgpp

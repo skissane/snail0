@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -14,6 +15,11 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <unistd.h>
+
+/***---DJGPP COMPATIBILITY---***/
+#ifdef __DJGPP__
+#include "snailDJGPP.h"
+#endif
 
 /***---Constants---***/
 const int VARIADIC = -1;

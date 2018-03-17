@@ -1,5 +1,6 @@
 *.cov.info
 *.dSYM
+*.exe
 *.gcda
 *.gcno
 *.o

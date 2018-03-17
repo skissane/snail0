@@ -1672,6 +1672,12 @@ char *snailWriteFile(const char *filename, char *text) {
 }
 
 void snailRandomBytes(void *buf, size_t count) {
+#ifdef __DJGPP__
+	char *cbuf = buf;
+	for (ssize_t i = 0; i < count; i++) {
+		cbuf[i] = rand();
+	}
+#else
 	FILE *fh = fopen("/dev/urandom","r");
 	if (fh == NULL)
 		snailPanic("RNG failure [opening random device]");
@@ -1679,6 +1685,7 @@ void snailRandomBytes(void *buf, size_t count) {
 		snailPanic("RNG failure [reading from random device]");
 	if (fclose(fh)!=0)
 		snailPanic("RNG failure [closing random device]");
+#endif
 }
 
 void snailBufferAddI64(snailBuffer *buf, int64_t n) {

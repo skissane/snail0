@@ -1078,7 +1078,9 @@ NATIVE(file_stat,1) {
 	snailHashTablePut(ht, "mtime", snailI64ToStr(buf.st_mtime));
 	snailHashTablePut(ht, "ctime", snailI64ToStr(buf.st_ctime));
 	snailHashTablePut(ht, "blksize", snailI64ToStr(buf.st_blksize));
+#ifndef __DJGPP__
 	snailHashTablePut(ht, "blocks", snailI64ToStr(buf.st_blocks));
+#endif
 
 	char *type = "other";
 	if (S_ISBLK(buf.st_mode))
@@ -1093,8 +1095,10 @@ NATIVE(file_stat,1) {
 		type = "reg";
 	else if (S_ISLNK(buf.st_mode))
 		type = "lnk";
+#ifndef __DJGPP__
 	else if (S_ISSOCK(buf.st_mode))
 		type = "sock";
+#endif
 	snailHashTablePut(ht, "type", snailDupString(type));
 
 	char *quoted = snailQuoteDict(ht);
