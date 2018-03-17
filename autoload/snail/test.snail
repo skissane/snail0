@@ -1,6 +1,6 @@
 test.case snail.test.t1000 {test.assert.eq 2 {+ 1 1}}
-test.case snail.test.t1001 {test.assert.error {file.run "/"}}
-test.case snail.test.t1002 {test.assert.error {file.read "/"}}
+test.case snail.test.t1001 {test.assert.error {file.run [string.concat [rand.hex 8] ".tmp"] }}
+test.case snail.test.t1002 {test.assert.error {file.read [string.concat [rand.hex 8] ".tmp"] }}
 test.case snail.test.t1003 {test.assert.error {error "intentionally induced"}}
 test.case snail.test.t1004 {test.assert {string.is.blank ""}}
 test.case snail.test.t1005 {test.assert {string.is.blank " "}}
@@ -559,7 +559,6 @@ test.case snail.test.t1375 {test.assert.error {channel.close {}}}
 test.case snail.test.t1376 {test.assert.error {file.open {} "r"}}
 test.case snail.test.t1377 {test.assert.error {file.open "" {}}}
 test.case snail.test.t1378 {test.assert.error {file.open "" "r"}}
-test.case snail.test.t1379 {test.assert.error {file.open "r" ""}}
 test.case snail.test.t1380 {test.assert.eq 2 {math.shl.u32 1 1}}
 test.case snail.test.t1381 {test.assert.eq 0 {math.shl.u32 0 10}}
 test.case snail.test.t1382 {test.assert.eq 1024 {math.shl.u32 1 10}}
