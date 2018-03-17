@@ -1493,7 +1493,7 @@ NATIVE(string_trim,1) {
 
 NATIVE(and,VARIADIC) {
 	for (int i = 0; i < argCount; i++)
-		NATIVE_ARG_MUSTCLASS(0,'L');
+		NATIVE_ARG_MUSTCLASS(i,'L');
 	for (int i = 0; i < argCount; i++) {
 		snailStatus ss = snailExecList(snail,args[i]);
 		if (ss != snailStatusOk)
@@ -1513,7 +1513,7 @@ NATIVE(and,VARIADIC) {
 
 NATIVE(or,VARIADIC) {
 	for (int i = 0; i < argCount; i++)
-		NATIVE_ARG_MUSTCLASS(0,'L');
+		NATIVE_ARG_MUSTCLASS(i,'L');
 	for (int i = 0; i < argCount; i++) {
 		snailStatus ss = snailExecList(snail,args[i]);
 		if (ss != snailStatusOk)
@@ -1603,9 +1603,7 @@ NATIVE(rand_hex,1) {
 
 
 NATIVE(rand_u32,0) {
-	uint32_t result;
-	snailRandomBytes(&result, sizeof(uint32_t));
-	snailSetResultInt(snail,result);
+	snailSetResultInt(snail,snailRandomU32());
 	return snailStatusOk;
 }
 
@@ -1782,18 +1780,7 @@ NATIVE(rand_u32_uniform,1) {
 		snailBufferDestroy(msg);
 		return snailStatusError;
 	}
-	uint32_t bits = 32 - __builtin_clz(arg);
-	uint32_t mask = snail2PowMinus1U32(bits);
-	for (;;) {
-		uint32_t result;
-		snailRandomBytes(&result, sizeof(uint32_t));
-		snailSetResultInt(snail,result % arg);
-		result &= mask;
-		if (result < arg) {
-			snailSetResultInt(snail,result);
-			return snailStatusOk;
-		}
-	}
+	snailSetResultInt(snail,snailRandomU32Uniform(arg));
 	return snailStatusOk;
 }
 
@@ -1839,5 +1826,19 @@ NATIVE(to_radix_i32,2) {
 	}
 	snailSetResult(snail,r);
 	free(r);
+	return snailStatusOk;
+}
+
+NATIVE(list_shuffle,1) {
+	snailArray *list = snailUnquoteList(args[0]);
+	if (list == NULL) {
+		snailSetResult(snail, "list.shuffle: argument 0 is not a valid list");
+		return snailStatusError;
+	}
+	snailArrayShuffle(list);
+	char *result = snailQuoteList(list);
+	snailSetResult(snail, result);
+	free(result);
+	snailArrayDestroy(list, free);
 	return snailStatusOk;
 }

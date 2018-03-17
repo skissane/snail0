@@ -601,3 +601,31 @@ test.case snail.test.t1417 {test.assert.error {to.radix.i32 0 0}}
 test.case snail.test.t1418 {test.assert.error {to.radix.i32 0 -1}}
 test.case snail.test.t1419 {test.assert.error {to.radix.i32 "10" 16}}
 test.case snail.test.t1420 {test.assert.error {to.radix.i32 10 "16"}}
+test.case snail.test.t1421 {test.assert.eq {0 1 2 3 4 5 6 7 8 9} {list.generate 10}}
+test.case snail.test.t1422 {
+	loop {
+		set r [list.generate 10]
+		set s [list.shuffle $r]
+		test.assert.eq $r {list.sort $s}
+		if {not [= $r $s]} then {break}
+	}
+}
+test.case snail.test.t1423 {test.assert.error {list.shuffle ""}}
+test.case snail.test.t1424 {test.assert.eq "-8" {to.radix.i32 -8 10}}
+test.case snail.test.t1425 {test.assert.eq "-10" {to.radix.i32 -8 8}}
+test.case snail.test.t1426 {test.assert.eq "-17" {to.radix.i32 -15 8}}
+test.case snail.test.t1427 {test.assert.eq "-F" {to.radix.i32 -15 16}}
+test.case snail.test.t1428 {test.assert.eq "-1" {to.radix.i32 -1 2}}
+test.case snail.test.t1429 {test.assert.error {token.unquote [null]}}
+test.case snail.test.t1430 {test.assert.eq "{\"}" {token.unquote "{\"}"}}
+test.case snail.test.t1431 {test.assert.eq "{()}" {token.unquote "{()}"}}
+test.case snail.test.t1432 {test.assert.eq "{\\}" {token.unquote "{\\}"}}
+test.case snail.test.t1433 {test.assert.eq "{x[]}" {token.unquote "{x[]}"}}
+test.case snail.test.t1434 {test.assert.eq "%[]" {token.unquote "%[]"}}
+test.case snail.test.t1435 {test.assert.eq "%$" {token.unquote "%$"}}
+test.case snail.test.t1436 {test.assert.eq "x\ny" {token.unquote "x\ny"}}
+test.case snail.test.t1437 {test.assert.eq foo {token.unquote "foo"}}
+test.case snail.test.t1438 {test.assert.eq foo.bar.baz {token.unquote "foo.bar.baz"}}
+test.case snail.test.t1439 {test.assert.eq "" {string.replace "" "" ""}}
+test.case snail.test.t1440 {test.assert.eq "foo" {string.replace "foo" "" "bar"}}
+test.case snail.test.t1441 {test.assert.eq "foobaz" {string.replace "foobarbaz" "bar" ""}}

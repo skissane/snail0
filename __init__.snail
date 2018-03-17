@@ -327,3 +327,15 @@ proc dict.values {$dict} {
 proc math.abs {$n} {
 	if {< $n 0} then {- $n} else {pass $n}
 }
+
+proc list.generate {$n} {
+	arg.must.int n
+	if {< $n 0} then {error "argument cannot be negative"}
+	set r {}
+	set i 0
+	while {< $i $n} {
+		set r [list.add $r $i]
+		set i [+ 1 $i]
+	}
+	pass $r
+}

@@ -806,11 +806,12 @@ void snailBufferReverse(snailBuffer *buf) {
 char *snailI32ToStrRadix(int32_t n, uint8_t base) {
 	const char digits[] = "0123456789ABCDEF";
 	snailBuffer *buf = snailBufferCreate(16);
+	bool negative = false;
 	if (base < 2 || base > 16) {
 		return NULL;
 	}
 	if (n < 0) {
-		snailBufferAddChar(buf,'-');
+		negative = true;
 		n = -n;
 	}
 	if (n == 0)
@@ -818,6 +819,8 @@ char *snailI32ToStrRadix(int32_t n, uint8_t base) {
 	else {
 		for (int32_t i = 30; n && i; --i, n /= base)
 			snailBufferAddChar(buf, digits[n % base]);
+		if (negative)
+			snailBufferAddChar(buf,'-');
 		snailBufferReverse(buf);
 	}
 	snailBufferAddChar(buf,0);
@@ -1683,4 +1686,32 @@ void snailBufferAddI64(snailBuffer *buf, int64_t n) {
 
 void snailQuickSort(void *base, size_t nElems, size_t width, void *thunk, snailQuickSortCmp *cmp) {
 	qsort_r(base, nElems, width, thunk, cmp);
+}
+
+uint32_t snailRandomU32(void) {
+	uint32_t result;
+	snailRandomBytes(&result, sizeof(uint32_t));
+	return result;
+}
+
+uint32_t snailRandomU32Uniform(uint32_t bound) {
+	if (bound < 2)
+		return 0;
+	uint32_t bits = 32 - __builtin_clz(bound);
+	uint32_t mask = snail2PowMinus1U32(bits);
+	for (;;) {
+		uint32_t result = snailRandomU32();
+		result &= mask;
+		if (result < bound)
+			return result;
+	}
+}
+
+void snailArrayShuffle(snailArray *array) {
+	for (uint32_t i = 0; i < array->length; i++) {
+		uint32_t j = i + snailRandomU32Uniform(array->length - i);
+		void *temp = array->elems[i];
+		array->elems[i] = array->elems[j];
+		array->elems[j] = temp;
+	}
 }

@@ -54,6 +54,7 @@ NATIVE(list_at, 2);
 NATIVE(list_concat, VARIADIC);
 NATIVE(list_find,2);
 NATIVE(list_length, 1);
+NATIVE(list_shuffle,1);
 NATIVE(list_sort, 1);
 NATIVE(loop,1);
 NATIVE(lt, 2);
