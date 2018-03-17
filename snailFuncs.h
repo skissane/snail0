@@ -498,6 +498,7 @@ void snailRepl(snailInterp *snail) {
 
 	printf("=(@)= Snail interpreter =(@)=\n\n");
 	printf("Interactive mode; press Ctrl-D to exit\n%s", snail->repl->prompt);
+	fflush(stdout);
 	for (;;) {
 loopRepl:
 		buffer = NULL;
@@ -527,6 +528,7 @@ loopRepl:
 		snailStatus status = snailExec(snail, buffer);
 		snailPrintResult(snail,status);
 		printf("%s", snail->repl->prompt);
+		fflush(stdout);
 		free(buffer);
 	}
 exitRepl:
