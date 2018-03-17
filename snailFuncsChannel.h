@@ -43,6 +43,19 @@ char * snailChannel_WRITE_stdio (snailChannel *channel, void *buf, size_t len, s
 	return rc == len ? NULL : snailDupString("I/O error writing on channel");
 }
 
+char * snailChannel_FLUSH_stdio (snailChannel *channel) {
+	FILE *fh = channel->driverInfo;
+	if (fh == NULL) {
+		return snailDupString("channel is closed");
+	}
+	flockfile(fh);
+	clearerr(fh);
+	int rc = fflush(fh);
+	clearerr(fh);
+	funlockfile(fh);
+	return rc == 0 ? NULL : snailDupString("I/O error flushing channel");
+}
+
 char * snailChannel_CLOSE_stdio (snailChannel *channel) {
 	FILE *fh = channel->driverInfo;
 	if (fh == NULL) {
@@ -136,6 +149,7 @@ void snailChannelSetup(snailInterp *snail) {
 	STDIO->f_READ = snailChannel_READ_stdio;
 	STDIO->f_WRITE = snailChannel_WRITE_stdio;
 	STDIO->f_CLOSE = snailChannel_CLOSE_stdio;
+	STDIO->f_FLUSH = snailChannel_FLUSH_stdio;
 	char *msg = snailChannelDriverRegister(snail,STDIO);
 	if (msg != NULL)
 		snailPanic(msg);
@@ -191,3 +205,19 @@ char *snailChannelMakeName(snailInterp *snail) {
 	snailBufferDestroy(buf);
 	return name;
 }
+
+char *snailChannelFlush(snailInterp *snail, char *channelName) {
+	snailChannel *channel = snailHashTableGet(snail->channels,channelName);
+	if (channel == NULL) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"no such channel named '");
+		snailBufferAddString(msg,channelName);
+		snailBufferAddString(msg,"'");
+		snailBufferAddChar(msg,0);
+		char *r = snailDupString(msg->bytes);
+		snailBufferDestroy(msg);
+		return r;
+	}
+	return channel->driver->f_FLUSH(channel);
+}
+

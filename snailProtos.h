@@ -113,3 +113,4 @@ void snailSetResult(snailInterp *snail, char *result);
 void snailSetResultBool(snailInterp *snail, bool result);
 void snailSetResultInt(snailInterp *snail, int64_t result);
 void snailSetVar(snailInterp *snail, char *name, char *value);
+char *snailChannelFlush(snailInterp *snail, char *channelName);

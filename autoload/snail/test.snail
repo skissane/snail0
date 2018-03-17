@@ -632,3 +632,6 @@ test.case snail.test.t1442 {test.assert.eq {0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 1
 test.case snail.test.t1443 {test.assert.eq {2147483649 2147483650 33} {list.sort {2147483649 2147483650 33}}}
 test.case snail.test.t1444 {test.assert.eq {112147483650 2147483649 2147483650 33 42147483650 521474836491} {list.sort {2147483649 2147483650 33 42147483650 521474836491 112147483650}}}
 test.case snail.test.t1445 {test.assert.eq {2 30 100 xa1 ya2} {list.sort {100 2 xa1 ya2 30}}}
+test.case snail.test.t1379 {test.assert.null {channel.flush stdout}}
+test.case snail.test.t1446 {test.assert.error {channel.flush [token.unquote [string.concat "nonexistent.channel." [rand.hex 8]]]}}
+test.case snail.test.t1447 {test.assert.error {channel.flush {}}}

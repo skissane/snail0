@@ -201,6 +201,7 @@ proc channel.read.line {$channel} {
 proc prompt {$prompt} {
 	arg.must.quoted prompt
 	puts.nonewline $prompt
+	channel.flush stdout
 	channel.read.line stdin
 }
 

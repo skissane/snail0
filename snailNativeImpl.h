@@ -1842,3 +1842,13 @@ NATIVE(list_shuffle,1) {
 	snailArrayDestroy(list, free);
 	return snailStatusOk;
 }
+
+NATIVE(channel_flush,1) {
+	NATIVE_ARG_MUSTCLASS(0,'U');
+	char *channelName = args[0];
+	char *r=snailChannelFlush(snail, channelName);
+	bool ok = r == NULL;
+	snailSetResult(snail,ok ? "" : r);
+	free(r);
+	return ok ? snailStatusOk : snailStatusError;
+}
