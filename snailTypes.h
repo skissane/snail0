@@ -87,6 +87,7 @@ typedef struct snailInterp {
 	snailHashTable *channels;
 	int64_t startupTime;
 	int64_t autoId;
+	bool noExit;
 } snailInterp;
 
 typedef struct snailReplState {

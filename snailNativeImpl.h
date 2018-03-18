@@ -5,6 +5,11 @@
 			return snailStatusError; \
 	} while(0)
 
+#define NATIVE_ARG_MAX(_max) do { \
+		if (!snailArgCountMaximum(snail, cmdName, _max, argCount)) \
+			return snailStatusError; \
+	} while(0)
+
 #define NATIVE_ARG_MUSTINT(_index) do { \
 		if (!snailIsInt(args[_index])) { \
 			snailSetResult(snail, "\"argument is not an integer\""); \
@@ -2090,4 +2095,22 @@ NATIVE(file_copy,2) {
 NATIVE(platform_type,0) {
 	snailSetResult(snail,snailGetPlatformType());
 	return snailStatusOk;
+}
+
+NATIVE(sys_exit,VARIADIC) {
+	NATIVE_ARG_MAX(1);
+	if (argCount > 0)
+		NATIVE_ARG_MUSTINT(0);
+	int32_t r = argCount > 0 ? strtol(args[0],NULL,10) : 0;
+	snailExit(snail,r);
+	return snailStatusOk;
+}
+
+NATIVE(sys_no_exit,1) {
+	NATIVE_ARG_MUSTCLASS(0, 'L');
+	bool saved = snail->noExit;
+	snail->noExit = true;
+	snailStatus ss = snailExecList(snail,args[0]);
+	snail->noExit = saved;
+	return ss;
 }

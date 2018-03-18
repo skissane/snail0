@@ -1,5 +1,6 @@
 /***---PROTOTYPES---***/
 bool snailArgCountExactly(snailInterp *snail, char *cmdName, int must, int actual);
+bool snailArgCountMaximum(snailInterp *snail, char *cmdName, int maximum, int actual);
 bool snailArgCountMinimum(snailInterp *snail, char *cmdName, int minimum, int actual);
 bool snailCopyFile(FILE *from, FILE *to);
 bool snailIsBlank(const char *str);
@@ -113,6 +114,7 @@ void snailChannelSetup_DIRENT(snailInterp *snail);
 void snailChannelSetup_STDIO(snailInterp *snail);
 void snailClearResult(snailInterp *snail);
 void snailDestroy(snailInterp *snail);
+void snailExit(snailInterp *snail, int exitCode);
 void snailHashCellDestroy(snailHashCell *cell, snailDestructor *destructor);
 void snailHashTableDestroy(snailHashTable *ht, snailDestructor *destructor);
 void snailParseDestroy(snailParseTool *parser);

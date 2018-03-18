@@ -111,6 +111,8 @@ NATIVE(string_sub,3);
 NATIVE(string_trim,1);
 NATIVE(string_upper,1);
 NATIVE(sub, VARIADIC);
+NATIVE(sys_exit,VARIADIC);
+NATIVE(sys_no_exit,1);
 NATIVE(time_now,0);
 NATIVE(time_startup,0);
 NATIVE(to_hex,1);

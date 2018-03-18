@@ -1100,6 +1100,30 @@ bool snailArgCountMinimum(snailInterp *snail, char *cmdName, int minimum, int ac
 	return false;
 }
 
+bool snailArgCountMaximum(snailInterp *snail, char *cmdName, int maximum, int actual) {
+	if (actual <= maximum)
+		return true;
+	char *iMaximum = snailI64ToStr(maximum);
+	char *iActual = snailI64ToStr(actual);
+
+	snailBuffer *msg = snailBufferCreate(16);
+	snailBufferAddString(msg, "command \"");
+	snailBufferAddString(msg, cmdName);
+	snailBufferAddString(msg, "\" permits maximum ");
+	snailBufferAddString(msg, iMaximum);
+	snailBufferAddString(msg, " arguments, got ");
+	snailBufferAddString(msg, iActual);
+	snailBufferAddString(msg, " instead");
+	snailBufferAddChar(msg, 0);
+
+	free(iMaximum);
+	free(iActual);
+
+	snailSetResult(snail, msg->bytes);
+	snailBufferDestroy(msg);
+	return false;
+}
+
 void snailSetResultBool(snailInterp *snail, bool result) {
 	snailSetResult(snail, result ? "t" : "f");
 }
@@ -1813,4 +1837,13 @@ char *snailGetPlatformType(void) {
 #else
 	return "unknown";
 #endif
+}
+
+void snailExit(snailInterp *snail, int exitCode) {
+	if (snail->noExit) {
+		fprintf(stdout,"NOTICE: Exit requested with code %d; refused since noExit flag is set\n", exitCode);
+	}
+	else {
+		exit(exitCode);
+	}
 }
