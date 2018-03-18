@@ -221,6 +221,7 @@ nextChar:
 				case ']':
 				case ' ':
 				case '\t':
+				case '\r':
 				case '\n':
 					if (parser->context->length == 0) {
 						snailBufferAddChar(parser->error,0);
@@ -269,6 +270,7 @@ nextChar:
 				case ']':
 				case ' ':
 				case '\t':
+				case '\r':
 				case '\n':
 					if (parser->context->length == 0) {
 						snailBufferAddChar(parser->error,0);
@@ -297,9 +299,10 @@ nextChar:
 				// whitespace at start of token, skip outside of list
 				case ' ':
 				case '\t':
+				case '\r':
 					if (parser->context->length > 0) {
 						char last = parser->word->bytes[parser->word->length-1];
-						if (last != ' ' && last != '\t' && last != '{' && last != '[')
+						if (last != ' ' && last != '\t' && last != '\r' && last != '{' && last != '[')
 							snailBufferAddChar(parser->word,' ');
 					}
 					parser->pos++;
