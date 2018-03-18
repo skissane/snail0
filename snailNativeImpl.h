@@ -2086,3 +2086,8 @@ NATIVE(file_copy,2) {
 	snailSetResult(snail,"");
 	return snailStatusOk;
 }
+
+NATIVE(platform_type,0) {
+	snailSetResult(snail,snailGetPlatformType());
+	return snailStatusOk;
+}

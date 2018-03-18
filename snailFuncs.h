@@ -1796,3 +1796,15 @@ bool snailCopyFile(FILE *from, FILE *to) {
 			return false;
 	}
 }
+
+char *snailGetPlatformType(void) {
+#if defined(__APPLE__)
+	return "macos";
+#elif defined(__DJGPP__)
+	return "djgpp";
+#elif defined(__linux__)
+	return "linux";
+#else
+	return "unknown";
+#endif
+}

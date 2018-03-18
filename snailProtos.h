@@ -34,6 +34,7 @@ char *snailChannel_READ_stdio(snailChannel *channel, void *buf, size_t len, size
 char *snailChannel_WRITE_stdio(snailChannel *channel, void *buf, size_t len, size_t *written);
 char *snailDupString(char *str);
 char *snailGetCmdUp(snailInterp *snail, int level);
+char *snailGetPlatformType(void);
 char *snailGetResult(snailInterp *snail);
 char *snailGetUpVar(snailInterp *snail, int level, char *name);
 char *snailGetVar(snailInterp *snail, char *name);

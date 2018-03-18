@@ -72,6 +72,7 @@ NATIVE(null,0);
 NATIVE(nvl, VARIADIC);
 NATIVE(or,VARIADIC);
 NATIVE(pass,1);
+NATIVE(platform_type,0);
 NATIVE(proc,3);
 NATIVE(proc_delete,1);
 NATIVE(puts, 1);
