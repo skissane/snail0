@@ -1,0 +1,38 @@
+proc dos.make83 {$name} {
+	arg.must.quoted name
+	if {string.contains $name "/"} then {return [dos.make83.path $name]}
+	set parts [string.split $name "."]
+	set nparts [list.length $parts]
+	if {or {< $nparts 1} {> $nparts 2}} then {error [string.concat "Name cannot be converted to DOS 8.3 format: " [token.quote $name]]}
+	set r [string.upper [string.left [list.at $parts 0] 8]]
+	if {= $nparts 2} then {set r [string.concat $r "." [string.upper [string.left [list.at $parts 1] 3]]]}
+	pass $r
+}
+
+proc dos.make83.path {$path} {
+	arg.must.quoted path
+	set names [string.split $path "/"]
+	set result {}
+	foreach name $names {set result [list.add $result [dos.make83 $name]]}
+	string.join $result "/"
+}
+
+proc dos.make83.paths {$paths} {
+	arg.must.list paths
+	set map %{}
+	foreach path $paths {set map [dict.set $map $path [dos.make83 $path]]}
+	set dups [dict.find.duplicate.values $map]
+	if {> [dict.size $dups] 0} then {
+		error [string.concat "DOS 8.3 paths are not unique: " $dups]
+	}
+	pass $map
+}
+
+proc dos.build {} {
+	foreach path [dir.prefix.all "BUILD.DOS/SNAIL" [dict.values [dos.make83.paths [dir.only.dirs [dir.walk.prefix "autoload"]]]]] {dir.create.path $path}
+	set files [dos.make83.paths [dir.only.files [dir.remove.hidden [dir.walk.prefix "autoload"]]]]
+	foreach from [list.sort [dict.keys $files]] {
+		set to [string.concat "BUILD.DOS/SNAIL/" [dict.get $files $from]]
+		file.copy $from $to
+	}
+}

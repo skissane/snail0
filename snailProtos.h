@@ -1,6 +1,7 @@
 /***---PROTOTYPES---***/
 bool snailArgCountExactly(snailInterp *snail, char *cmdName, int must, int actual);
 bool snailArgCountMinimum(snailInterp *snail, char *cmdName, int minimum, int actual);
+bool snailCopyFile(FILE *from, FILE *to);
 bool snailIsBlank(const char *str);
 bool snailIsBool(const char *str);
 bool snailIsDigits(const char *str);

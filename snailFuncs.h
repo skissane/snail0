@@ -1782,3 +1782,14 @@ int snailNaturalCmp(const char *a, const char *b) {
 		return strcmp(a,b);
 	return na - nb;
 }
+
+bool snailCopyFile(FILE *from, FILE *to) {
+	char buffer[1024];
+	for (;;) {
+		size_t n = fread(buffer, sizeof(char), sizeof(buffer), from);
+		if (n == 0)
+			return feof(from);
+		if (fwrite(buffer, sizeof(char), n, to) != n)
+			return false;
+	}
+}

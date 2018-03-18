@@ -694,3 +694,48 @@ test.case snail.test.t1465 {test.assert.eq {"foo" "" "22"} {string.split "foo,,2
 test.case snail.test.t1466 {test.assert.eq {"" ""} {string.split "," ","}}
 test.case snail.test.t1467 {test.assert.eq "foo,bar,baz" {string.join {"foo" "bar" "baz"} ","}}
 test.case snail.test.t1468 {test.assert.eq "" {string.join {} ","}}
+test.case snail.test.t1469 {test.assert.error {dir.delete [string.concat [rand.hex 4] ".DIR"]}}
+test.case snail.test.t1470 {test.assert.error {dir.delete {}}}
+test.case snail.test.t1471 {test.assert.error {dir.create "."}}
+test.case snail.test.t1472 {test.assert.error {dir.create {}}}
+test.case snail.test.t1473 {
+	set name [string.concat [rand.hex 4] ".TMP"]
+	test.assert.not {file.is.dir $name}
+	test.assert.null {dir.create $name}
+	test.assert {file.is.dir $name}
+	test.assert.error {dir.create $name}
+	set file [string.concat $name "/test.txt"]
+	set value [string.concat "Hello World " [rand.hex 4]]
+	test.assert.null {file.write $file $value}
+	test.assert.eq $value {file.read $file}
+	test.assert.null {file.delete $file}
+	test.assert.error {file.delete $file}
+	test.assert.null {dir.delete $name}
+	test.assert.not {file.is.dir $name}
+	test.assert.error {dir.delete $name}
+}
+test.case snail.test.t1474 {
+	set name1 [string.concat "F0" [rand.hex 4] ".tmp"]
+	set name2 [string.concat "F1" [rand.hex 4] ".tmp"]
+	set value [rand.hex 128]
+	test.assert.not {file.exists $name1}
+	test.assert.not {file.exists $name2}
+	test.assert.null {file.write $name1 $value}
+	test.assert {file.exists $name1}
+	test.assert.not {file.exists $name2}
+	test.assert.eq $value {file.read $name1}
+	test.assert.null {file.copy $name1 $name2}
+	test.assert.error {file.copy $name1 ""}
+	test.assert {file.exists $name1}
+	test.assert {file.exists $name2}
+	test.assert.eq $value {file.read $name2}
+	test.assert.null {file.delete $name1}
+	test.assert.null {file.delete $name2}
+}
+test.case snail.test.t1475 {
+	set name1 [string.concat "F0" [rand.hex 4] ".tmp"]
+	set name2 [string.concat "F1" [rand.hex 4] ".tmp"]
+	test.assert.error {file.copy $name1 $name2}
+}
+test.case snail.test.t1476 {test.assert.error {file.copy "" {}}}
+test.case snail.test.t1477 {test.assert.error {file.copy {} ""}}

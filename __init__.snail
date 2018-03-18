@@ -63,6 +63,12 @@ proc arg.must.list {$name} {
 	}
 }
 
+proc arg.must.dict {$name} {
+	if {not [token.is.dict [var.get.up 1 $name]]} then {
+		error [string.concat "argument $" $name " must be a dict (in: " [frame.cmd.up 1] ")"]
+	}
+}
+
 proc arg.must.int {$name} {
 	if {not [is.int [var.get.up 1 $name]]} then {
 		error [string.concat "argument $" $name " must be an integer (in: " [frame.cmd.up 1] ")"]
@@ -355,33 +361,6 @@ proc list.generate {$n} {
 	pass $r
 }
 
-proc dir.read {$path} {
-	set channel [dir.open $path]
-	set r {}
-	loop {
-		set entry [channel.getline $channel]
-		if {is.null $entry} then {break}
-		if {= $entry "."} then {continue}
-		if {= $entry ".."} then {continue}
-		set r [list.add $r $entry]
-	}
-	channel.close $channel
-	pass $r
-}
-
-proc dir.walk {$path} {
-	set files [dir.read $path]
-	set underneath {}
-	foreach file $files {
-		set p [string.concat $path "/" $file]
-		if {not [file.is.dir $p]} then {continue}
-		foreach sub [dir.walk $p] {
-			set underneath [list.add $underneath [string.concat $file "/" $sub]]
-		}
-	}
-	list.sort [list.concat $files $underneath]
-}
-
 proc string.split {$string $delim} {
 	if {string.is.empty $string} then {return {}}
 	if {not [string.contains $string $delim]} then {return [list $string]}
@@ -406,6 +385,29 @@ proc string.join {$list $delim} {
 	set r ""
 	foreach e $list {
 		set r [string.concat $r [if {string.is.empty $r} then {pass ""} else {pass $delim}] $e]
+	}
+	pass $r
+}
+
+proc dict.invert {$dict} {
+	arg.must.dict dict
+	set values %{}
+	foreach key [dict.keys $dict] {
+		set value [dict.get $dict $key]
+		set values [dict.set $values $value [list.add [nvl [dict.get $values $value] {}] $key]]
+	}
+	pass $values
+}
+
+proc dict.find.duplicate.values {$dict} {
+	arg.must.dict dict
+	set values [dict.invert $dict]
+	set r %{}
+	foreach value [dict.keys $values] {
+		set keys [dict.get $values $value]
+		set nkeys [list.length $keys]
+		if {<= $nkeys 1} then {continue}
+		set r [dict.set $r $value $keys]
 	}
 	pass $r
 }

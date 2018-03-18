@@ -18,6 +18,22 @@ snailNativeProtos.h: snailNativeImpl.h makeNativeProtos.sh
 	sh ./makeNativeProtos.sh
 
 djgpp: clean bin2c
+	rm -f snail snail.exe
 	CC=i586-pc-msdosdjgpp-gcc make
+	rm -rf BUILD.DOS
+	mkdir -p BUILD.DOS/SNAIL
+	cp ports/dos/CWSDPMI.EXE BUILD.DOS/SNAIL
+	cp snail.exe BUILD.DOS/SNAIL/SNAIL.EXE
+	make clean snail
+	./snail - dos.build
+	(cd BUILD.DOS && zip -r SNAIL.ZIP SNAIL)
 
-.PHONY: clean djgpp
+test: snail
+	./testsnail
+
+linux:
+	./ports/linux/create
+
+allports: clean test djgpp linux
+
+.PHONY: clean djgpp test linux allports

@@ -4,6 +4,7 @@
 *.gcda
 *.gcno
 *.o
+/BUILD.DOS
 /bin2c
 /snail
 /snailInit.h

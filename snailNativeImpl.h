@@ -1954,3 +1954,135 @@ NATIVE(repl_history_add,1) {
 	snailSetResult(snail,"");
 	return snailStatusOk;
 }
+
+NATIVE(dir_create,1) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	char *path = snailTokenUnquote(args[0]);
+	errno = 0;
+	if (mkdir(path,0700) == 0) {
+		free(path);
+		snailSetResult(snail,"");
+		return snailStatusOk;
+	}
+	int e = errno;
+	snailBuffer *msg = snailBufferCreate(16);
+	snailBufferAddString(msg,"dir.create: OS error #");
+	snailBufferAddI64(msg,e);
+	snailBufferAddString(msg," attempting to create directory ");
+	snailBufferAddString(msg,args[0]);
+	snailBufferAddChar(msg,0);
+	snailSetResult(snail,msg->bytes);
+	snailBufferDestroy(msg);
+	return snailStatusError;
+}
+
+NATIVE(dir_delete,1) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	char *path = snailTokenUnquote(args[0]);
+	errno = 0;
+	if (rmdir(path) == 0) {
+		free(path);
+		snailSetResult(snail,"");
+		return snailStatusOk;
+	}
+	int e = errno;
+	snailBuffer *msg = snailBufferCreate(16);
+	snailBufferAddString(msg,"dir.delete: OS error #");
+	snailBufferAddI64(msg,e);
+	snailBufferAddString(msg," attempting to remove directory ");
+	snailBufferAddString(msg,args[0]);
+	snailBufferAddChar(msg,0);
+	snailSetResult(snail,msg->bytes);
+	snailBufferDestroy(msg);
+	return snailStatusError;
+}
+
+NATIVE(file_copy,2) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	NATIVE_ARG_MUSTCLASS(1, 'Q');
+	char *pfrom = snailTokenUnquote(args[0]);
+	char *pto = snailTokenUnquote(args[1]);
+
+	// Open input file
+	errno = 0;
+	FILE *from = fopen(pfrom,"r");
+	int e = errno;
+	free(pfrom);
+	if (from == NULL) {
+		free(pto);
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"file.copy: OS error #");
+		snailBufferAddI64(msg,e);
+		snailBufferAddString(msg," attempting to open source file ");
+		snailBufferAddString(msg,args[0]);
+		snailBufferAddChar(msg,0);
+		snailSetResult(snail,msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+
+	// Open output file
+	errno = 0;
+	FILE *to = fopen(pto,"w");
+	e = errno;
+	free(pto);
+	if (to == NULL) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"file.copy: OS error #");
+		snailBufferAddI64(msg,e);
+		snailBufferAddString(msg," attempting to open destination file ");
+		snailBufferAddString(msg,args[1]);
+		snailBufferAddChar(msg,0);
+		snailSetResult(snail,msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+
+	// Do the copy
+	if (!snailCopyFile(from,to)) {
+		e = errno;
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"file.copy: OS error #");
+		snailBufferAddI64(msg,e);
+		snailBufferAddString(msg," copying from file ");
+		snailBufferAddString(msg,args[0]);
+		snailBufferAddString(msg," to file ");
+		snailBufferAddString(msg,args[1]);
+		snailBufferAddChar(msg,0);
+		snailSetResult(snail,msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+
+	// Close the files
+	if (fclose(from) != 0) {
+		e = errno;
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"file.copy: OS error #");
+		snailBufferAddI64(msg,e);
+		snailBufferAddString(msg," closing handle to source file ");
+		snailBufferAddString(msg,args[0]);
+		snailBufferAddChar(msg,0);
+		snailSetResult(snail,msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+
+	// Close the files
+	if (fclose(to) != 0) {
+		e = errno;
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"file.copy: OS error #");
+		snailBufferAddI64(msg,e);
+		snailBufferAddString(msg," closing handle to destination file ");
+		snailBufferAddString(msg,args[0]);
+		snailBufferAddChar(msg,0);
+		snailSetResult(snail,msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+
+	// Success
+	snailSetResult(snail,"");
+	return snailStatusOk;
+}

@@ -1,0 +1,83 @@
+proc dir.read {$path} {
+	set channel [dir.open $path]
+	set r {}
+	loop {
+		set entry [channel.getline $channel]
+		if {is.null $entry} then {break}
+		if {= $entry "."} then {continue}
+		if {= $entry ".."} then {continue}
+		set r [list.add $r $entry]
+	}
+	channel.close $channel
+	pass $r
+}
+
+proc dir.walk {$path} {
+	set files [dir.read $path]
+	set underneath {}
+	foreach file $files {
+		set p [string.concat $path "/" $file]
+		if {not [file.is.dir $p]} then {continue}
+		foreach sub [dir.walk $p] {
+			set underneath [list.add $underneath [string.concat $file "/" $sub]]
+		}
+	}
+	list.sort [list.concat $files $underneath]
+}
+
+
+proc dir.prefix.all {$prefix $paths} {
+	arg.must.quoted prefix
+	arg.must.list paths
+	set r {}
+	foreach path $paths {
+		set r [list.add $r [string.concat $prefix "/" $path]]
+	}
+	pass $r
+}
+
+proc dir.remove.hidden {$paths} {
+	arg.must.list paths
+	set r {}
+	foreach path $paths {
+		if {string.starts.with $path "."} then {continue}
+		if {string.contains $path "/."} then {continue}
+		set r [list.add $r $path]
+	}
+	pass $r
+}
+
+proc dir.walk.prefix {$path} {dir.prefix.all $path [dir.walk $path]}
+
+proc dir.only.dirs {$paths} {
+	arg.must.list paths
+	set r {}
+	foreach path $paths {
+		if {not [file.is.dir $path]} then {continue}
+		set r [list.add $r $path]
+	}
+	pass $r
+}
+
+proc dir.parent {$path} {
+	arg.must.quoted path
+	if {not [string.contains $path "/"]} then {return [null]}
+	string.left $path [string.find.rev $path "/"]
+}
+
+proc dir.create.path {$path} {
+	if {file.is.dir $path} then {return [null]}
+	set parent [dir.parent $path]
+	if {not [is.null $parent]} then {dir.create.path $parent}
+	dir.create $path
+}
+
+proc dir.only.files {$paths} {
+	arg.must.list paths
+	set r {}
+	foreach path $paths {
+		if {not [file.is.reg $path]} then {continue}
+		set r [list.add $r $path]
+	}
+	pass $r
+}
