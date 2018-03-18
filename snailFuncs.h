@@ -495,11 +495,17 @@ stmtDone:
 	}
 }
 
+#ifdef __DJGPP__
+#define REPL_EXIT_CHAR 'Z'
+#else
+#define REPL_EXIT_CHAR 'C'
+#endif
+
 void snailRepl(snailInterp *snail) {
 	char *buffer;
 
 	printf("=(@)= Snail interpreter =(@)=\n\n");
-	printf("Interactive mode; press Ctrl-D to exit\n%s", snail->repl->prompt);
+	printf("Interactive mode; press Ctrl-%c to exit\n%s", REPL_EXIT_CHAR, snail->repl->prompt);
 	fflush(stdout);
 	for (;;) {
 loopRepl:
