@@ -411,3 +411,12 @@ proc dict.find.duplicate.values {$dict} {
 	}
 	pass $r
 }
+
+proc list.quoted.only {$list} {
+	arg.must.list list
+	set r {}
+	foreach e $list {
+		if {token.is.quoted $e} then {set r [list.add $r $e]}
+	}
+	pass $r
+}

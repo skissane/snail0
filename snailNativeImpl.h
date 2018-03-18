@@ -2114,3 +2114,11 @@ NATIVE(sys_no_exit,1) {
 	snail->noExit = saved;
 	return ss;
 }
+
+NATIVE(sys_run,1) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	char *cmd = snailTokenUnquote(args[0]);
+	snailSetResultInt(snail,system(cmd));
+	free(cmd);
+	return snailStatusOk;
+}

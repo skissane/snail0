@@ -35,4 +35,8 @@ proc dos.build {} {
 		set to [string.concat "BUILD.DOS/SNAIL/" [dict.get $files $from]]
 		file.copy $from $to
 	}
+	file.write "BUILD.DOS/SNAIL/SNAILTST.BAT" [string.join [list.quoted.only {
+		"@echo off"
+		"snail - \"test.run.suite snail.test\""
+	}] "\r\n"]
 }
