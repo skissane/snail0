@@ -498,7 +498,7 @@ stmtDone:
 #ifdef __DJGPP__
 #define REPL_EXIT_CHAR 'Z'
 #else
-#define REPL_EXIT_CHAR 'C'
+#define REPL_EXIT_CHAR 'D'
 #endif
 
 void snailRepl(snailInterp *snail) {
