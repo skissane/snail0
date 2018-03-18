@@ -27,6 +27,17 @@ char *snailChannelDriverRegister(snailInterp *snail, snailChannelDriver *driver)
 }
 
 /***---CHANNEL FUNCTIONS---***/
+bool channelIsProtected(char *channelName) {
+	if (strcmp(channelName,"stdin")==0) return true;
+	if (strcmp(channelName,"stdout")==0) return true;
+	if (strcmp(channelName,"stderr")==0) return true;
+#ifdef __DJGPP__
+	if (strcmp(channelName,"stdaux")==0) return true;
+	if (strcmp(channelName,"stdprn")==0) return true;
+#endif
+	return false;
+}
+
 char * snailChannelClose(snailChannel *channel) {
 	char *msg = NULL;
 	if (channel->driver->f_CLOSE != NULL)
@@ -175,6 +186,14 @@ void snailChannelSetup_STDIO(snailInterp *snail) {
 	msg = snailChannelRegister(snail,"stderr","STDIO",stderr);
 	if (msg != NULL)
 		snailPanic(msg);
+#ifdef __DJGPP__
+	msg = snailChannelRegister(snail,"stdprn","STDIO",stdprn);
+	if (msg != NULL)
+		snailPanic(msg);
+	msg = snailChannelRegister(snail,"stdaux","STDIO",stdaux);
+	if (msg != NULL)
+		snailPanic(msg);
+#endif
 }
 
 char * snailChannel_OPEN_stdio (snailChannel *channel, void *driverArg) {

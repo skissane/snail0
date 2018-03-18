@@ -1701,7 +1701,7 @@ NATIVE(file_delete,1) {
 
 NATIVE(channel_close,1) {
 	NATIVE_ARG_MUSTCLASS(0, 'U');
-	if (strcmp(args[0],"stdin")==0||strcmp(args[0],"stdout")==0||strcmp(args[0],"stderr")==0) {
+	if (channelIsProtected(args[0])) {
 		snailBuffer *msg = snailBufferCreate(16);
 		snailBufferAddString(msg,"channel.close: disallowing closure of protected channel ");
 		snailBufferAddString(msg,args[0]);

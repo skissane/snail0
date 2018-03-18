@@ -748,3 +748,5 @@ test.case snail.test.t1483 {test.assert.error {sys.exit 0 0}}
 test.case snail.test.t1484 {test.assert.eq 0 {sys.run "./snail - \"sys.exit 0\""}}
 test.case snail.test.t1485 {test.assert {not [= 0 [sys.run "./snail - \"sys.exit 1\""]]}}
 test.case snail.test.t1486 {test.assert.error {sys.run {}}}
+test.case snail.test.t1487 {test.assert.error {channel.close stdprn}}
+test.case snail.test.t1488 {test.assert.error {channel.close stdaux}}

@@ -1,4 +1,5 @@
 /***---PROTOTYPES---***/
+bool channelIsProtected(char *channelName);
 bool snailArgCountExactly(snailInterp *snail, char *cmdName, int must, int actual);
 bool snailArgCountMaximum(snailInterp *snail, char *cmdName, int maximum, int actual);
 bool snailArgCountMinimum(snailInterp *snail, char *cmdName, int minimum, int actual);
