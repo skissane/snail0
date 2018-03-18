@@ -25,7 +25,7 @@ djgpp: clean bin2c
 	cp ports/dos/CWSDPMI.EXE BUILD.DOS/SNAIL
 	cp snail.exe BUILD.DOS/SNAIL/SNAIL.EXE
 	make clean snail
-	./snail - dos.build
+	./snail - snail.dos.build
 	(cd BUILD.DOS && zip -r SNAIL.ZIP SNAIL)
 	mformat -i ./BUILD.DOS/SNAIL.IMG -C -f 1440 ::
 	mcopy -i ./BUILD.DOS/SNAIL.IMG ./BUILD.DOS/SNAIL.ZIP ::

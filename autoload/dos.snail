@@ -27,16 +27,3 @@ proc dos.make83.paths {$paths} {
 	}
 	pass $map
 }
-
-proc dos.build {} {
-	foreach path [dir.prefix.all "BUILD.DOS/SNAIL" [dict.values [dos.make83.paths [dir.only.dirs [dir.walk.prefix "autoload"]]]]] {dir.create.path $path}
-	set files [dos.make83.paths [dir.only.files [dir.remove.hidden [dir.walk.prefix "autoload"]]]]
-	foreach from [list.sort [dict.keys $files]] {
-		set to [string.concat "BUILD.DOS/SNAIL/" [dict.get $files $from]]
-		file.copy $from $to
-	}
-	file.write "BUILD.DOS/SNAIL/SNAILTST.BAT" [string.join [list.quoted.only {
-		"@echo off"
-		"snail - \"test.run.suite snail.test\""
-	}] "\r\n"]
-}
