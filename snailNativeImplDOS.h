@@ -19,8 +19,9 @@ NATIVE(dos_mem_alloc,1) {
 		snailSetResult(snail,"__dpmi_allocate_dos_memory failed");
 		return snailStatusError;
 	}
-	void *addr = (void*)((block->segment) << 4);
-	memset(addr, 0, (block->paragraphs) << 4);
+	uint8_t zero = 0;
+	for (size_t i = 0; i < (block->paragraphs << 4); i++)
+		dosmemput(&zero, 1, (block->segment << 4) + i);
 	char *channelName = snailChannelMakeName(snail);
         char *error = snailChannelRegister(snail, channelName, "DOSMEM", block);
 	assert(error==NULL);

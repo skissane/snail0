@@ -793,3 +793,18 @@ test.case snail.test.t1505 {test.assert.error {proc.meta.get "foo" foo}}
 test.case snail.test.t1506 {test.assert.error {proc.meta.get proc.meta.get "foo"}}
 test.case snail.test.t1507 {test.assert.error {proc.meta.delete "proc.meta.delete" foo}}
 test.case snail.test.t1508 {test.assert.error {proc.meta.delete proc.meta.delete "foo"}}
+test.case snail.test.t1509 {
+	set rand.data [rand.hex 4]
+	set channel [dos.mem.alloc 16]
+	test.assert {token.is.symbol $channel}
+	test.assert {is.int [channel.control $channel {selector}]}
+	test.assert {is.int [channel.control $channel {segment}]}
+	test.assert.eq 16 {channel.control $channel {size}}
+	test.assert.null {channel.control $channel {byte.set 0 65}}
+	test.assert.eq 65 {channel.control $channel {byte.get 0}}
+	test.assert.eq "A" {channel.read $channel 16}
+	test.assert.null {channel.write $channel $rand.data}
+	test.assert.eq $rand.data {channel.read $channel 16}
+	test.assert.null {channel.close $channel}
+}
+test.platform.only snail.test.t1509 {djgpp}

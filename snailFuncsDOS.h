@@ -45,8 +45,8 @@ bool snailChannel_CONTROL_dosmem(snailChannel *channel, snailArray *cmdIn, char 
 			*resultOut = snailDupString("DOSMEM: 'byte.get' argument out of valid range");
 			return false;
 		}
-		uint8_t *addr = (uint8_t*)(block->segment << 4);
-		uint8_t byte = addr[off];
+		uint8_t byte = 0;
+		dosmemget((block->segment << 4) + off, 1, &byte);
 		*resultOut = snailI64ToStr(byte);
 		return true;
 	}
@@ -73,8 +73,8 @@ bool snailChannel_CONTROL_dosmem(snailChannel *channel, snailArray *cmdIn, char 
 			*resultOut = snailDupString("DOSMEM: 'byte.set' 2nd argument out of valid range");
 			return false;
 		}
-		uint8_t *addr = (uint8_t*)(block->segment << 4);
-		addr[off] = data;
+		uint8_t bdata = data;
+		dosmemput(&bdata, 1, (block->segment << 4) + off);
 		*resultOut = NULL;
 		return true;
 	}
@@ -109,12 +109,12 @@ char *snailChannel_READ_dosmem(snailChannel *channel, void *buf, size_t len, siz
 		*read = 0;
 		return NULL;
 	}
+	memset(buf, 0, len);
 	snailDosMemoryBlock *block = channel->driverInfo;
-	void *addr = (void*)(block->segment << 4);
 	int32_t blockSize = block->paragraphs << 4;
-	if (len > blockSize - 1)
-		len = blockSize - 1;
-	memcpy(buf, addr, len);
+	if (len > blockSize)
+		len = blockSize;
+	dosmemget(block->segment << 4, len, buf);
 	char *cbuf = buf;
 	cbuf[len - 1] = 0;
 	*read = len;
@@ -127,11 +127,55 @@ char *snailChannel_WRITE_dosmem(snailChannel *channel, void *buf, size_t len, si
 		return NULL;
 	}
 	snailDosMemoryBlock *block = channel->driverInfo;
-	void *addr = (void *)(block->segment << 4);
 	int32_t blockSize = block->paragraphs << 4;
 	if (len > blockSize)
 		len = blockSize;
-	memcpy(addr, buf, len);
+	dosmemput(buf, len, block->segment << 4);
 	*written = len;
 	return NULL;
 }
+
+#define SNAIL_DOS_INT_SETREG(_group,_name) do { \
+		if (strcmp(name,#_name) == 0) { \
+			regs->_group._name = value; \
+			return true; \
+		} \
+	} while (0)
+
+bool snailDosSetReg(__dpmi_regs *regs, char *name, int32_t value) {
+	SNAIL_DOS_INT_SETREG(d,edi);
+	SNAIL_DOS_INT_SETREG(d,esi);
+	SNAIL_DOS_INT_SETREG(d,ebp);
+	SNAIL_DOS_INT_SETREG(d,res);
+	SNAIL_DOS_INT_SETREG(d,ebx);
+	SNAIL_DOS_INT_SETREG(d,edx);
+	SNAIL_DOS_INT_SETREG(d,ecx);
+	SNAIL_DOS_INT_SETREG(d,eax);
+	SNAIL_DOS_INT_SETREG(x,di);
+	SNAIL_DOS_INT_SETREG(x,si);
+	SNAIL_DOS_INT_SETREG(x,bp);
+	SNAIL_DOS_INT_SETREG(x,bx);
+	SNAIL_DOS_INT_SETREG(x,dx);
+	SNAIL_DOS_INT_SETREG(x,cx);
+	SNAIL_DOS_INT_SETREG(x,ax);
+	SNAIL_DOS_INT_SETREG(x,flags);
+	SNAIL_DOS_INT_SETREG(x,es);
+	SNAIL_DOS_INT_SETREG(x,ds);
+	SNAIL_DOS_INT_SETREG(x,fs);
+	SNAIL_DOS_INT_SETREG(x,gs);
+	SNAIL_DOS_INT_SETREG(x,ip);
+	SNAIL_DOS_INT_SETREG(x,cs);
+	SNAIL_DOS_INT_SETREG(x,sp);
+	SNAIL_DOS_INT_SETREG(x,ss);
+	SNAIL_DOS_INT_SETREG(h,bl);
+	SNAIL_DOS_INT_SETREG(h,bh);
+	SNAIL_DOS_INT_SETREG(h,dl);
+	SNAIL_DOS_INT_SETREG(h,dh);
+	SNAIL_DOS_INT_SETREG(h,cl);
+	SNAIL_DOS_INT_SETREG(h,ch);
+	SNAIL_DOS_INT_SETREG(h,al);
+	SNAIL_DOS_INT_SETREG(h,ah);
+	return false;
+}
+
+#undef SNAIL_DOS_INT_SETREG
