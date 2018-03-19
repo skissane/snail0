@@ -135,7 +135,8 @@ char *snailChannel_WRITE_dosmem(snailChannel *channel, void *buf, size_t len, si
 	return NULL;
 }
 
-#define SNAIL_DOS_INT_SETREG(_group,_name) do { \
+#define SNAIL_DOS_INT_SETREG(_group,_name) \
+	do { \
 		if (strcmp(name,#_name) == 0) { \
 			regs->_group._name = value; \
 			return true; \
@@ -143,14 +144,17 @@ char *snailChannel_WRITE_dosmem(snailChannel *channel, void *buf, size_t len, si
 	} while (0)
 
 bool snailDosSetReg(__dpmi_regs *regs, char *name, int32_t value) {
-	SNAIL_DOS_INT_SETREG(d,edi);
-	SNAIL_DOS_INT_SETREG(d,esi);
-	SNAIL_DOS_INT_SETREG(d,ebp);
-	SNAIL_DOS_INT_SETREG(d,res);
-	SNAIL_DOS_INT_SETREG(d,ebx);
-	SNAIL_DOS_INT_SETREG(d,edx);
-	SNAIL_DOS_INT_SETREG(d,ecx);
-	SNAIL_DOS_INT_SETREG(d,eax);
+// Do we plan to call any 32-bit services?
+// Are there any we could call?
+// Uncomment this until we need it (if we ever do).
+// 	SNAIL_DOS_INT_SETREG(d,edi);
+// 	SNAIL_DOS_INT_SETREG(d,esi);
+// 	SNAIL_DOS_INT_SETREG(d,ebp);
+// 	SNAIL_DOS_INT_SETREG(d,res);
+// 	SNAIL_DOS_INT_SETREG(d,ebx);
+// 	SNAIL_DOS_INT_SETREG(d,edx);
+// 	SNAIL_DOS_INT_SETREG(d,ecx);
+// 	SNAIL_DOS_INT_SETREG(d,eax);
 	SNAIL_DOS_INT_SETREG(x,di);
 	SNAIL_DOS_INT_SETREG(x,si);
 	SNAIL_DOS_INT_SETREG(x,bp);
@@ -179,3 +183,44 @@ bool snailDosSetReg(__dpmi_regs *regs, char *name, int32_t value) {
 }
 
 #undef SNAIL_DOS_INT_SETREG
+
+#define SNAIL_DOS_INT_GETREG(_group,_name) \
+	snailHashTablePut(out, #_name, snailI64ToStr(regs->_group._name))
+
+void snailDosGetReg(__dpmi_regs *regs, snailHashTable *out) {
+//	See above as to why 32-bit registers are commented-out.
+// 	SNAIL_DOS_INT_GETREG(d,edi);
+// 	SNAIL_DOS_INT_GETREG(d,esi);
+// 	SNAIL_DOS_INT_GETREG(d,ebp);
+// 	SNAIL_DOS_INT_GETREG(d,res);
+// 	SNAIL_DOS_INT_GETREG(d,ebx);
+// 	SNAIL_DOS_INT_GETREG(d,edx);
+// 	SNAIL_DOS_INT_GETREG(d,ecx);
+// 	SNAIL_DOS_INT_GETREG(d,eax);
+	SNAIL_DOS_INT_GETREG(x,di);
+	SNAIL_DOS_INT_GETREG(x,si);
+	SNAIL_DOS_INT_GETREG(x,bp);
+	SNAIL_DOS_INT_GETREG(x,bx);
+	SNAIL_DOS_INT_GETREG(x,dx);
+	SNAIL_DOS_INT_GETREG(x,cx);
+	SNAIL_DOS_INT_GETREG(x,ax);
+	SNAIL_DOS_INT_GETREG(x,flags);
+	SNAIL_DOS_INT_GETREG(x,es);
+	SNAIL_DOS_INT_GETREG(x,ds);
+	SNAIL_DOS_INT_GETREG(x,fs);
+	SNAIL_DOS_INT_GETREG(x,gs);
+	SNAIL_DOS_INT_GETREG(x,ip);
+	SNAIL_DOS_INT_GETREG(x,cs);
+	SNAIL_DOS_INT_GETREG(x,sp);
+	SNAIL_DOS_INT_GETREG(x,ss);
+	SNAIL_DOS_INT_GETREG(h,bl);
+	SNAIL_DOS_INT_GETREG(h,bh);
+	SNAIL_DOS_INT_GETREG(h,dl);
+	SNAIL_DOS_INT_GETREG(h,dh);
+	SNAIL_DOS_INT_GETREG(h,cl);
+	SNAIL_DOS_INT_GETREG(h,ch);
+	SNAIL_DOS_INT_GETREG(h,al);
+	SNAIL_DOS_INT_GETREG(h,ah);
+}
+
+#undef SNAIL_DOS_INT_GETREG

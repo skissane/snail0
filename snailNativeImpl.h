@@ -1837,6 +1837,32 @@ NATIVE(to_radix_i32,2) {
 	return snailStatusOk;
 }
 
+NATIVE(from_radix_i32,2) {
+	NATIVE_ARG_MUSTCLASS(0,'Q');
+	NATIVE_ARG_MUSTINT(1);
+	int32_t radix = strtol(args[1],NULL,10);
+	if (radix < 2 || radix > 16) {
+		snailSetResult(snail,"from.radix.i32: bad radix");
+		return snailStatusError;
+	}
+	char *end = NULL;
+	char *unquoted = snailTokenUnquote(args[0]);
+	if (strlen(unquoted) == 0) {
+		free(unquoted);
+		snailSetResult(snail,"from.radix.i32: empty input");
+		return snailStatusError;
+	}
+	int32_t n = strtol(unquoted, &end, radix);
+	if (strlen(end) > 0) {
+		free(unquoted);
+		snailSetResult(snail,"from.radix.i32: junk at end of number");
+		return snailStatusError;
+	}
+	free(unquoted);
+	snailSetResultInt(snail,n);
+	return snailStatusOk;
+}
+
 NATIVE(list_shuffle,1) {
 	snailArray *list = snailUnquoteList(args[0]);
 	if (list == NULL) {

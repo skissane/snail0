@@ -23,9 +23,65 @@ NATIVE(dos_mem_alloc,1) {
 	for (size_t i = 0; i < (block->paragraphs << 4); i++)
 		dosmemput(&zero, 1, (block->segment << 4) + i);
 	char *channelName = snailChannelMakeName(snail);
-        char *error = snailChannelRegister(snail, channelName, "DOSMEM", block);
+	char *error = snailChannelRegister(snail, channelName, "DOSMEM", block);
 	assert(error==NULL);
 	snailSetResult(snail,channelName);
 	free(channelName);
+	return snailStatusOk;
+}
+
+NATIVE(dos_int86,2) {
+	NATIVE_ARG_MUSTINT(0);
+	NATIVE_ARG_MUSTCLASS(1, 'D');
+	int32_t vector = strtol(args[0],NULL,10);
+	if (vector < 0 || vector > 255) {
+		snailSetResult(snail,"dos.int86: vector out of range");
+		return snailStatusError;
+	}
+	snailHashTable *regs = snailParseDict(args[1]);
+	snailArray *names = snailHashTableKeys(regs);
+	__dpmi_regs r;
+	for (int i = 0; i < names->length; i++) {
+		char *name = names->elems[i];
+		char *value = snailHashTableGet(regs,name);
+		if (!snailIsInt(value)) {
+			snailBuffer *msg = snailBufferCreate(16);
+			snailBufferAddString(msg, "dos.int86: register ");
+			snailBufferAddString(msg,name);
+			snailBufferAddString(msg," has non-numeric value ");
+			snailBufferAddString(msg,value);
+			snailBufferAddChar(msg,0);
+			snailSetResult(snail,msg->bytes);
+			snailBufferDestroy(msg);
+			snailArrayDestroy(names,free);
+			snailHashTableDestroy(regs,free);
+			return snailStatusError;
+		}
+		int32_t v = strtol(value,NULL,10);
+		if (!snailDosSetReg(&r, name, v)) {
+			snailBuffer *msg = snailBufferCreate(16);
+			snailBufferAddString(msg, "dos.int86: unrecognised register '");
+			snailBufferAddString(msg,name);
+			snailBufferAddString(msg,"'");
+			snailBufferAddChar(msg,0);
+			snailSetResult(snail,msg->bytes);
+			snailBufferDestroy(msg);
+			snailArrayDestroy(names,free);
+			snailHashTableDestroy(regs,free);
+			return snailStatusError;
+		}
+	}
+	snailArrayDestroy(names,free);
+	snailHashTableDestroy(regs,free);
+	if (__dpmi_int(vector,&r) != 0) {
+		snailSetResult(snail,"dos.int86: __dpmi_int call failed");
+		return snailStatusError;
+	}
+	snailHashTable *out = snailHashTableCreate(16);
+	snailDosGetReg(&r, out);
+	char *quoted = snailQuoteDict(out);
+	snailHashTableDestroy(out,free);
+	snailSetResult(snail, quoted);
+	free(quoted);
 	return snailStatusOk;
 }

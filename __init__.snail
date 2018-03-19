@@ -424,3 +424,7 @@ proc list.quoted.only {$list} {
 proc platform.is.dos {} {= [platform.type] djgpp}
 proc platform.is.linux {} {= [platform.type] linux}
 proc platform.is.macos {} {= [platform.type] macos}
+
+proc hex {$hex} {
+	if {token.is.quoted $hex} then {from.radix.i32 $hex 16} else {from.radix.i32 [token.quote $hex] 16}
+}

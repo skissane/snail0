@@ -808,3 +808,29 @@ test.case snail.test.t1509 {
 	test.assert.null {channel.close $channel}
 }
 test.platform.only snail.test.t1509 {djgpp}
+test.case snail.test.t1510 {test.assert.eq 0 {from.radix.i32 "0" 2}}
+test.case snail.test.t1511 {test.assert.eq 0 {from.radix.i32 "0" 8}}
+test.case snail.test.t1512 {test.assert.eq 0 {from.radix.i32 "0" 10}}
+test.case snail.test.t1513 {test.assert.eq 0 {from.radix.i32 "0" 16}}
+test.case snail.test.t1514 {test.assert.eq 2 {from.radix.i32 "10" 2}}
+test.case snail.test.t1515 {test.assert.eq 8 {from.radix.i32 "10" 8}}
+test.case snail.test.t1516 {test.assert.eq 16 {from.radix.i32 "10" 16}}
+test.case snail.test.t1517 {test.assert.eq -2 {from.radix.i32 "-10" 2}}
+test.case snail.test.t1518 {test.assert.eq -8 {from.radix.i32 "-10" 8}}
+test.case snail.test.t1519 {test.assert.eq -16 {from.radix.i32 "-10" 16}}
+test.case snail.test.t1520 {test.assert.eq 10 {from.radix.i32 "10" 10}}
+test.case snail.test.t1521 {test.assert.eq -10 {from.radix.i32 "-10" 10}}
+test.case snail.test.t1522 {test.assert.eq -127 {from.radix.i32 "-177" 8}}
+test.case snail.test.t1523 {test.assert.eq -375 {from.radix.i32 "-177" 16}}
+test.case snail.test.t1524 {test.assert.eq -255 {from.radix.i32 "-FF" 16}}
+test.case snail.test.t1525 {test.assert.error {from.radix.i32 "0" 1}}
+test.case snail.test.t1526 {test.assert.error {from.radix.i32 "0" 17}}
+test.case snail.test.t1527 {test.assert.error {from.radix.i32 "" 10}}
+test.case snail.test.t1528 {test.assert.error {from.radix.i32 "z" 10}}
+test.case snail.test.t1529 {test.assert.error {from.radix.i32 "1f" 8}}
+test.case snail.test.t1530 {test.assert.error {from.radix.i32 10 10}}
+test.case snail.test.t1531 {test.assert.error {from.radix.i32 "10" hex}}
+test.case snail.test.t1532 {
+	puts [string.concat "Detected DOS version " [dos.version]]
+}
+test.platform.only snail.test.t1532 {djgpp}

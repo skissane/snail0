@@ -27,3 +27,10 @@ proc dos.make83.paths {$paths} {
 	}
 	pass $map
 }
+
+proc dos.version {} {
+	set r [dos.int86 [hex 21] [dict ah [hex 30]]]
+	set major [dict.get $r al]
+	set minor [dict.get $r ah]
+	string.concat $major "." $minor
+}
