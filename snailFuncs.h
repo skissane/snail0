@@ -511,7 +511,7 @@ void snailRepl(snailInterp *snail) {
 loopRepl:
 		buffer = NULL;
 		size_t n = 0;
-		ssize_t rc = getline(&buffer, &n, stdin);
+		ssize_t rc = snailReplRead(snail, &buffer, &n);
 		if (rc < 0) {
 			free(buffer);
 			goto exitRepl;
@@ -523,7 +523,7 @@ loopRepl:
 
 		char *context = snailParseGetContext(buffer);
 		if (context != NULL) {
-			buffer = snailReplContext(context, buffer);
+			buffer = snailReplContext(snail, context, buffer);
 		}
 		if (buffer == NULL)
 			goto exitRepl;
@@ -1150,7 +1150,58 @@ bool snailIsFalse(const char *str) {
 	return strcasecmp(str,"f") == 0;
 }
 
-char * snailReplContext(char *context, char *buffer) {
+ssize_t snailReplRead(snailInterp *snail, char **buffer, size_t *n) {
+	if (snail->repl->readScript == NULL) {
+		return getline(buffer, n, stdin);
+	}
+	snailStatus status = snailExec(snail, snail->repl->readScript);
+	if (status == snailStatusError) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"crash in REPL read script {");
+		snailBufferAddString(msg,snail->repl->readScript);
+		snailBufferAddString(msg,"} due to error {");
+		snailBufferAddString(msg,snail->result);
+		snailBufferAddString(msg,"}");
+		snailBufferAddChar(msg,0);
+		snailPanic(msg->bytes);
+	}
+	if (status != snailStatusOk) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"crash in REPL read script {");
+		snailBufferAddString(msg,snail->repl->readScript);
+		snailBufferAddString(msg,"} due to unexpected status");
+		snailBufferAddChar(msg,0);
+		snailPanic(msg->bytes);
+	}
+	if (snail->result[0] == 0) {
+		// EOF condition
+		snailSetResult(snail,"");
+		return -1;
+	}
+	char *text = snailTokenUnquote(snail->result);
+	if (text == NULL) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"crash in REPL read script {");
+		snailBufferAddString(msg,snail->repl->readScript);
+		snailBufferAddString(msg,"} due to returnin non-string result {");
+		snailBufferAddString(msg,snail->result);
+		snailBufferAddString(msg,"}");
+		snailBufferAddChar(msg,0);
+		snailPanic(msg->bytes);
+	}
+	snailSetResult(snail,"");
+	snailBuffer *r = snailBufferCreate(strlen(text)+2);
+	snailBufferAddString(r,text);
+	free(text);
+	snailBufferAddString(r,"\n");
+	snailBufferAddChar(r,0);
+	*buffer = snailDupString(r->bytes);
+	snailBufferDestroy(r);
+	*n = strlen(*buffer) + 1;
+	return (*n) - 1;
+}
+
+char * snailReplContext(snailInterp *snail, char *context, char *buffer) {
 	snailBuffer *b = snailBufferCreate(strlen(buffer)+1);
 	snailBufferAddString(b,buffer);
 	free(buffer);
@@ -1165,7 +1216,7 @@ char * snailReplContext(char *context, char *buffer) {
 
 		buffer = NULL;
 		size_t n = 0;
-		ssize_t rc = getline(&buffer, &n, stdin);
+		ssize_t rc = snailReplRead(snail, &buffer, &n);
 		if (rc < 0) {
 			snailBufferDestroy(b);
 			snailBufferDestroy(p);

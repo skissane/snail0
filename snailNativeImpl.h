@@ -2251,3 +2251,48 @@ NATIVE(proc_meta_delete,2) {
 	snailSetResult(snail, "");
 	return snailStatusOk;
 }
+
+NATIVE(repl_read_script_get,0) {
+	if (snail->repl->readScript == NULL) {
+		snailSetResult(snail,"{}");
+		return snailStatusOk;
+	}
+	snailBuffer *buf = snailBufferCreate(strlen(snail->repl->readScript)+3);
+	snailBufferAddChar(buf,'{');
+	snailBufferAddString(buf,snail->repl->readScript);
+	snailBufferAddChar(buf,'}');
+	snailBufferAddChar(buf,0);
+	snailSetResult(snail,buf->bytes);
+	snailBufferDestroy(buf);
+	return snailStatusOk;
+}
+
+NATIVE(repl_read_script_set,1) {
+	NATIVE_ARG_MUSTCLASS(0,'L');
+	if (strcmp(args[0],"{}") == 0) {
+		free(snail->repl->readScript);
+		snail->repl->readScript = NULL;
+	} else {
+		char *script = snailDupString(args[0]+1);
+		script[strlen(script)-1]=0;
+		snail->repl->readScript = script;
+	}
+	snailSetResult(snail,"");
+	return snailStatusOk;
+}
+
+NATIVE(repl_read,0) {
+	char *buffer = NULL;
+	size_t n = 0;
+	ssize_t r = snailReplRead(snail, &buffer, &n);
+	if (r == -1) {
+		free(buffer);
+		snailSetResult(snail,"");
+		return snailStatusOk;
+	}
+	char *quoted = snailMakeQuoted(buffer);
+	free(buffer);
+	snailSetResult(snail,quoted);
+	free(quoted);
+	return snailStatusOk;
+}

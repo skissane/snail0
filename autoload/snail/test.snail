@@ -834,3 +834,24 @@ test.case snail.test.t1532 {
 	puts [string.concat "Detected DOS version " [dos.version]]
 }
 test.platform.only snail.test.t1532 {djgpp}
+test.case snail.test.t1533 {
+	set saved [repl.read.script.get]
+	test.assert {token.is.list $saved}
+	test.assert.eq $saved {repl.read.script.get}
+	set value [rand.hex 8]
+	set script [list pass $value]
+	test.assert.null {repl.read.script.set $script}
+	test.assert.eq $script {repl.read.script.get}
+	test.assert.eq [string.concat $value "\n"] {repl.read}
+	test.assert.eq [string.concat $value "\n"] {repl.read}
+
+	set script {null}
+	test.assert.null {repl.read.script.set $script}
+	test.assert.eq $script {repl.read.script.get}
+	test.assert.null {repl.read}
+	test.assert.null {repl.read}
+
+	test.assert.null {repl.read.script.set $saved}
+	test.assert.eq $saved {repl.read.script.get}
+}
+test.case snail.test.t1534 {test.assert.error {repl.read.script.set [null]}}

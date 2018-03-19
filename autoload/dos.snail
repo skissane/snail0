@@ -34,3 +34,40 @@ proc dos.version {} {
 	set minor [dict.get $r ah]
 	string.concat $major "." $minor
 }
+
+proc dos.key.installed {} {
+	set r [dos.int86 [hex 2f] [dict ax [hex 4800]]]
+	not [= 0 [dict.get $r al]]
+}
+
+proc dos.key.read {} {
+	set mem.buf [dos.mem.alloc 130]
+	set mem.seg [channel.control $mem.buf {segment}]
+	channel.control $mem.buf [list byte.set 0 [hex 80]]
+	set result [dos.int86 [hex 2f] [dict ax [hex 4810] ds $mem.seg]]
+	if {not [= [dict.get $result ax] 0]} then {
+		channel.close $mem.buf
+		error "dos.key.read: DOSKEY call (INT 0x2F,AX=0x4810) failed"
+	}
+	set bytes [channel.control $mem.buf {byte.get 1}]
+	if {= 0 $bytes} then {
+		channel.close $mem.buf
+		puts ""
+		return ""
+	}
+	channel.control $mem.buf [list byte.set 0 [hex 20]]
+	channel.control $mem.buf [list byte.set 1 [hex 20]]
+	channel.control $mem.buf [list byte.set [+ $bytes 2] 0]
+	set read [channel.read $mem.buf 144]
+	channel.close $mem.buf
+	puts ""
+	set r [string.skip $read 2]
+	if {= $r [string.chr 26]} then {return [null]}
+	pass $r
+}
+
+proc dos.snail.init {} {
+	if {dos.key.installed} then {
+		repl.read.script.set {dos.key.read}
+	}
+}

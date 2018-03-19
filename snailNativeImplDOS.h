@@ -41,6 +41,7 @@ NATIVE(dos_int86,2) {
 	snailHashTable *regs = snailParseDict(args[1]);
 	snailArray *names = snailHashTableKeys(regs);
 	__dpmi_regs r;
+	memset(&r,0,sizeof(__dpmi_regs));
 	for (int i = 0; i < names->length; i++) {
 		char *name = names->elems[i];
 		char *value = snailHashTableGet(regs,name);

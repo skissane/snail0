@@ -97,6 +97,7 @@ typedef struct snailReplState {
 	int historyMax;
 	snailArray *history;
 	char *prompt;
+	char *readScript;
 } snailReplState;
 
 typedef struct snailParseTool {
