@@ -77,6 +77,7 @@ typedef struct snailCommand {
 	char *args;
 	char *script;
 	snailNative *native;
+	snailHashTable *meta;
 } snailCommand;
 
 typedef struct snailInterp {

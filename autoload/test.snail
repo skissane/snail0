@@ -1,11 +1,25 @@
 proc test.case {$name $body} {proc $name {} $body}
 
+proc test.platform.only {$case $platforms} {
+	proc.meta.set $case test.platform.only $platforms
+}
+
+proc test.platform.supported {$case} {
+	set platforms [proc.meta.get $case test.platform.only]
+	if {is.null $platforms} then {return t}
+	list.contains $platforms [platform.type]
+}
+
 proc test.run.case {$name} {
-	set start [time.now]
-	set caught [null]
-	catch {eval [list $name]} e {set caught $e}
-	set duration [- [time.now] $start]
-	set r [list [if {is.null $caught} then {pass PASS} else {pass FAIL}] $name $duration [nvl $caught ""]]
+	if {test.platform.supported $name} then {
+		set start [time.now]
+		set caught [null]
+		catch {eval [list $name]} e {set caught $e}
+		set duration [- [time.now] $start]
+		set r [list [if {is.null $caught} then {pass PASS} else {pass FAIL}] $name $duration [nvl $caught ""]]
+	} else {
+		set r [list SKIP $name 0 [string.concat "only runs on platforms " [proc.meta.get $name test.platform.only]]]
+	}
 	puts [string.concat "|" [token.list.body $r]]
 	pass $r
 }

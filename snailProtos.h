@@ -117,6 +117,7 @@ void snailChannelSetup_DIRENT(snailInterp *snail);
 void snailChannelSetup_STDIO(snailInterp *snail);
 void snailClearResult(snailInterp *snail);
 void snailDestroy(snailInterp *snail);
+void snailDestroyCommand(snailCommand *cmd);
 void snailExit(snailInterp *snail, int exitCode);
 void snailHashCellDestroy(snailHashCell *cell, snailDestructor *destructor);
 void snailHashTableDestroy(snailHashTable *ht, snailDestructor *destructor);

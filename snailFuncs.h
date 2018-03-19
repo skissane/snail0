@@ -658,6 +658,10 @@ snailInterp *snailCreate(void) {
 
 void snailDestroyCommand(snailCommand *cmd) {
 	free(cmd->name);
+	free(cmd->args);
+	free(cmd->script);
+	if (cmd->meta != NULL)
+		snailHashTableDestroy(cmd->meta,free);
 	free(cmd);
 }
 

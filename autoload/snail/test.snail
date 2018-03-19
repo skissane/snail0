@@ -755,3 +755,41 @@ test.case snail.test.t1490 {test.assert.error {channel.control stdout ""}}
 test.case snail.test.t1491 {test.assert.error {channel.control stdout {}}}
 test.case snail.test.t1492 {test.assert.error {channel.control stdout ""}}
 test.case snail.test.t1493 {test.assert.error {channel.control [token.unquote [string.concat "non.existent.channel." [rand.hex 8]]] {}}}
+test.case snail.test.t1494 {test.assert.error {dos.mem.alloc 0}}
+test.platform.only snail.test.t1494 {djgpp}
+test.case snail.test.t1495 {test.assert.null {channel.close [dos.mem.alloc 1]}}
+test.platform.only snail.test.t1495 {djgpp}
+test.case snail.test.t1496 {test.assert.error {proc.meta.keys {}}}
+test.case snail.test.t1497 {test.assert.error {proc.meta.keys [token.unquote [string.concat "nonexistent.proc." [rand.hex 8]]]}}
+test.case snail.test.t1498 {test.assert.error {proc.meta.get [token.unquote [string.concat "nonexistent.proc." [rand.hex 8]]] foo}}
+test.case snail.test.t1499 {test.assert.error {proc.meta.set [token.unquote [string.concat "nonexistent.proc." [rand.hex 8]]] foo 32}}
+test.case snail.test.t1500 {test.assert.null {proc.meta.get proc.meta.get [token.unquote [string.concat "nonexistent.meta." [rand.hex 8]]]}}
+test.case snail.test.t1501 {
+	set temp.proc.name [token.unquote [string.concat "temp.proc." [rand.hex 8]]]
+	set temp.meta.name1 [token.unquote [string.concat "temp.meta." [rand.hex 8]]]
+	set temp.meta.name2 [token.unquote [string.concat "temp.meta." [rand.hex 8]]]
+	set value1 [string.concat "value1." [rand.hex 8]]
+	set value2 [string.concat "value2." [rand.hex 8]]
+	proc $temp.proc.name {} {}
+	test.assert.eq {} {proc.meta.keys $temp.proc.name}
+	test.assert.null {proc.meta.get $temp.proc.name $temp.meta.name1}
+	test.assert.null {proc.meta.delete $temp.proc.name $temp.meta.name1}
+	test.assert.null {proc.meta.set $temp.proc.name $temp.meta.name1 $value1}
+	test.assert.eq [list $temp.meta.name1] {proc.meta.keys $temp.proc.name}
+	test.assert.eq $value1 {proc.meta.get $temp.proc.name $temp.meta.name1}
+	test.assert.null {proc.meta.get $temp.proc.name $temp.meta.name2}
+	test.assert.null {proc.meta.set $temp.proc.name $temp.meta.name2 $value2}
+	test.assert.eq $value2 {proc.meta.get $temp.proc.name $temp.meta.name2}
+	test.assert.null {proc.meta.delete $temp.proc.name $temp.meta.name2}
+	test.assert.null {proc.meta.delete $temp.proc.name $temp.meta.name1}
+	test.assert.eq {} {proc.meta.keys $temp.proc.name}
+	test.assert.null {proc.meta.get $temp.proc.name $temp.meta.name1}
+	proc.delete $temp.proc.name
+}
+test.case snail.test.t1502 {test.assert.error {proc.meta.delete [token.unquote [string.concat "nonexistent.proc." [rand.hex 8]]] foo}}
+test.case snail.test.t1503 {test.assert.error {proc.meta.set "foo" bar baz}}
+test.case snail.test.t1504 {test.assert.error {proc.meta.set proc.meta.set "foo" bar}}
+test.case snail.test.t1505 {test.assert.error {proc.meta.get "foo" foo}}
+test.case snail.test.t1506 {test.assert.error {proc.meta.get proc.meta.get "foo"}}
+test.case snail.test.t1507 {test.assert.error {proc.meta.delete "proc.meta.delete" foo}}
+test.case snail.test.t1508 {test.assert.error {proc.meta.delete proc.meta.delete "foo"}}

@@ -1136,6 +1136,8 @@ NATIVE(info_about_cmd,1) {
 	}
 	if (cmd->native != NULL)
 		snailHashTablePut(ht,"native",snailDupString("t"));
+	if (cmd->meta != NULL)
+		snailHashTablePut(ht,"meta",snailQuoteDict(cmd->meta));
 	char *quoted = snailQuoteDict(ht);
 	snailHashTableDestroy(ht,free);
 	snailSetResult(snail,quoted);
@@ -1652,10 +1654,7 @@ NATIVE(proc_delete,1) {
 		return snailStatusError;
 	}
 	snailHashTableDelete(snail->commands,args[0]);
-	free(cmd->name);
-	free(cmd->args);
-	free(cmd->script);
-	free(cmd);
+	snailDestroyCommand(cmd);
 	snailSetResult(snail,"");
 	return snailStatusOk;
 }
@@ -2134,4 +2133,95 @@ NATIVE(channel_control,2) {
 	snailArrayDestroy(cmd,free);
 	free(result);
 	return rc ? snailStatusOk : snailStatusError;
+}
+
+NATIVE(proc_meta_keys,1) {
+	NATIVE_ARG_MUSTCLASS(0,'U');
+	snailCommand *cmd = snailHashTableGet(snail->commands, args[0]);
+	if (cmd == NULL) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"proc.meta.keys: proc not found: ");
+		snailBufferAddString(msg,args[0]);
+		snailBufferAddChar(msg,0);
+		snailSetResult(snail,msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+	if (cmd->meta == NULL) {
+		snailSetResult(snail,"{}");
+		return snailStatusOk;
+	}
+	snailArray *keys = snailHashTableKeys(cmd->meta);
+	char *result = snailQuoteList(keys);
+	snailArrayDestroy(keys, free);
+	snailSetResult(snail, result);
+	free(result);
+	return snailStatusOk;
+}
+
+NATIVE(proc_meta_set,3) {
+	NATIVE_ARG_MUSTCLASS(0,'U');
+	NATIVE_ARG_MUSTCLASS(1,'U');
+	snailCommand *cmd = snailHashTableGet(snail->commands, args[0]);
+	if (cmd == NULL) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"proc.meta.set: proc not found: ");
+		snailBufferAddString(msg,args[0]);
+		snailBufferAddChar(msg,0);
+		snailSetResult(snail,msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+	if (cmd->meta == NULL) {
+		cmd->meta = snailHashTableCreate(8);
+	}
+	free(snailHashTablePut(cmd->meta, args[1], snailDupString(args[2])));
+	snailSetResult(snail, "");
+	return snailStatusOk;
+}
+
+NATIVE(proc_meta_get,2) {
+	NATIVE_ARG_MUSTCLASS(0,'U');
+	NATIVE_ARG_MUSTCLASS(1,'U');
+	snailCommand *cmd = snailHashTableGet(snail->commands, args[0]);
+	if (cmd == NULL) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"proc.meta.get: proc not found: ");
+		snailBufferAddString(msg,args[0]);
+		snailBufferAddChar(msg,0);
+		snailSetResult(snail,msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+	if (cmd->meta == NULL) {
+		snailSetResult(snail,"");
+		return snailStatusOk;
+	}
+	char *r = snailHashTableGet(cmd->meta, args[1]);
+	if (r == NULL) {
+		snailSetResult(snail,"");
+		return snailStatusOk;
+	}
+	snailSetResult(snail,r);
+	return snailStatusOk;
+}
+
+NATIVE(proc_meta_delete,2) {
+	NATIVE_ARG_MUSTCLASS(0,'U');
+	NATIVE_ARG_MUSTCLASS(1,'U');
+	snailCommand *cmd = snailHashTableGet(snail->commands, args[0]);
+	if (cmd == NULL) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg,"proc.meta.delete: proc not found: ");
+		snailBufferAddString(msg,args[0]);
+		snailBufferAddChar(msg,0);
+		snailSetResult(snail,msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+	if (cmd->meta != NULL) {
+		free(snailHashTableDelete(cmd->meta, args[1]));
+	}
+	snailSetResult(snail, "");
+	return snailStatusOk;
 }
