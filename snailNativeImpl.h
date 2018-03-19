@@ -2122,3 +2122,16 @@ NATIVE(sys_run,1) {
 	free(cmd);
 	return snailStatusOk;
 }
+
+NATIVE(channel_control,2) {
+	NATIVE_ARG_MUSTCLASS(0,'U');
+	NATIVE_ARG_MUSTCLASS(1,'L');
+	char *channelName = args[0];
+	snailArray *cmd = snailUnquoteList(args[1]);
+	char *result = NULL;
+	bool rc = snailChannelControl(snail, channelName, cmd, &result);
+	snailSetResult(snail,result == NULL ? "" : result);
+	snailArrayDestroy(cmd,free);
+	free(result);
+	return rc ? snailStatusOk : snailStatusError;
+}

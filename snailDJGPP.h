@@ -1,5 +1,12 @@
 /***---DJGPP COMPATIBILITY---***/
 
+/***---DOS: TYPES---***/
+typedef struct snailDosMemoryBlock {
+	int32_t paragraphs;
+	int32_t segment;
+	int32_t selector;
+} snailDosMemoryBlock;
+
 // DJGPP doesn't have these.
 // For now just make them do-nothing stubs.
 static inline void flockfile(FILE *file) {}

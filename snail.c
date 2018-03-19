@@ -19,6 +19,9 @@
 
 /***---DJGPP COMPATIBILITY---***/
 #ifdef __DJGPP__
+#include <sys/movedata.h>
+#include <dpmi.h>
+#include <go32.h>
 #include "snailDJGPP.h"
 #endif
 
@@ -35,12 +38,18 @@ static const char snailInitScript[] = {
 
 /***---PROTOTYPES---***/
 #include "snailProtos.h"
+#ifdef __DJGPP__
+#	include "snailProtosDOS.h"
+#endif
 
 /***---NATIVES: PROTOTYPES---***/
 #define NATIVE(_name, _arity) \
 	snailStatus snailNative_##_name(snailInterp *snail, char *cmdName, int argCount, char **args)
 
 #include "snailNativeProtos.h"
+#ifdef __DJGPP__
+#	include "snailNativeProtosDOS.h"
+#endif
 
 /***---NATIVES: REGISTER---***/
 #undef NATIVE
@@ -49,6 +58,9 @@ static const char snailInitScript[] = {
 
 void snailRegisterNatives(snailInterp *snail) {
 #	include "snailNativeProtos.h"
+#	ifdef __DJGPP__
+#		include "snailNativeProtosDOS.h"
+#	endif
 }
 
 /***---NATIVES: IMPLEMENT---***/
@@ -56,8 +68,16 @@ void snailRegisterNatives(snailInterp *snail) {
 #define NATIVE(_name, _arity) \
 	snailStatus snailNative_##_name(snailInterp *snail, char *cmdName, int argCount, char **args)
 #include "snailNativeImpl.h"
+#ifdef __DJGPP__
+#	include "snailNativeImplDOS.h"
+#endif
 
-/***---FUNCTIONS---***/
+/***---FUNCTIONS: PLATFORM SPECIFIC---***/
+#ifdef __DJGPP__
+#	include "snailFuncsDOS.h"
+#endif
+
+/***---FUNCTIONS: PLATFORM GENERIC---***/
 #include "snailFuncsChannel.h"
 #include "snailFuncs.h"
 

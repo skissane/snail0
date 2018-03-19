@@ -1,8 +1,10 @@
+
 /***---PROTOTYPES---***/
 bool channelIsProtected(char *channelName);
 bool snailArgCountExactly(snailInterp *snail, char *cmdName, int must, int actual);
 bool snailArgCountMaximum(snailInterp *snail, char *cmdName, int maximum, int actual);
 bool snailArgCountMinimum(snailInterp *snail, char *cmdName, int minimum, int actual);
+bool snailChannelControl(snailInterp *snail, char *channelName, snailArray *cmdIn, char **resultOut);
 bool snailCopyFile(FILE *from, FILE *to);
 bool snailIsBlank(const char *str);
 bool snailIsBool(const char *str);

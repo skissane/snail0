@@ -21,6 +21,7 @@ typedef char * snailChannel_OPEN (snailChannel *channel, void *driverArg);
 typedef char * snailChannel_CLOSE (snailChannel *channel);
 typedef char * snailChannel_FLUSH (snailChannel *channel);
 typedef char * snailChannel_GETLINE (snailChannel *channel, char **bufOut);
+typedef bool snailChannel_CONTROL (snailChannel *channel, snailArray *cmdIn, char **resultOut);
 
 typedef struct snailChannelDriver {
 	char *name;
@@ -30,6 +31,7 @@ typedef struct snailChannelDriver {
 	snailChannel_CLOSE *f_CLOSE;
 	snailChannel_FLUSH *f_FLUSH;
 	snailChannel_GETLINE *f_GETLINE;
+	snailChannel_CONTROL *f_CONTROL;
 } snailChannelDriver;
 
 typedef struct snailChannel {

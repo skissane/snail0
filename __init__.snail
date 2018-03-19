@@ -420,3 +420,7 @@ proc list.quoted.only {$list} {
 	}
 	pass $r
 }
+
+proc platform.is.dos {} {= [platform.type] djgpp}
+proc platform.is.linux {} {= [platform.type] linux}
+proc platform.is.macos {} {= [platform.type] macos}

@@ -2,6 +2,9 @@
 void snailChannelSetup(snailInterp *snail) {
 	snailChannelSetup_STDIO(snail);
 	snailChannelSetup_DIRENT(snail);
+#ifdef __DJGPP__
+	snailChannelSetup_DOSMEM(snail);
+#endif
 }
 
 /***---CHANNEL DRIVER FUNCTIONS---***/
@@ -135,6 +138,19 @@ char *snailChannelGetLine(snailInterp *snail, char *channelName, char **bufOut) 
 		return snailChannelNotSupported(channelName,"GETLINE");
 	}
 	return channel->driver->f_GETLINE(channel, bufOut);
+}
+
+bool snailChannelControl(snailInterp *snail, char *channelName, snailArray *cmdIn, char **resultOut) {
+	snailChannel *channel = snailHashTableGet(snail->channels,channelName);
+	if (channel == NULL) {
+		*resultOut = snailChannelNotFound(channelName);
+		return false;
+	}
+	if (channel->driver->f_CONTROL == NULL) {
+		*resultOut = snailChannelNotSupported(channelName,"CONTROL");
+		return false;
+	}
+	return channel->driver->f_CONTROL(channel, cmdIn, resultOut);
 }
 
 /***---ERROR REPORTING FUNCTIONS---***/

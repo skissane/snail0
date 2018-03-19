@@ -750,3 +750,8 @@ test.case snail.test.t1485 {test.assert {not [= 0 [sys.run "./snail - \"sys.exit
 test.case snail.test.t1486 {test.assert.error {sys.run {}}}
 test.case snail.test.t1487 {test.assert.error {channel.close stdprn}}
 test.case snail.test.t1488 {test.assert.error {channel.close stdaux}}
+test.case snail.test.t1489 {test.assert.error {channel.control "stdout" {}}}
+test.case snail.test.t1490 {test.assert.error {channel.control stdout ""}}
+test.case snail.test.t1491 {test.assert.error {channel.control stdout {}}}
+test.case snail.test.t1492 {test.assert.error {channel.control stdout ""}}
+test.case snail.test.t1493 {test.assert.error {channel.control [token.unquote [string.concat "non.existent.channel." [rand.hex 8]]] {}}}
