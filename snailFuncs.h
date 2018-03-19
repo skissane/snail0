@@ -668,6 +668,14 @@ void snailDestroyCommand(snailCommand *cmd) {
 void snailDestroy(snailInterp *snail) {
 	if (snail == NULL)
 		return;
+	if (snail->atExit != NULL) {
+		for (int i = 0; i < snail->atExit->length; i++) {
+			snailStatus ss = snailExec(snail,snail->atExit->elems[i]);
+			if (ss != snailStatusOk) {
+				printf("error: exit handler {%s} failed with result: %s\n", (char*)(snail->atExit->elems[i]), snail->result);
+			}
+		}
+	}
 	free(snail->result);
 	snailArrayDestroy(snail->frames,(void*)snailCallFrameDestroy);
 	snailHashTableDestroy(snail->globals,free);
@@ -675,6 +683,8 @@ void snailDestroy(snailInterp *snail) {
 	snailReplStateDestroy(snail->repl);
 	snailHashTableDestroy(snail->channels, (void*)snailChannelClose);
 	snailHashTableDestroy(snail->channelDrivers, (void*)snailChannelDriverDestroy);
+	if (snail->atExit != NULL)
+		snailArrayDestroy(snail->atExit,free);
 	free(snail);
 }
 
@@ -1899,6 +1909,7 @@ void snailExit(snailInterp *snail, int exitCode) {
 		fprintf(stdout,"NOTICE: Exit requested with code %d; refused since noExit flag is set\n", exitCode);
 	}
 	else {
+		snailDestroy(snail);
 		exit(exitCode);
 	}
 }

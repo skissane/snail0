@@ -855,3 +855,29 @@ test.case snail.test.t1533 {
 	test.assert.eq $saved {repl.read.script.get}
 }
 test.case snail.test.t1534 {test.assert.error {repl.read.script.set [null]}}
+test.case snail.test.t1535 {
+	test.assert {token.is.list [sys.at.exit.list]}
+	set value1 [rand.hex 4]
+	set script1 [list pass $value1]
+	set value2 [rand.hex 4]
+	set script2 [list pass $value2]
+	test.assert.not {list.contains [sys.at.exit.list] $script1}
+	test.assert.not {list.contains [sys.at.exit.list] $script2}
+	test.assert.null {sys.at.exit $script1}
+	test.assert {list.contains [sys.at.exit.list] $script1}
+	test.assert.not {list.contains [sys.at.exit.list] $script2}
+	test.assert.null {sys.at.exit $script2}
+	test.assert {list.contains [sys.at.exit.list] $script1}
+	test.assert {list.contains [sys.at.exit.list] $script2}
+	test.assert.error {sys.at.exit.remove [list.length [sys.at.exit.list]]}
+	test.assert.null {sys.at.exit.remove [list.find [sys.at.exit.list] $script1]}
+	test.assert.not {list.contains [sys.at.exit.list] $script1}
+	test.assert {list.contains [sys.at.exit.list] $script2}
+	test.assert.null {sys.at.exit.remove [list.find [sys.at.exit.list] $script2]}
+	test.assert.not {list.contains [sys.at.exit.list] $script1}
+	test.assert.not {list.contains [sys.at.exit.list] $script2}
+}
+test.case snail.test.t1536 {test.assert.error {sys.at.exit ""}}
+test.case snail.test.t1537 {test.assert.error {sys.at.exit.remove {}}}
+test.case snail.test.t1538 {test.assert.error {sys.at.exit.remove -1}}
+test.case snail.test.t1539 {test.assert.error {sys.at.exit.remove [list.length [sys.at.exit.list]]}}

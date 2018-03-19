@@ -430,3 +430,5 @@ proc hex {$hex} {
 }
 
 if {platform.is.dos} then {dos.snail.init}
+
+if {file.exists "__auto__.snail"} then {file.run "__auto__.snail"}

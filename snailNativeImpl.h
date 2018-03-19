@@ -2296,3 +2296,54 @@ NATIVE(repl_read,0) {
 	free(quoted);
 	return snailStatusOk;
 }
+
+NATIVE(sys_at_exit,1) {
+	NATIVE_ARG_MUSTCLASS(0,'L');
+	char *script = snailDupString(args[0]+1);
+	script[strlen(script)-1]=0;
+	if (snail->atExit == NULL)
+		snail->atExit = snailArrayCreate(4);
+	snailArrayAdd(snail->atExit,script);
+	snailSetResult(snail,"");
+	return snailStatusOk;
+}
+
+NATIVE(sys_at_exit_list,0) {
+	snailBuffer *r = snailBufferCreate(64);
+	snailBufferAddChar(r,'{');
+	if (snail->atExit != NULL)
+		for (int32_t i = 0; i < snail->atExit->length; i++) {
+			if (r->length > 1)
+				snailBufferAddChar(r,' ');
+			snailBufferAddChar(r,'{');
+			snailBufferAddString(r,snail->atExit->elems[i]);
+			snailBufferAddChar(r,'}');
+		}
+	snailBufferAddChar(r,'}');
+	snailBufferAddChar(r,0);
+	snailSetResult(snail, r->bytes);
+	snailBufferDestroy(r);
+	return snailStatusOk;
+}
+
+NATIVE(sys_at_exit_remove,1) {
+	NATIVE_ARG_MUSTINT(0);
+	int32_t off = strtol(args[0],NULL,10);
+	if (off < 0 || snail->atExit == NULL || off >= snail->atExit->length) {
+		snailSetResult(snail,"sys.at.exit.remove: provided offset is out of range");
+		return snailStatusError;
+	}
+	if (snail->atExit->length == 1) {
+		snailArrayDestroy(snail->atExit,free);
+		snail->atExit = NULL;
+	} else {
+		snailArray *copy = snailArrayCreate(snail->atExit->allocated);
+		for (int32_t i = 0; i < snail->atExit->length; i++)
+			if (i != off)
+				snailArrayAdd(copy,snailDupString(snail->atExit->elems[i]));
+		snailArrayDestroy(snail->atExit,free);
+		snail->atExit = copy;
+	}
+	snailSetResult(snail,"");
+	return snailStatusOk;
+}

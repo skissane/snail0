@@ -91,6 +91,7 @@ typedef struct snailInterp {
 	int64_t startupTime;
 	int64_t autoId;
 	bool noExit;
+	snailArray *atExit;
 } snailInterp;
 
 typedef struct snailReplState {
