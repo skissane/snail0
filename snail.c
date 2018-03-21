@@ -98,11 +98,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	else {
-		for (int i = 1; argv[i] != NULL; i++) {
-			rc = snailRunFile(snail, argv[i]);
-			if (rc != 0)
-				break;
-		}
+		rc = snailRunFile(snail, argv[1]);
 	}
 	snailDestroy(snail);
 	return rc;
