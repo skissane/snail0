@@ -124,6 +124,7 @@ NATIVE(sub, VARIADIC);
 NATIVE(sys_at_exit,1);
 NATIVE(sys_at_exit_list,0);
 NATIVE(sys_at_exit_remove,1);
+NATIVE(sys_environ,0);
 NATIVE(sys_exit,VARIADIC);
 NATIVE(sys_no_exit,1);
 NATIVE(sys_run,1);

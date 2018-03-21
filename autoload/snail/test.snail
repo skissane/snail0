@@ -916,3 +916,4 @@ test.case snail.test.t1546 {
 	test.assert.not {file.exists $file.name}
 }
 test.case snail.test.t1547 {test.assert.eq {"0" "1" "10" "12" "31" "88" "9" 0 1 9 10 12 31 88} {list.sort {0 "0" 10 "10" 12 "12" 31 "31" 88 "88" 9 "9" 1 "1"}}}
+test.case snail.test.t1548 {test.assert {token.is.dict [sys.environ]}}

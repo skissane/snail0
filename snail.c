@@ -17,6 +17,8 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+extern char **environ;
+
 /***---DJGPP COMPATIBILITY---***/
 #ifdef __DJGPP__
 #include <sys/movedata.h>

@@ -385,7 +385,10 @@ NATIVE(var_get, 1) {
 
 NATIVE(var_del, 1) {
 	snailCallFrame *frame = snail->frames->elems[snail->frames->length-1];
-	snailSetResultBool(snail,snailHashTableDelete(frame->vars, args[0]) != NULL);
+	char *value = snailHashTableDelete(frame->vars, args[0]);
+	bool got = value != NULL;
+	free(value);
+	snailSetResultBool(snail,got);
 	return snailStatusOk;
 }
 
@@ -2352,5 +2355,34 @@ NATIVE(sys_at_exit_remove,1) {
 		snail->atExit = copy;
 	}
 	snailSetResult(snail,"");
+	return snailStatusOk;
+}
+
+NATIVE(sys_environ,0) {
+	char **ptr = environ;
+	snailBuffer *buf = snailBufferCreate(256);
+	snailBufferAddString(buf,"%{");
+	for (int i = 0; ptr[i] != NULL; i++) {
+		if (strchr(ptr[i],'=') == NULL)
+			continue;
+		char *key = snailDupString(ptr[i]);
+		char *value = strchr(key,'=');
+		*value = 0;
+		value++;
+		if (buf->length > 2)
+			snailBufferAddChar(buf,' ');
+		char *qkey = snailMakeQuoted(key);
+		char *qvalue = snailMakeQuoted(value);
+		free(key);
+		snailBufferAddString(buf,qkey);
+		snailBufferAddChar(buf,' ');
+		snailBufferAddString(buf,qvalue);
+		free(qkey);
+		free(qvalue);
+	}
+	snailBufferAddChar(buf,'}');
+	snailBufferAddChar(buf,0);
+	snailSetResult(snail,buf->bytes);
+	snailBufferDestroy(buf);
 	return snailStatusOk;
 }
