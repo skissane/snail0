@@ -39,6 +39,7 @@ NATIVE(frame_cmd_up,1);
 NATIVE(frame_cmds,0);
 NATIVE(frame_count,0);
 NATIVE(from_radix_i32,2);
+NATIVE(global_delete, 1);
 NATIVE(global_get, 1);
 NATIVE(global_set, 2);
 NATIVE(gt, 2);

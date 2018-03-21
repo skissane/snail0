@@ -557,7 +557,7 @@ int snailRunFile(snailInterp *snail, char *fileName) {
 		fprintf(stderr, "error: unable to read %s\n", fileName);
 		return 1;
 	}
-	snailStatus status = snailExec(snail, script);
+	snailStatus status = snailExec(snail, snailStripShebang(script));
 	if(status == snailStatusError) {
 		fprintf(stderr, "error: %s\n", snailGetResult(snail));
 		return 1;
@@ -1926,4 +1926,12 @@ char *snailQuoteArgv(char **argv) {
 	char *result = snailQuoteList(args);
 	snailArrayDestroy(args,free);
 	return result;
+}
+
+char *snailStripShebang(char *script) {
+	if (script[0] != '#' || script[1] != '!')
+		return script;
+	while (script[0] != '\n' && script[0] != 0)
+		script++;
+	return script;
 }

@@ -722,7 +722,7 @@ NATIVE(file_run,1) {
 		snailBufferDestroy(msg);
 		return snailStatusError;
 	}
-	snailStatus status = snailExec(snail, script);
+	snailStatus status = snailExec(snail, snailStripShebang(script));
 	free(script);
 	return status;
 }
@@ -1148,6 +1148,13 @@ NATIVE(info_about_cmd,1) {
 NATIVE(global_set, 2) {
 	NATIVE_ARG_MUSTCLASS(0,'U');
 	free(snailHashTablePut(snail->globals,args[0],args[1]));
+	snailSetResult(snail,"");
+	return snailStatusOk;
+}
+
+NATIVE(global_delete, 1) {
+	NATIVE_ARG_MUSTCLASS(0,'U');
+	free(snailHashTableDelete(snail->globals,args[0]));
 	snailSetResult(snail,"");
 	return snailStatusOk;
 }

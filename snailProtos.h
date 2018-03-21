@@ -55,6 +55,7 @@ char *snailQuoteList(snailArray *list);
 char *snailReadFile(const char *fileName);
 char *snailReplContext(snailInterp *snail, char *context, char *buffer);
 char *snailStringReplace(char *target, char *find, char *sub);
+char *snailStripShebang(char *script);
 char *snailTokenNormalize(char *script);
 char *snailTokenQuote(char *script);
 char *snailTokenUnquote(char *script);

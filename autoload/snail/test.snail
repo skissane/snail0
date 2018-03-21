@@ -777,6 +777,8 @@ test.case snail.test.t1501 {
 	test.assert.null {proc.meta.set $temp.proc.name $temp.meta.name1 $value1}
 	test.assert.eq [list $temp.meta.name1] {proc.meta.keys $temp.proc.name}
 	test.assert.eq $value1 {proc.meta.get $temp.proc.name $temp.meta.name1}
+	test.assert {dict.has [dict.get [info.about.cmd $temp.proc.name] meta] $temp.meta.name1}
+	test.assert.eq $value1 {dict.get [dict.get [info.about.cmd $temp.proc.name] meta] $temp.meta.name1}
 	test.assert.null {proc.meta.get $temp.proc.name $temp.meta.name2}
 	test.assert.null {proc.meta.set $temp.proc.name $temp.meta.name2 $value2}
 	test.assert.eq $value2 {proc.meta.get $temp.proc.name $temp.meta.name2}
@@ -885,3 +887,32 @@ test.case snail.test.t1540 {test.assert {token.is.list [global.get sys.args]}}
 test.case snail.test.t1541 {test.assert.not {> 0 [list.length [global.get sys.args]]}}
 test.case snail.test.t1542 {test.assert {token.is.quoted [list.at [global.get sys.args] 0]}}
 test.case snail.test.t1543 {test.assert {list.contains [info.globals] sys.args}}
+test.case snail.test.t1544 {
+	set file.name [string.concat [rand.hex 4] ".tmp"]
+	set global.name [token.unquote [string.concat "test.global." [rand.hex 4]]]
+	set value [rand.hex 8]
+	set script [string.concat "#!shebang\n" [token.list.body [list global.set $global.name $value]]]
+	test.assert.null {file.write $file.name $script}
+	test.assert.null {global.get $global.name}
+	test.assert.not {list.contains [info.globals] $global.name}
+	test.assert.null {file.run $file.name}
+	test.assert {list.contains [info.globals] $global.name}
+	test.assert.eq $value {global.get $global.name}
+	test.assert.null {global.delete $global.name}
+	test.assert.not {list.contains [info.globals] $global.name}
+	test.assert.null {global.get $global.name}
+	test.assert {file.exists $file.name}
+	test.assert.null {file.delete $file.name}
+	test.assert.not {file.exists $file.name}
+}
+test.case snail.test.t1545 {test.assert.error {global.delete {}}}
+test.case snail.test.t1546 {
+	set file.name [string.concat [rand.hex 4] ".tmp"]
+	set script "#invalid_shebang"
+	test.assert.null {file.write $file.name $script}
+	test.assert.error {file.run $file.name}
+	test.assert {file.exists $file.name}
+	test.assert.null {file.delete $file.name}
+	test.assert.not {file.exists $file.name}
+}
+test.case snail.test.t1547 {test.assert.eq {"0" "1" "10" "12" "31" "88" "9" 0 1 9 10 12 31 88} {list.sort {0 "0" 10 "10" 12 "12" 31 "31" 88 "88" 9 "9" 1 "1"}}}
