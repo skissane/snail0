@@ -881,3 +881,7 @@ test.case snail.test.t1536 {test.assert.error {sys.at.exit ""}}
 test.case snail.test.t1537 {test.assert.error {sys.at.exit.remove {}}}
 test.case snail.test.t1538 {test.assert.error {sys.at.exit.remove -1}}
 test.case snail.test.t1539 {test.assert.error {sys.at.exit.remove [list.length [sys.at.exit.list]]}}
+test.case snail.test.t1540 {test.assert {token.is.list [global.get sys.args]}}
+test.case snail.test.t1541 {test.assert.not {> 0 [list.length [global.get sys.args]]}}
+test.case snail.test.t1542 {test.assert {token.is.quoted [list.at [global.get sys.args] 0]}}
+test.case snail.test.t1543 {test.assert {list.contains [info.globals] sys.args}}

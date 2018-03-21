@@ -49,6 +49,7 @@ char *snailI64ToStr(int64_t n);
 char *snailMakeQuoted(char *str);
 char *snailMakeVarNotFoundError(char *name);
 char *snailParseGetContext(char *str);
+char *snailQuoteArgv(char **argv);
 char *snailQuoteDict(snailHashTable *ht);
 char *snailQuoteList(snailArray *list);
 char *snailReadFile(const char *fileName);

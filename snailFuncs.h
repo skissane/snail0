@@ -1913,3 +1913,17 @@ void snailExit(snailInterp *snail, int exitCode) {
 		exit(exitCode);
 	}
 }
+
+char *snailQuoteArgv(char **argv) {
+	int count = 0;
+	while (argv[count] != NULL)
+		count++;
+	snailArray *args = snailArrayCreate(count);
+	for (int i = 0; argv[i] != NULL; i++) {
+		char *quoted = snailMakeQuoted(argv[i]);
+		snailArrayAdd(args,quoted);
+	}
+	char *result = snailQuoteList(args);
+	snailArrayDestroy(args,free);
+	return result;
+}

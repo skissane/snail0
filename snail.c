@@ -84,6 +84,8 @@ void snailRegisterNatives(snailInterp *snail) {
 /***---MAIN FUNCTION---***/
 int main(int argc, char *argv[]) {
 	snailInterp *snail = snailCreate();
+	snailHashTablePut(snail->globals,"sys.args",snailQuoteArgv(argv));
+
 	int rc = 0;
 	if(argc < 2)
 		snailRepl(snail);
