@@ -1446,7 +1446,7 @@ char * snailTokenNormalize(char *script) {
 	return token;
 }
 
-char *snailMakeQuoted(char *str) {
+char *snailMakeQuoted(const char *str) {
 	snailBuffer *b = snailBufferCreate(strlen(str)+3);
 	snailBufferAddChar(b, '"');
 	for (int i = 0; str[i] != 0; i++) {
@@ -1592,7 +1592,7 @@ int snailArraySortCmp(void *thunk, const void **a, const void **b) {
 int64_t snailTimeNow(void) {
 	struct timeval tp;
 	gettimeofday(&tp, NULL);
-	int64_t msec = (tp.tv_sec * 1000) + (tp.tv_usec / 1000);
+	int64_t msec = (((int64_t)tp.tv_sec) * 1000) + (((int64_t)tp.tv_usec) / 1000);
 	return msec;
 }
 
@@ -1934,4 +1934,46 @@ char *snailStripShebang(char *script) {
 	while (script[0] != '\n' && script[0] != 0)
 		script++;
 	return script;
+}
+
+void snailDictBufSetInt(snailBuffer *buf, const char *name, int64_t n) {
+	char *v = snailI64ToStr(n);
+	snailDictBufSetToken(buf,name,v);
+	free(v);
+}
+
+void snailDictBufSetToken(snailBuffer *buf, const char *name, const char *value) {
+	snailBufferAddChar(buf,' ');
+	snailBufferAddString(buf,name);
+	snailBufferAddChar(buf,' ');
+	snailBufferAddString(buf,value);
+}
+
+void snailDictBufSetQuoted(snailBuffer *buf, const char *name, const char *value) {
+	char *q = snailMakeQuoted(value);
+	snailDictBufSetToken(buf,name,q);
+	free(q);
+}
+
+char *snailTimeToDict(struct tm *time, int32_t millis) {
+	snailBuffer *buf = snailBufferCreate(64);
+	snailBufferAddString(buf,"%{");
+	snailDictBufSetInt(buf,"millis",millis);
+	snailDictBufSetInt(buf,"sec",time->tm_sec);
+	snailDictBufSetInt(buf,"min",time->tm_min);
+	snailDictBufSetInt(buf,"hour",time->tm_hour);
+	snailDictBufSetInt(buf,"dom",time->tm_mday);
+	snailDictBufSetInt(buf,"dow",time->tm_wday==0 ? 7 : time->tm_wday);
+	snailDictBufSetInt(buf,"doy",time->tm_yday+1);
+	snailDictBufSetInt(buf,"month",time->tm_mon+1);
+	snailDictBufSetInt(buf,"year",time->tm_year+1900);
+	snailDictBufSetToken(buf,"dst",time->tm_isdst ? "t" : "f");
+	if (time->tm_zone != NULL)
+		snailDictBufSetQuoted(buf,"zone",time->tm_zone);
+	snailDictBufSetInt(buf,"utcOffsetMinutes",((int32_t)time->tm_gmtoff) / 60);
+	snailBufferAddChar(buf,'}');
+	snailBufferAddChar(buf,0);
+	char *r = snailDupString(buf->bytes);
+	snailBufferDestroy(buf);
+	return r;
 }

@@ -917,3 +917,11 @@ test.case snail.test.t1546 {
 }
 test.case snail.test.t1547 {test.assert.eq {"0" "1" "10" "12" "31" "88" "9" 0 1 9 10 12 31 88} {list.sort {0 "0" 10 "10" 12 "12" 31 "31" 88 "88" 9 "9" 1 "1"}}}
 test.case snail.test.t1548 {test.assert {token.is.dict [sys.environ]}}
+test.case snail.test.t1549 {test.assert.error {time.local "0"}}
+test.case snail.test.t1550 {test.assert.error {time.utc "0"}}
+test.case snail.test.t1551 {test.assert.eq 1970 {dict.get [time.utc 0] year}}
+test.case snail.test.t1552 {test.assert.eq 0 {dict.get [time.local 0] sec}}
+test.case snail.test.t1553 {test.assert.eq "1970-01-01 00:00:00" {time.iso8601.utc 0}}
+test.case snail.test.t1554 {test.assert.eq "2009-02-13 23:31:30" {time.iso8601.utc 1234567890000}}
+test.case snail.test.t1555 {test.assert.eq 1 {dict.get [time.utc 1514764800000] dow}}
+test.case snail.test.t1556 {test.assert.eq 7 {dict.get [time.utc 1522540800000] dow}}

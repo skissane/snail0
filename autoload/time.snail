@@ -1,0 +1,10 @@
+proc time.iso8601.utc {$ts} {
+	set tm [time.utc $ts]
+	set year [string.lpad [token.quote [dict.get $tm year]] "0" 4]
+	set month [string.lpad [token.quote [dict.get $tm month]] "0" 2]
+	set day [string.lpad [token.quote [dict.get $tm dom]] "0" 2]
+	set hour [string.lpad [token.quote [dict.get $tm hour]] "0" 2]
+	set min [string.lpad [token.quote [dict.get $tm min]] "0" 2]
+	set sec [string.lpad [token.quote [dict.get $tm sec]] "0" 2]
+	string.concat $year "-" $month "-" $day " " $hour ":" $min ":" $sec
+}

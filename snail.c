@@ -15,6 +15,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
 
 extern char **environ;
@@ -85,6 +86,7 @@ void snailRegisterNatives(snailInterp *snail) {
 
 /***---MAIN FUNCTION---***/
 int main(int argc, char *argv[]) {
+	tzset();
 	snailInterp *snail = snailCreate();
 	snailHashTablePut(snail->globals,"sys.args",snailQuoteArgv(argv));
 

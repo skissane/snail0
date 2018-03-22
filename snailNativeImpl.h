@@ -2386,3 +2386,27 @@ NATIVE(sys_environ,0) {
 	snailBufferDestroy(buf);
 	return snailStatusOk;
 }
+
+NATIVE(time_local,1) {
+	NATIVE_ARG_MUSTINT(0);
+	int64_t w = strtoll(args[0],NULL,10);
+	int32_t millis = w % 1000;
+	time_t t = w / 1000;
+	struct tm * time = localtime(&t);
+	char * r = snailTimeToDict(time,millis);
+	snailSetResult(snail,r);
+	free(r);
+	return snailStatusOk;
+}
+
+NATIVE(time_utc,1) {
+	NATIVE_ARG_MUSTINT(0);
+	int64_t w = strtoll(args[0],NULL,10);
+	int32_t millis = w % 1000;
+	time_t t = w / 1000;
+	struct tm * time = gmtime(&t);
+	char * r = snailTimeToDict(time,millis);
+	snailSetResult(snail,r);
+	free(r);
+	return snailStatusOk;
+}
