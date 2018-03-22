@@ -110,3 +110,23 @@ proc time.valid {$dt} {
 	if {or {< $sec 0} {> $sec 60}} then {return f}
 	pass t
 }
+
+proc time.format.dur {$seconds} {
+	arg.must.int seconds
+	if {< $seconds 0} then {error "argument $seconds must be positive"}
+	if {= $seconds 0} then {return "0 seconds"}
+	if {< $seconds 60} then {return [string.concat $seconds " seconds"]}
+	set r {}
+	set v $seconds
+	set mod60 [% $v 60]
+	if {> $mod60 0} then {set r [list.add $r [string.concat $mod60 " seconds"]]}
+	set v [/ $v 60]
+	set mod60 [% $v 60]
+	if {> $mod60 0} then {set r [list.add $r [string.concat $mod60 " minutes"]]}
+	set v [/ $v 60]
+	set mod24 [% $v 24]
+	if {> $mod24 0} then {set r [list.add $r [string.concat $mod24 " hours"]]}
+	set v [/ $v 24]
+	if {> $v 0} then {set r [list.add $r [string.concat $v " days"]]}
+	pass [string.join [list.reverse $r] " "]
+}

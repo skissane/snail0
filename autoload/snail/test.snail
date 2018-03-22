@@ -972,3 +972,6 @@ test.case snail.test.t1590 {test.assert {time.valid [time.local [time.now]]}}
 test.case snail.test.t1591 {test.assert {time.valid [time.utc [time.now]]}}
 test.case snail.test.t1592 {test.assert.eq "1970-01-01 00:00:00" {time.iso8601 [time.iso8601.parse "1970-01-01 00:00:00"]}}
 test.case snail.test.t1593 {test.assert.eq "2000-02-29 23:59:59" {time.iso8601 [time.iso8601.parse "2000-02-29 23:59:59"]}}
+test.case snail.test.t1594 {test.assert.eq {} {list.reverse {}}}
+test.case snail.test.t1595 {test.assert.eq {baz bar foo} {list.reverse {foo bar baz}}}
+test.case snail.test.t1596 {test.assert.error {list.reverse "foo bar baz"}}

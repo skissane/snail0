@@ -2473,3 +2473,20 @@ NATIVE(time_make_local,1) {
 	snailSetResultInt(snail,((int64_t)r*1000) + millis);
 	return snailStatusOk;
 }
+
+NATIVE(list_reverse, 1) {
+	snailArray *list = snailUnquoteList(args[0]);
+	if (list == NULL) {
+		snailSetResult(snail, "list.reverse: argument 0 is not a valid list");
+		return snailStatusError;
+	}
+	snailArray *r = snailArrayCreate(list->length);
+	for (int i = list->length-1; i >= 0; i--)
+		snailArrayAdd(r, list->elems[i]);
+	char *result = snailQuoteList(r);
+	snailSetResult(snail, result);
+	free(result);
+	snailArrayDestroy(r, NULL);
+	snailArrayDestroy(list, free);
+	return snailStatusOk;
+}
