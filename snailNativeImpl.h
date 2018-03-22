@@ -84,7 +84,7 @@ NATIVE(is_int, 1) {
 NATIVE(string_is_digits, 1) {
 	NATIVE_ARG_MUSTCLASS(0, 'Q');
 	char *unquoted = snailTokenUnquote(args[0]);
-	snailSetResultBool(snail, snailIsDigits(unquoted));
+	snailSetResultBool(snail, snailIsDigitsAllowInitialZeroes(unquoted));
 	free(unquoted);
 	return snailStatusOk;
 }
@@ -175,6 +175,19 @@ NATIVE(mul, VARIADIC) {
 	char *result = snailI64ToStr(c);
 	snailSetResult(snail, result);
 	free(result);
+	return snailStatusOk;
+}
+
+NATIVE(mod, 2) {
+	NATIVE_ARG_MUSTINT(0);
+	NATIVE_ARG_MUSTINT(1);
+	int64_t a = strtoll(args[0], NULL, 10);
+	int64_t b = strtoll(args[1], NULL, 10);
+	if (b == 0) {
+		snailSetResult(snail, "\"%: division by zero\"");
+		return snailStatusError;
+	}
+	snailSetResultInt(snail, (a%b));
 	return snailStatusOk;
 }
 
@@ -1011,6 +1024,26 @@ NATIVE(dict_set,3) {
 	char *quoted = snailQuoteDict(ht);
 	if (quoted == NULL) {
 		snailSetResult(snail,"unexpected error in dict.set command (quoting failed)");
+		snailHashTableDestroy(ht,free);
+		return snailStatusError;
+	}
+	snailHashTableDestroy(ht,free);
+	snailSetResult(snail,quoted);
+	free(quoted);
+	return snailStatusOk;
+}
+
+NATIVE(dict_del,2) {
+	NATIVE_ARG_MUSTCLASS(0,'D');
+	snailHashTable *ht = snailParseDict(args[0]);
+	if (ht == NULL) {
+		snailSetResult(snail,"unexpected error in dict.del command (parsing failed)");
+		return snailStatusError;
+	}
+	free(snailHashTableDelete(ht, args[1]));
+	char *quoted = snailQuoteDict(ht);
+	if (quoted == NULL) {
+		snailSetResult(snail,"unexpected error in dict.del command (quoting failed)");
 		snailHashTableDestroy(ht,free);
 		return snailStatusError;
 	}
@@ -2408,5 +2441,35 @@ NATIVE(time_utc,1) {
 	char * r = snailTimeToDict(time,millis);
 	snailSetResult(snail,r);
 	free(r);
+	return snailStatusOk;
+}
+
+NATIVE(time_make_local,1) {
+	NATIVE_ARG_MUSTCLASS(0,'D');
+	snailHashTable *dict = snailParseDict(args[0]);
+	struct tm dt;
+	memset(&dt,0,sizeof(struct tm));
+	int64_t year, month, dom, hour, min, sec, millis;
+	if (
+		!snailTimeFieldGet(snail, dict, "year", &year, true, 0, 9999) ||
+		!snailTimeFieldGet(snail, dict, "month", &month, true, 1, 12) ||
+		!snailTimeFieldGet(snail, dict, "dom", &dom, true, 1, 31) ||
+		!snailTimeFieldGet(snail, dict, "hour", &hour, true, 0, 23) ||
+		!snailTimeFieldGet(snail, dict, "min", &min, true, 0, 59) ||
+		!snailTimeFieldGet(snail, dict, "sec", &sec, true, 0, 60) ||
+		!snailTimeFieldGet(snail, dict, "millis", &millis, false, 0, 999)
+	   ) {
+		snailHashTableDestroy(dict,free);
+		return snailStatusError;
+	}
+	dt.tm_year = year - 1900;
+	dt.tm_mon = month - 1;
+	dt.tm_mday = dom;
+	dt.tm_hour = hour;
+	dt.tm_min = min;
+	dt.tm_sec = sec;
+	dt.tm_isdst = -1;
+	time_t r = mktime(&dt);
+	snailSetResultInt(snail,((int64_t)r*1000) + millis);
 	return snailStatusOk;
 }

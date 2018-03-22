@@ -1078,6 +1078,16 @@ bool snailIsDigits(const char *str) {
 	return true;
 }
 
+bool snailIsDigitsAllowInitialZeroes(const char *str) {
+	if (str[0] == 0)
+		return false;
+	for (int i = 0; str[i] != 0; i++) {
+		if (!isdigit(str[i]))
+			return false;
+	}
+	return true;
+}
+
 bool snailIsInt(const char *str) {
 	return (*str == '-' && snailIsDigits(str + 1)) || snailIsDigits(str);
 }
@@ -1976,4 +1986,45 @@ char *snailTimeToDict(struct tm *time, int32_t millis) {
 	char *r = snailDupString(buf->bytes);
 	snailBufferDestroy(buf);
 	return r;
+}
+
+bool snailTimeFieldGet(snailInterp *snail, snailHashTable *dict, char *name, int64_t *r, bool mandatory, int64_t min, int64_t max) {
+	char *value = snailHashTableGet(dict,name);
+	if (value == NULL && !mandatory) {
+		*r = 0;
+	} else {
+		if (value == NULL || !snailIsInt(value)) {
+			snailCallFrame *cur = snail->frames->elems[snail->frames->length-1];
+			char *cmdName = cur->cmdName;
+			snailBuffer *msg = snailBufferCreate(32);
+			snailBufferAddString(msg,cmdName);
+			snailBufferAddString(msg,": mandatory field '");
+			snailBufferAddString(msg,name);
+			snailBufferAddString(msg,"' is missing or has invalid value");
+			snailBufferAddChar(msg,0);
+			snailSetResult(snail,msg->bytes);
+			snailBufferDestroy(msg);
+			return false;
+		}
+		*r = strtoll(value,NULL,10);
+	}
+	if (*r < min || *r > max) {
+		snailCallFrame *cur = snail->frames->elems[snail->frames->length-1];
+		char *cmdName = cur->cmdName;
+		snailBuffer *msg = snailBufferCreate(32);
+		snailBufferAddString(msg,cmdName);
+		snailBufferAddString(msg,": field '");
+		snailBufferAddString(msg,name);
+		snailBufferAddString(msg,"' value ");
+		snailBufferAddI64(msg,*r);
+		snailBufferAddString(msg," is out of valid range ");
+		snailBufferAddI64(msg,min);
+		snailBufferAddString(msg,"...");
+		snailBufferAddI64(msg,max);
+		snailBufferAddChar(msg,0);
+		snailSetResult(snail,msg->bytes);
+		snailBufferDestroy(msg);
+		return false;
+	}
+	return true;
 }

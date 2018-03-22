@@ -15,7 +15,7 @@ test.case snail.test.t1013 {test.assert.error {string.is.digits {}}}
 test.case snail.test.t1014 {test.assert.not {string.is.digits ""}}
 test.case snail.test.t1015 {test.assert {string.is.digits "0"}}
 test.case snail.test.t1016 {test.assert {string.is.digits "9"}}
-test.case snail.test.t1017 {test.assert.not {string.is.digits "0123456789"}}
+test.case snail.test.t1017 {test.assert {string.is.digits "123456789"}}
 test.case snail.test.t1018 {test.assert.not {string.is.digits "a"}}
 test.case snail.test.t1019 {test.assert.not {string.is.digits "9a"}}
 test.case snail.test.t1020 {test.assert.not {string.is.digits "A9"}}
@@ -925,3 +925,44 @@ test.case snail.test.t1553 {test.assert.eq "1970-01-01 00:00:00" {time.iso8601.u
 test.case snail.test.t1554 {test.assert.eq "2009-02-13 23:31:30" {time.iso8601.utc 1234567890000}}
 test.case snail.test.t1555 {test.assert.eq 1 {dict.get [time.utc 1514764800000] dow}}
 test.case snail.test.t1556 {test.assert.eq 7 {dict.get [time.utc 1522540800000] dow}}
+test.case snail.test.t1557 {test.assert.not {time.is.leap.year 1900}}
+test.case snail.test.t1558 {test.assert {time.is.leap.year 2000}}
+test.case snail.test.t1559 {test.assert.not {time.is.leap.year 2001}}
+test.case snail.test.t1560 {test.assert.not {time.is.leap.year 2002}}
+test.case snail.test.t1561 {test.assert.not {time.is.leap.year 2003}}
+test.case snail.test.t1562 {test.assert {time.is.leap.year 2004}}
+test.case snail.test.t1563 {test.assert.eq 28 {time.month.length 1900 2}}
+test.case snail.test.t1564 {test.assert.eq 29 {time.month.length 2000 2}}
+test.case snail.test.t1565 {
+	set ts [time.now]
+	set dt [time.local $ts]
+	test.assert.eq $ts {time.make.local $dt}
+}
+test.case snail.test.t1566 {test.assert.error {time.make.local 0}}
+test.case snail.test.t1567 {test.assert.error {time.make.local %{}}}
+test.case snail.test.t1568 {test.assert.error {time.make.local %{year 2000}}}
+test.case snail.test.t1569 {test.assert.error {time.make.local %{year 2000 month 1}}}
+test.case snail.test.t1570 {test.assert.error {time.make.local %{year 2000 month 1 dom 1}}}
+test.case snail.test.t1571 {test.assert.error {time.make.local %{year 2000 month 1 dom 1 hour 0}}}
+test.case snail.test.t1572 {test.assert.error {time.make.local %{year 2000 month 1 dom 1 hour 0 min 0}}}
+test.case snail.test.t1573 {test.assert.error {time.make.local %{year 2000 month 1 dom 1 hour 0 min 0 sec "0"}}}
+test.case snail.test.t1574 {test.assert.error {time.make.local %{year 2000 month 1 dom 1 hour 0 min 0 sec 99}}}
+test.case snail.test.t1575 {test.assert.error {time.make.local %{year 2000 month 1 dom 1 hour 0 min 0 sec -1}}}
+test.case snail.test.t1576 {
+	set ts1 [time.now]
+	set dt1 [time.local $ts1]
+	set ts2 [* [/ $ts1 1000] 1000]
+	set dt2 [dict.del $dt1 millis]
+	test.assert.eq $ts2 {time.make.local $dt2}
+}
+test.case snail.test.t1577 {test.assert.eq %{foo 12} {dict.del %{foo 12 bar 13} bar}}
+test.case snail.test.t1578 {test.assert.eq %{} {dict.del %{foo 12} foo}}
+test.case snail.test.t1579 {test.assert.eq %{} {dict.del %{} quux}}
+test.case snail.test.t1580 {test.assert.eq %{foo bar} {dict.del %{foo bar} quux}}
+test.case snail.test.t1581 {test.assert.error {dict.del {} foo}}
+test.case snail.test.t1582 {test.assert.error {% 1 0}}
+test.case snail.test.t1583 {test.assert.error {% 1 0}}
+test.case snail.test.t1584 {test.assert.eq 0 {% 188 2}}
+test.case snail.test.t1585 {test.assert.eq 1 {% 189 2}}
+test.case snail.test.t1586 {test.assert.error {% "1" 0}}
+test.case snail.test.t1587 {test.assert.error {% 1 "2"}}

@@ -8,6 +8,7 @@ NATIVE_NAME("*","mul");
 NATIVE_NAME("+","add");
 NATIVE_NAME("-","sub");
 NATIVE_NAME("/","div");
+NATIVE_NAME("%","mod");
 NATIVE_NAME("<","lt");
 NATIVE_NAME("<=","lte");
 NATIVE_NAME("=","eq");

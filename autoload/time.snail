@@ -8,3 +8,75 @@ proc time.iso8601.utc {$ts} {
 	set sec [string.lpad [token.quote [dict.get $tm sec]] "0" 2]
 	string.concat $year "-" $month "-" $day " " $hour ":" $min ":" $sec
 }
+
+proc time.internal.parse.int {$str} {
+	while {and {> [string.length $str] 1} {string.starts.with $str "0"}} {set str [string.skip $str 1]}
+	if {not [string.is.digits $str]} then {return [null]}
+	token.unquote $str
+}
+
+proc time.iso8601.parse {$str} {
+	if {not [= [string.length $str] 19]} then {return [null]}
+	if {not [= "-" [string.sub $str 4 1]]} then {return [null]}
+	if {not [= "-" [string.sub $str 7 1]]} then {return [null]}
+	if {not [= " " [string.sub $str 10 1]]} then {return [null]}
+	if {not [= ":" [string.sub $str 13 1]]} then {return [null]}
+	if {not [= ":" [string.sub $str 16 1]]} then {return [null]}
+	set year [time.internal.parse.int [string.sub $str 0 4]]
+	set month [time.internal.parse.int [string.sub $str 5 2]]
+	set dom [time.internal.parse.int [string.sub $str 8 2]]
+	set hour [time.internal.parse.int [string.sub $str 11 2]]
+	set min [time.internal.parse.int [string.sub $str 14 2]]
+	set sec [time.internal.parse.int [string.sub $str 17 2]]
+	if {is.null $year} then {return [null]}
+	if {is.null $month} then {return [null]}
+	if {is.null $dom} then {return [null]}
+	if {is.null $hour} then {return [null]}
+	if {is.null $min} then {return [null]}
+	if {is.null $sec} then {return [null]}
+	set tm [dict year $year month $month dom $dom hour $hour min $min sec $sec]
+	if {not [time.valid $tm]} then {return [null]}
+	time.make.local $tm
+}
+
+proc time.is.leap.year {$year} {
+	set div4 [= [% $year 4] 0]
+	set div100 [= [% $year 100] 0]
+	set div400 [= [% $year 400] 0]
+	if {not $div4} then {return f}
+	if {not $div100} then {return t}
+	if {pass $div400} then {return t}
+	pass f
+}
+
+proc time.month.length {$year $month} {
+	arg.must.int year
+	arg.must.int month
+	if {or {< $month 1} {> $month 12}} then {return [null]}
+	set leap [time.is.leap.year $year]
+	if {= $month 2} then {return [if {pass $leap} then {pass 29} else {pass 28}]}
+	if {list.contains [4 6 9 11] $month} then {pass 30} else {pass 31}
+}
+
+proc time.valid {$dt} {
+	if {not [token.is.dict $dt]} then {return f}
+	set year [dict.get $dt year]
+	set month [dict.get $dt month]
+	set dom [dict.get $dt dom]
+	set hour [dict.get $dt hour]
+	set min [dict.get $dt min]
+	set sec [dict.get $dt sec]
+	if {not [is.int $year]} then {return f}
+	if {not [is.int $month]} then {return f}
+	if {not [is.int $dom]} then {return f}
+	if {not [is.int $hour]} then {return f}
+	if {not [is.int $min]} then {return f}
+	if {not [is.int $sec]} then {return f}
+	if {or {< $month 1} {> $month 12}} then {return f}
+	set maxdom [time.month.length $year $month]
+	if {or {< $dom 1} {> $dom $maxdom}} then {return f}
+	if {or {< $hour 0} {> $hour 23}} then {return f}
+	if {or {< $min 0} {> $hour 59}} then {return f}
+	if {or {< $sec 0} {> $sec 60}} then {return f}
+	pass t
+}
