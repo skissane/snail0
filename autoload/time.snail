@@ -62,6 +62,32 @@ proc time.month.length {$year $month} {
 	if {list.contains {4 6 9 11} $month} then {pass 30} else {pass 31}
 }
 
+proc time.month.name {$month} {
+	arg.must.int month
+	if {or {< $month 1} {> $month 12}} then {error [string.concat "Invalid month " $month]}
+	list.at [
+		list "January" "February" "March" "April" "May" "June" "July" "August" "September" "October" "November" "December"
+	] [- $month 1]
+}
+
+proc time.month.name.short {$month} {
+	arg.must.int month
+	string.left [time.month.name $month] 3
+}
+
+proc time.wday.name {$wday} {
+	arg.must.int wday
+	if {or {< $wday 1} {> $wday 7}} then {error [string.concat "Invalid wday " $wday]}
+	list.at [
+		list "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday"
+	] [- $wday 1]
+}
+
+proc time.wday.name.short {$wday} {
+	arg.must.int wday
+	string.left [time.wday.name $wday] 3
+}
+
 proc time.valid {$dt} {
 	if {not [token.is.dict $dt]} then {return f}
 	set year [dict.get $dt year]
