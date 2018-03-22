@@ -1,5 +1,4 @@
-proc time.iso8601.utc {$ts} {
-	set tm [time.utc $ts]
+proc time.iso8601 {$tm} {
 	set year [string.lpad [token.quote [dict.get $tm year]] "0" 4]
 	set month [string.lpad [token.quote [dict.get $tm month]] "0" 2]
 	set day [string.lpad [token.quote [dict.get $tm dom]] "0" 2]
@@ -9,11 +8,16 @@ proc time.iso8601.utc {$ts} {
 	string.concat $year "-" $month "-" $day " " $hour ":" $min ":" $sec
 }
 
+proc time.iso8601.utc {$ts} {time.iso8601 [time.utc $ts]}
+proc time.iso8601.local {$ts} {time.iso8601 [time.local $ts]}
+
 proc time.internal.parse.int {$str} {
 	while {and {> [string.length $str] 1} {string.starts.with $str "0"}} {set str [string.skip $str 1]}
 	if {not [string.is.digits $str]} then {return [null]}
 	token.unquote $str
 }
+
+proc time.iso8601.parse.local {$str} {time.make.local [time.iso8601.parse $str]}
 
 proc time.iso8601.parse {$str} {
 	if {not [= [string.length $str] 19]} then {return [null]}
@@ -36,7 +40,7 @@ proc time.iso8601.parse {$str} {
 	if {is.null $sec} then {return [null]}
 	set tm [dict year $year month $month dom $dom hour $hour min $min sec $sec]
 	if {not [time.valid $tm]} then {return [null]}
-	time.make.local $tm
+	pass $tm
 }
 
 proc time.is.leap.year {$year} {
@@ -55,7 +59,7 @@ proc time.month.length {$year $month} {
 	if {or {< $month 1} {> $month 12}} then {return [null]}
 	set leap [time.is.leap.year $year]
 	if {= $month 2} then {return [if {pass $leap} then {pass 29} else {pass 28}]}
-	if {list.contains [4 6 9 11] $month} then {pass 30} else {pass 31}
+	if {list.contains {4 6 9 11} $month} then {pass 30} else {pass 31}
 }
 
 proc time.valid {$dt} {
