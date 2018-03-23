@@ -519,7 +519,13 @@ NATIVE(proc,3) {
 		return snailStatusError;
 	}
 	if (snailHashTableGet(snail->commands, args[0]) != NULL) {
-		snailSetResult(snail,"duplicate command name");
+		snailBuffer *buf = snailBufferCreate(32);
+		snailBufferAddString(buf,"duplicate command name '");
+		snailBufferAddString(buf,args[0]);
+		snailBufferAddString(buf,"'");
+		snailBufferAddChar(buf,0);
+		snailSetResult(snail,buf->bytes);
+		snailBufferDestroy(buf);
 		return snailStatusError;
 	}
 	char *pname = snailDupString(args[0]);
