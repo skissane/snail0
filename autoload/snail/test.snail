@@ -975,3 +975,4 @@ test.case snail.test.t1593 {test.assert.eq "2000-02-29 23:59:59" {time.iso8601 [
 test.case snail.test.t1594 {test.assert.eq {} {list.reverse {}}}
 test.case snail.test.t1595 {test.assert.eq {baz bar foo} {list.reverse {foo bar baz}}}
 test.case snail.test.t1596 {test.assert.error {list.reverse "foo bar baz"}}
+test.case snail.test.t1597 {test.assert {token.is.quoted [file.getcwd]}}

@@ -2496,3 +2496,16 @@ NATIVE(list_reverse, 1) {
 	snailArrayDestroy(list, free);
 	return snailStatusOk;
 }
+
+NATIVE(file_getcwd,0) {
+	char buf[1024];
+	char *wd = getcwd(buf,sizeof(buf));
+	if (wd == NULL) {
+		snailSetResult(snail,"file.getcwd: failed");
+		return snailStatusError;
+	}
+	char *quoted = snailMakeQuoted(wd);
+	snailSetResult(snail,quoted);
+	free(quoted);
+	return snailStatusOk;
+}

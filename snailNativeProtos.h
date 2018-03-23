@@ -30,6 +30,7 @@ NATIVE(eval,1);
 NATIVE(eval_up,2);
 NATIVE(file_copy,2);
 NATIVE(file_delete,1);
+NATIVE(file_getcwd,0);
 NATIVE(file_open,2);
 NATIVE(file_read,1);
 NATIVE(file_run,1);
