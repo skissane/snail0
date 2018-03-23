@@ -71,3 +71,95 @@ proc dos.snail.init {} {
 		repl.read.script.set {dos.key.read}
 	}
 }
+
+proc dos.bda.get.byte {$off} {
+	dos.mem.peek [hex 40] $off
+}
+
+proc dos.bda.screen.columns {} {dos.bda.get.byte [hex 4A]}
+proc dos.bda.screen.rows {} {dos.bda.get.byte [hex 84]}
+
+proc dos.vmode.get {} {
+	set r [dos.int86 [hex 10] [dict ah [hex 0f]]]
+	dict videoMode [dict.get $r al] columnsPerLine [dict.get $r ah] activePage [dict.get $r bh]
+}
+
+proc dos.vmode.set {$mode} {
+	arg.must.int mode
+	dos.int86 [hex 10] [dict ah 0 al $mode]
+	set curMode [dict.get [dos.vmode.get] videoMode]
+	if {not [= $mode $curMode]} then {
+		error [string.concat "set video mode " $mode " failed; still in mode " $curMode]
+	}
+	null
+}
+
+proc dos.vmode.enter {$mode} {
+	arg.must.int mode
+	set curMode [dict.get [dos.vmode.get] videoMode]
+	if {= $mode $curMode} then {return [null]}
+	dos.vmode.set $mode
+}
+
+
+proc dos.vpage.set {$page} {
+	arg.must.int page
+	dos.int86 [hex 10] [dict ah 5 al $page]
+	set curPage [dict.get [dos.vmode.get] activePage]
+	if {not [= $page $curPage]} then {
+		error [string.concat "set video page " $page " failed; still in page " $curPage]
+	}
+	null
+}
+
+proc dos.vpage.enter {$page} {
+	arg.must.int page
+	set curPage [dict.get [dos.vmode.get] activePage]
+	if {= $page $curPage} then {return [null]}
+	dos.vpage.set $page
+}
+
+proc dos.vpage.get {} {dict.get [dos.vmode.get] activePage}
+
+proc dos.vpage.cursor.get {$page} {
+	arg.must.int page
+	set regs [dos.int86 [hex 10] [dict ah 3 bh $page]]
+	dict page $page startScanLine [dict.get $regs ch] endScanLine [dict.get $regs cl] row [dict.get $regs dh] column [dict.get $regs dl]
+}
+
+proc dos.cursor.get {} {dos.vpage.cursor.get [dos.vpage.get]}
+proc dos.vpage.cursor.set {$page $row $col} {
+	arg.must.int page
+	arg.must.int row
+	arg.must.int col
+	dos.int86 [hex 10] [dict bh $page dh $row dl $col ah 2]
+	null
+}
+proc dos.cursor.set {$row $col} {dos.vpage.cursor.set [dos.vpage.get] $row $col}
+proc dos.cursor.home {} {dos.cursor.set 0 0}
+
+proc dos.cls {} {
+	set regs %{}
+	set regs [dict.set $regs dh [dos.bda.screen.rows]]
+	set regs [dict.set $regs dl [dos.bda.screen.columns]]
+	set regs [dict.set $regs cx 0]
+	set regs [dict.set $regs bh 7]
+	set regs [dict.set $regs al 0]
+	set regs [dict.set $regs ah 6]
+	dos.int86 [hex 10] $regs
+	null
+}
+proc dos.cls.home {} {
+	dos.cls
+	dos.cursor.home
+}
+proc dos.pause.key {} {
+	dos.int86 [hex 21] [dict ax [hex 0c07]]
+	dos.int86 [hex 21] [dict ax [hex 0c00]]
+	null
+}
+proc dos.pause {} {
+	puts.nonewline "Press any key to continue..."
+	dos.pause.key
+	puts ""
+}

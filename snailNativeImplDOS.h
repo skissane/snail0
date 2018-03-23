@@ -86,3 +86,22 @@ NATIVE(dos_int86,2) {
 	free(quoted);
 	return snailStatusOk;
 }
+
+NATIVE(dos_mem_peek,2) {
+	NATIVE_ARG_MUSTINT(0);
+	NATIVE_ARG_MUSTINT(1);
+	int32_t segment = strtol(args[0],NULL,10);
+	int32_t offset = strtol(args[1],NULL,10);
+	if (segment < 0 || segment > 0xFFFF) {
+		snailSetResult(snail,"dos.mem.peek: segment out of range");
+		return snailStatusError;
+	}
+	if (offset < 0 || offset > 0xFFFF) {
+		snailSetResult(snail,"dos.mem.peek: offset out of range");
+		return snailStatusError;
+	}
+	uint8_t byte;
+	dosmemget(((segment<<4)+offset),1,&byte);
+	snailSetResultInt(snail,byte);
+	return snailStatusOk;
+}

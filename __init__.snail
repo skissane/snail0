@@ -437,5 +437,9 @@ proc proc.comment {$proc $comment} {
 	proc.meta.set $proc proc.comment $comment
 }
 
+proc cls {} {
+	if {platform.is.dos} then {dos.cls.home} else {puts.nonewline [string.concat [string.chr 27] "[2J" [string.chr 27] "[H"]}
+}
+
 if {platform.is.dos} then {dos.snail.init}
 if {file.exists "__auto__.snail"} then {file.run "__auto__.snail"}
