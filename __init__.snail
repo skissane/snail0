@@ -429,6 +429,13 @@ proc hex {$hex} {
 	if {token.is.quoted $hex} then {from.radix.i32 $hex 16} else {from.radix.i32 [token.quote $hex] 16}
 }
 
-if {platform.is.dos} then {dos.snail.init}
+proc proc.comment {$proc $comment} {
+	set existing [proc.meta.get $proc proc.comment]
+	if {not.null $existing} then {
+		set comment [string.concat $existing "\n" $comment]
+	}
+	proc.meta.set $proc proc.comment $comment
+}
 
+if {platform.is.dos} then {dos.snail.init}
 if {file.exists "__auto__.snail"} then {file.run "__auto__.snail"}
