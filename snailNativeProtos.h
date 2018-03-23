@@ -38,6 +38,7 @@ NATIVE(file_run,1);
 NATIVE(file_setcwd,1);
 NATIVE(file_stat,1);
 NATIVE(file_write,2);
+NATIVE(file_write_hex,2);
 NATIVE(foreach,3);
 NATIVE(frame_cmd_up,1);
 NATIVE(frame_cmds,0);

@@ -2552,13 +2552,19 @@ NATIVE(hex_decode,1) {
 		return snailStatusOk;
 	}
 	char *data = snailHexDecode(unquote);
+	size_t len = strlen(unquote)/2;
 	free(unquote);
 	if (data == NULL) {
 		snailSetResult(snail,"hex.decode: bad hex data");
 		return snailStatusError;
 	}
-	char *quoted = snailMakeQuoted(data);
+	snailBuffer *buf = snailBufferCreate(len+1);
+	for (size_t i = 0; i < len; i++)
+		snailBufferAddChar(buf,data[i]);
 	free(data);
+	snailBufferAddChar(buf,0);
+	char *quoted = snailMakeQuoted(buf->bytes);
+	snailBufferDestroy(buf);
 	snailSetResult(snail,quoted);
 	free(quoted);
 	return snailStatusOk;
@@ -2581,4 +2587,28 @@ NATIVE(file_read_hex,1) {
 	snailSetResult(snail, quoted);
 	free(hex);
 	return snailStatusOk;
+}
+
+NATIVE(file_write_hex,2) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	NATIVE_ARG_MUSTCLASS(1, 'Q');
+	char *fileName = snailTokenUnquote(args[0]);
+	char *hex = snailTokenUnquote(args[1]);
+	char *data = hex[0]==0 ? snailMalloc(1) : snailHexDecode(hex);
+	size_t length = strlen(hex) / 2;
+	free(hex);
+	if (data == NULL) {
+		snailSetResult(snail,"file.write.hex: bad hex data");
+		free(fileName);
+		return snailStatusError;
+	}
+	char *error = snailWriteFileBinary(fileName,data,length,true);
+	free(data);
+	if (error == NULL) {
+		snailSetResult(snail,"");
+		return snailStatusOk;
+	}
+	snailSetResult(snail,error);
+	free(error);
+	return snailStatusError;
 }

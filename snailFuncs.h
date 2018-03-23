@@ -1752,8 +1752,13 @@ char *snailGetCmdUp(snailInterp *snail, int level) {
 }
 
 char *snailWriteFile(const char *filename, char *text) {
+	size_t len = strlen(text);
+	return snailWriteFileBinary(filename,text,len,false);
+}
+
+char *snailWriteFileBinary(const char *filename, char *text, size_t len, bool binaryMode) {
 	FILE *f;
-	if(!(f = fopen(filename, "w"))) {
+	if(!(f = fopen(filename, binaryMode ? "wb" : "w"))) {
 		int e = errno;
 		snailBuffer *msg = snailBufferCreate(16);
 		snailBufferAddString(msg,"snailWriteFile: I/O error ");
@@ -1767,7 +1772,6 @@ char *snailWriteFile(const char *filename, char *text) {
 		snailBufferDestroy(msg);
 		return r;
 	}
-	size_t len = strlen(text);
 	if (fwrite(text, 1, len, f) != len) {
 		int e = errno;
 		fclose(f);
@@ -2054,7 +2058,7 @@ char *snailHexDecode(const char *hex) {
 	size_t len = strlen(hex);
 	if (len == 0 || (len % 2) != 0)
 		return NULL;
-	char *buf = snailMalloc(len / 2);
+	uint8_t *buf = snailMalloc(len / 2);
 	for (size_t i = 0; i < (len/2); i++) {
 		char hexHi = hex[(2*i)+0];
 		char hexLo = hex[(2*i)+1];
@@ -2062,20 +2066,23 @@ char *snailHexDecode(const char *hex) {
 			free(buf);
 			return NULL;
 		}
-		buf[i] = (snailHexDecodeNibble(hexHi) << 4) | snailHexDecodeNibble(hexLo);
+		uint8_t nHi = snailHexDecodeNibble(hexHi);
+		uint8_t nLo = snailHexDecodeNibble(hexLo);
+		uint8_t n = (nHi << 4) | nLo;
+		buf[i] = n;
 	}
-	return buf;
+	return (char*)buf;
 }
 
 bool snailIsHexDigit(char ch) {
 	return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
 }
 
-char snailHexDecodeNibble(char ch) {
+uint8_t snailHexDecodeNibble(char ch) {
 	if (ch >= 'A' && ch <= 'F')
-		return ch - 'A';
+		return (ch - 'A') + 0xA;
 	if (ch >= 'a' && ch <= 'f')
-		return ch - 'a';
+		return (ch - 'a') + 0xA;
 	return ch - '0';
 }
 

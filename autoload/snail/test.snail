@@ -1000,3 +1000,20 @@ test.case snail.test.t1608 {test.assert.eq "" {hex.decode ""}}
 test.case snail.test.t1609 {test.assert.eq "" {hex.decode "00"}}
 test.case snail.test.t1610 {test.assert.error {hex.decode "0G"}}
 test.case snail.test.t1611 {test.assert.error {hex.decode {}}}
+test.case snail.test.t1612 {
+	set temp [string.concat [rand.hex 4] ".tmp"]
+	set hex "0001020300040506F0F9FF"
+	test.assert.null {file.write.hex $temp $hex}
+	test.assert.eq $hex {file.read.hex $temp}
+	test.assert.eq $hex {file.read.hex $temp}
+	test.assert.null {file.delete $temp}
+}
+test.case snail.test.t1613 {
+	set temp [string.concat [rand.hex 4] ".tmp"]
+	set hex ""
+	test.assert.null {file.write.hex $temp $hex}
+	test.assert.eq $hex {file.read.hex $temp}
+	test.assert.eq $hex {file.read.hex $temp}
+	test.assert.null {file.delete $temp}
+}
+test.case snail.test.t1614 {test.assert.eq "FF" {hex.encode [hex.decode "FF"]}}
