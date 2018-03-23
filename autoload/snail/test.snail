@@ -976,3 +976,10 @@ test.case snail.test.t1594 {test.assert.eq {} {list.reverse {}}}
 test.case snail.test.t1595 {test.assert.eq {baz bar foo} {list.reverse {foo bar baz}}}
 test.case snail.test.t1596 {test.assert.error {list.reverse "foo bar baz"}}
 test.case snail.test.t1597 {test.assert {token.is.quoted [file.getcwd]}}
+test.case snail.test.t1598 {
+	set cur [file.getcwd]
+	test.assert.null {file.setcwd $cur}
+	test.assert.eq $cur {file.getcwd}
+}
+test.case snail.test.t1599 {test.assert.error {file.setcwd [string.concat [rand.hex 8] ".nonexistent"]}}
+test.case snail.test.t1600 {test.assert.error {file.setcwd {}}}

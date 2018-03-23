@@ -2509,3 +2509,21 @@ NATIVE(file_getcwd,0) {
 	free(quoted);
 	return snailStatusOk;
 }
+
+NATIVE(file_setcwd,1) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	char *unquote = snailTokenUnquote(args[0]);
+	bool rc = chdir(unquote)==0;
+	free(unquote);
+	if (rc) {
+		snailSetResult(snail,"");
+		return snailStatusOk;
+	}
+	snailBuffer *buf = snailBufferCreate(16);
+	snailBufferAddString(buf,"file.setcwd: cannot change to directory ");
+	snailBufferAddString(buf,args[0]);
+	snailBufferAddChar(buf,0);
+	snailSetResult(snail,buf->bytes);
+	snailBufferDestroy(buf);
+	return snailStatusError;
+}

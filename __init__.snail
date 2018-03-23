@@ -1,3 +1,8 @@
+global.set snail.init.dir [file.getcwd]
+if {dict.has [sys.environ] "SNAILWORK"} then {
+	file.setcwd [dict.get [sys.environ] "SNAILWORK"]
+}
+
 proc module.cmds {$name} {
 	arg.must.symbol name
 	if {module.exists.unloaded $name} then {module.load $name}
@@ -83,7 +88,7 @@ proc file.is.reg {$path} {file.is.type $path reg}
 proc file.is.lnk {$path} {file.is.type $path lnk}
 proc file.is.sock {$path} {file.is.type $path sock}
 
-global.set module.load.path {"./autoload"}
+global.set module.load.path [list [string.concat [global.get snail.init.dir] "/autoload"]]
 global.set module.loaded %{}
 
 proc not {$bool} {if {pass $bool} then {pass f} else {pass t}}
