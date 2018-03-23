@@ -49,6 +49,22 @@ proc dir.remove.hidden {$paths} {
 
 proc dir.walk.prefix {$path} {dir.prefix.all $path [dir.walk $path]}
 
+proc dir.find.files {$path $exts} {
+	arg.must.quoted path
+	arg.must.list exts
+	set w [dir.read $path]
+	set r {}
+	foreach f $w {
+		foreach e $exts {
+			set e [string.lower [string.concat "." $e]]
+			if {string.ends.with [string.lower $f] $e} then {
+				if {not [list.contains $r $f]} then {set r [list.add $r $f]}
+			}
+		}
+	}
+	pass $r
+}
+
 proc dir.only.dirs {$paths} {
 	arg.must.list paths
 	set r {}
@@ -80,4 +96,15 @@ proc dir.only.files {$paths} {
 		set r [list.add $r $path]
 	}
 	pass $r
+}
+
+proc dir.exts {$path} {
+	set exts {}
+	foreach name [dir.read $path] {
+		if {string.starts.with $name "."} then {continue}
+		if {not [string.contains $name "."]} then {continue}
+		set ext [string.skip $name [+ 1 [string.find $name "."]]]
+		if {not [list.contains $exts $ext]} then {set exts [list.add $exts $ext]}
+	}
+	list.sort $exts
 }

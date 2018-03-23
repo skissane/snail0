@@ -2527,3 +2527,22 @@ NATIVE(file_setcwd,1) {
 	snailBufferDestroy(buf);
 	return snailStatusError;
 }
+
+NATIVE(file_read_hex,1) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	char *fileName = snailTokenUnquote(args[0]);
+	char *hex = snailReadFileHex(fileName);
+	free(fileName);
+	if (!hex) {
+		snailBuffer *msg = snailBufferCreate(16);
+		snailBufferAddString(msg, "unable to read file ");
+		snailBufferAddString(msg, args[0]);
+		snailSetResult(snail, msg->bytes);
+		snailBufferDestroy(msg);
+		return snailStatusError;
+	}
+	char *quoted = snailMakeQuoted(hex);
+	snailSetResult(snail, quoted);
+	free(hex);
+	return snailStatusOk;
+}

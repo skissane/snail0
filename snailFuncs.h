@@ -116,6 +116,31 @@ char *snailReadFile(const char *filename) {
 	return str;
 }
 
+char *snailReadFileHex(const char *filename) {
+	FILE *f;
+	long len,r;
+
+	if(!(f = fopen(filename, "rb")))
+		return NULL;
+
+	fseek(f, 0, SEEK_END);
+	len = ftell(f);
+	rewind(f);
+
+	char *buf = snailMalloc(len + 2);
+	r = fread(buf, 1, len, f);
+
+	if(r != len) {
+		free(buf);
+		return NULL;
+	}
+
+	fclose(f);
+	char *hex = snailHexEncode(buf,len);
+	free(buf);
+	return hex;
+}
+
 snailParseTool *snailParseCreate(const char *script) {
 	snailParseTool *p = snailMalloc(sizeof(snailParseTool));
 	p->script = script;
@@ -2027,4 +2052,24 @@ bool snailTimeFieldGet(snailInterp *snail, snailHashTable *dict, char *name, int
 		return false;
 	}
 	return true;
+}
+
+char *snailHexEncode(const char *buf, size_t len) {
+	char *hex = snailMalloc((2*len)+1);
+	size_t j = 0;
+	for (size_t i = 0; i < len; i++) {
+		uint8_t byte = buf[i];
+		uint8_t nibLo = (byte & 0xf);
+		uint8_t nibHi = ((byte >> 8) & 0xf);
+		char hexLo = snailHexEncodeNibble(nibLo);
+		char hexHi = snailHexEncodeNibble(nibHi);
+		hex[j++] = hexHi;
+		hex[j++] = hexLo;
+	}
+	hex[j++] = 0;
+	return hex;
+}
+
+char snailHexEncodeNibble(uint8_t nibble) {
+	return nibble < 10 ? '0' + nibble : 'A' + (nibble - 10);
 }

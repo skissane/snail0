@@ -33,6 +33,7 @@ NATIVE(file_delete,1);
 NATIVE(file_getcwd,0);
 NATIVE(file_open,2);
 NATIVE(file_read,1);
+NATIVE(file_read_hex,1);
 NATIVE(file_run,1);
 NATIVE(file_setcwd,1);
 NATIVE(file_stat,1);

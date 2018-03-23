@@ -446,5 +446,21 @@ proc cls {} {
 	if {platform.is.dos} then {dos.cls.home} else {puts.nonewline [string.concat [string.chr 27] "[2J" [string.chr 27] "[H"]}
 }
 
+proc cleanup {$body $cleanup} {
+	set caught [null]
+	set r [null]
+	catch {
+		set r [eval.up 1 $body]
+	} e {set caught $e}
+	eval.up 1 $cleanup
+	if {not.null $caught} then {error $caught}
+	pass $r
+}
+
+proc file.savecwd {$code} {
+	set saved [file.getcwd]
+	cleanup {eval.up 1 $code} {file.setcwd $saved}
+}
+
 if {platform.is.dos} then {dos.snail.init}
 if {file.exists "__auto__.snail"} then {file.run "__auto__.snail"}

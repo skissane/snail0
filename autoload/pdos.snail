@@ -1,0 +1,64 @@
+proc pdos.build.pdpclib {} {file.savecwd {
+	file.setcwd "/pdos/pdpclib"
+	puts "NOTICE: PDPCLIB: Clean prior build artifacts"
+	foreach to.del [dir.find.files "." {"obj" "exe" "lib" "log"}] {file.delete $to.del}
+	puts "NOTICE: PDPCLIB: Execute make, logging to /pdos/pdpclib/make.log"
+	sys.run "make -fmakefile.dos >make.log"
+	puts "SUCCESS: PDPCLIB: make complete"
+}}
+
+proc pdos.format.a {} {
+	sys.run "format a: /autotest /u /s"
+	foreach file [dir.read "a:"] {
+		file.delete [string.concat "a:/" $file]
+	}
+}
+
+proc pdos.build.pdos {} {file.savecwd {
+	pdos.build.pdpclib
+	file.setcwd "/pdos/src"
+	puts "NOTICE: PDOS: Clean prior build artifacts"
+	foreach to.del [dir.find.files "." {"obj" "exe" "lib" "com" "sys" "log"}] {file.delete $to.del}
+	puts "NOTICE: PDOS: Building patchver"
+	sys.run "tcc patchver.c"
+	puts "NOTICE: PDOS: Assemble stage 1"
+	foreach file {"ploadst.asm" "int13x.asm" "near.asm" "support.asm" "lldos.asm"} {
+		sys.run [string.concat "wasmr -zq -zcm -Dmemodel=tiny " $file]
+	}
+	puts "NOTICE: PDOS: Compile stage 1, logging to /pdos/src/comp1.log"
+	sys.run "tcc -O -c -mt -DNEED_DUMP -j1 -I..\\pdpclib pload.c fat.c bos.c pdosload.c ..\\pdpclib\\string.c ..\\pdpclib\\dossupc.c >comp1.log"
+	puts "NOTICE: PDOS: Link stage 1"
+	sys.run "tlink -t -x ploadst+pload+int13x+near+support+bos+dossupc+fat+string+pdosload+lldos,pload.com,,,"
+	puts "NOTICE: PDOS: Assemble stage 2"
+	foreach file {"pdosstrt.asm" "support.asm" "lldos.asm" "handlers.asm" "..\\pdpclib\\dossupa.asm"} {
+		sys.run [string.concat "wasmr -zq -zcm -Dmemodel=large " $file]
+	}
+	puts "NOTICE: PDOS: Compile stage 2, logging to /pdos/src/comp2.log"
+	sys.run "tcc -w- -O -c -ml -j1 -I..\\pdpclib memmgr.c format.c patmat.c >comp2.log"
+	sys.run "tcc -w- -O -c -ml -j1 -I..\\pdpclib bos.c fat.c ..\\pdpclib\\string.c ..\\pdpclib\\ctype.c ..\\pdpclib\\dossupc.c >>comp2.log"
+	sys.run "tcc -w- -O -j1 -c -ml -j1 -I..\\pdpclib pdos.c >>comp2.log"
+	puts "NOTICE: PDOS: Link stage 2"
+	sys.run "tlink -x pdosstrt+pdos+bos+support+fat+dossupa+string+dossupc+lldos+handlers+memmgr+format+ctype+patmat,pdos.exe"
+	puts "NOTICE: PDOS: Assemble stage 3"
+	sys.run "wasmr -zq -zcm -Dmemodel=large support.asm"
+	puts "NOTICE: PDOS: Compile stage 3, logging to /pdos/src/comp3.log"
+	sys.run "tcc -O -c -ml -I..\\pdpclib pcomm.c pos.c dostime.c >comp3.log"
+	puts "NOTICE: PDOS: Link stage 3"
+	sys.run "tlink -x pcomm+pos+dostime+support,pcomm.exe,,..\\pdpclib\\borland.lib"
+	puts "NOTICE: PDOS: Compile 16-bit hello world, logging to /pdos/src/compw16.log"
+	sys.run "tcc -c -ml -I..\\pdpclib world.c >compw16.log"
+	puts "NOTICE: PDOS: Link 16-bit hello world"
+	sys.run "tlink -x ..\\pdpclib\\dosstart.obj+world.obj,world.exe,,..\\pdpclib\\borland.lib,"
+	puts "NOTICE: PDOS: Assemble boot sector"
+	sys.run "wasmr -zq -zcm -Dmemodel=tiny pbootsec.asm"
+	puts "NOTICE: PDOS: Link boot sector"
+	sys.run "tlink -t -x pbootsec,pbootsec.com,,,"
+	if {not [prompt.yesno "CONFIRM: Wipe all data on floppy in drive A"]} then {return [null]}
+	puts "NOTICE: PDOS: Installing on Drive A"
+	pdos.format.a
+	file.copy "pload.com" "a:io.sys"
+	file.copy "pdos.exe" "a:msdos.sys"
+	file.copy "pcomm.exe" "a:command.com"
+	sys.run "patchver a:io.sys"
+	puts "SUCCESS: PDOS: 16-bit version installed on drive A, reboot to test"
+}}
