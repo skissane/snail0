@@ -2457,13 +2457,13 @@ NATIVE(time_make_local,1) {
 	memset(&dt,0,sizeof(struct tm));
 	int64_t year, month, dom, hour, min, sec, millis;
 	if (
-		!snailTimeFieldGet(snail, dict, "year", &year, true, 0, 9999) ||
-		!snailTimeFieldGet(snail, dict, "month", &month, true, 1, 12) ||
-		!snailTimeFieldGet(snail, dict, "dom", &dom, true, 1, 31) ||
-		!snailTimeFieldGet(snail, dict, "hour", &hour, true, 0, 23) ||
-		!snailTimeFieldGet(snail, dict, "min", &min, true, 0, 59) ||
-		!snailTimeFieldGet(snail, dict, "sec", &sec, true, 0, 60) ||
-		!snailTimeFieldGet(snail, dict, "millis", &millis, false, 0, 999)
+		!snailTimeFieldGet(snail, cmdName, dict, "year", &year, true, 0, 9999) ||
+		!snailTimeFieldGet(snail, cmdName, dict, "month", &month, true, 1, 12) ||
+		!snailTimeFieldGet(snail, cmdName, dict, "dom", &dom, true, 1, 31) ||
+		!snailTimeFieldGet(snail, cmdName, dict, "hour", &hour, true, 0, 23) ||
+		!snailTimeFieldGet(snail, cmdName, dict, "min", &min, true, 0, 59) ||
+		!snailTimeFieldGet(snail, cmdName, dict, "sec", &sec, true, 0, 60) ||
+		!snailTimeFieldGet(snail, cmdName, dict, "millis", &millis, false, 0, 999)
 	   ) {
 		snailHashTableDestroy(dict,free);
 		return snailStatusError;
@@ -2526,6 +2526,42 @@ NATIVE(file_setcwd,1) {
 	snailSetResult(snail,buf->bytes);
 	snailBufferDestroy(buf);
 	return snailStatusError;
+}
+
+NATIVE(hex_encode,1) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	snailBuffer *buf = snailBufferCreate(16);
+	snailBufferAddChar(buf,'"');
+	char *unquote = snailTokenUnquote(args[0]);
+	char *hex = snailHexEncode(unquote,strlen(unquote));
+	snailBufferAddString(buf,hex);
+	free(hex);
+	snailBufferAddChar(buf,'"');
+	snailBufferAddChar(buf,0);
+	snailSetResult(snail,buf->bytes);
+	snailBufferDestroy(buf);
+	return snailStatusOk;
+}
+
+NATIVE(hex_decode,1) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	char *unquote = snailTokenUnquote(args[0]);
+	if (unquote[0] == 0) {
+		free(unquote);
+		snailSetResult(snail,"\"\"");
+		return snailStatusOk;
+	}
+	char *data = snailHexDecode(unquote);
+	free(unquote);
+	if (data == NULL) {
+		snailSetResult(snail,"hex.decode: bad hex data");
+		return snailStatusError;
+	}
+	char *quoted = snailMakeQuoted(data);
+	free(data);
+	snailSetResult(snail,quoted);
+	free(quoted);
+	return snailStatusOk;
 }
 
 NATIVE(file_read_hex,1) {

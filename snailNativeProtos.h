@@ -48,6 +48,8 @@ NATIVE(global_get, 1);
 NATIVE(global_set, 2);
 NATIVE(gt, 2);
 NATIVE(gte, 2);
+NATIVE(hex_decode,1);
+NATIVE(hex_encode,1);
 NATIVE(if,VARIADIC);
 NATIVE(info_about_cmd,1);
 NATIVE(info_channel_drivers, 0);

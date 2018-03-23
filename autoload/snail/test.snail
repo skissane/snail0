@@ -983,3 +983,20 @@ test.case snail.test.t1598 {
 }
 test.case snail.test.t1599 {test.assert.error {file.setcwd [string.concat [rand.hex 8] ".nonexistent"]}}
 test.case snail.test.t1600 {test.assert.error {file.setcwd {}}}
+test.case snail.test.t1601 {test.assert.eq "414243313233" {hex.encode "ABC123"}}
+test.case snail.test.t1602 {
+	set temp [string.concat [rand.hex 4] ".tmp"]
+	set value "Hello World!"
+	file.write $temp $value
+	test.assert.eq [hex.encode $value] {file.read.hex $temp}
+	file.delete $temp
+}
+test.case snail.test.t1603 {test.assert.error {file.read.hex [string.concat [rand.hex 4] ".nonexistent"]}}
+test.case snail.test.t1604 {test.assert.error {hex.encode {}}}
+test.case snail.test.t1605 {test.assert.error {file.read.hex {}}}
+test.case snail.test.t1606 {test.assert.eq "Abacus$15" {hex.decode [hex.encode "Abacus$15"]}}
+test.case snail.test.t1607 {test.assert.eq "" {hex.encode ""}}
+test.case snail.test.t1608 {test.assert.eq "" {hex.decode ""}}
+test.case snail.test.t1609 {test.assert.eq "" {hex.decode "00"}}
+test.case snail.test.t1610 {test.assert.error {hex.decode "0G"}}
+test.case snail.test.t1611 {test.assert.error {hex.decode {}}}

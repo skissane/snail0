@@ -2013,14 +2013,12 @@ char *snailTimeToDict(struct tm *time, int32_t millis) {
 	return r;
 }
 
-bool snailTimeFieldGet(snailInterp *snail, snailHashTable *dict, char *name, int64_t *r, bool mandatory, int64_t min, int64_t max) {
+bool snailTimeFieldGet(snailInterp *snail, char *cmdName, snailHashTable *dict, char *name, int64_t *r, bool mandatory, int64_t min, int64_t max) {
 	char *value = snailHashTableGet(dict,name);
 	if (value == NULL && !mandatory) {
 		*r = 0;
 	} else {
 		if (value == NULL || !snailIsInt(value)) {
-			snailCallFrame *cur = snail->frames->elems[snail->frames->length-1];
-			char *cmdName = cur->cmdName;
 			snailBuffer *msg = snailBufferCreate(32);
 			snailBufferAddString(msg,cmdName);
 			snailBufferAddString(msg,": mandatory field '");
@@ -2034,8 +2032,6 @@ bool snailTimeFieldGet(snailInterp *snail, snailHashTable *dict, char *name, int
 		*r = strtoll(value,NULL,10);
 	}
 	if (*r < min || *r > max) {
-		snailCallFrame *cur = snail->frames->elems[snail->frames->length-1];
-		char *cmdName = cur->cmdName;
 		snailBuffer *msg = snailBufferCreate(32);
 		snailBufferAddString(msg,cmdName);
 		snailBufferAddString(msg,": field '");
@@ -2054,13 +2050,42 @@ bool snailTimeFieldGet(snailInterp *snail, snailHashTable *dict, char *name, int
 	return true;
 }
 
+char *snailHexDecode(const char *hex) {
+	size_t len = strlen(hex);
+	if (len == 0 || (len % 2) != 0)
+		return NULL;
+	char *buf = snailMalloc(len / 2);
+	for (size_t i = 0; i < (len/2); i++) {
+		char hexHi = hex[(2*i)+0];
+		char hexLo = hex[(2*i)+1];
+		if (!snailIsHexDigit(hexHi) || !snailIsHexDigit(hexLo)) {
+			free(buf);
+			return NULL;
+		}
+		buf[i] = (snailHexDecodeNibble(hexHi) << 4) | snailHexDecodeNibble(hexLo);
+	}
+	return buf;
+}
+
+bool snailIsHexDigit(char ch) {
+	return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
+}
+
+char snailHexDecodeNibble(char ch) {
+	if (ch >= 'A' && ch <= 'F')
+		return ch - 'A';
+	if (ch >= 'a' && ch <= 'f')
+		return ch - 'a';
+	return ch - '0';
+}
+
 char *snailHexEncode(const char *buf, size_t len) {
 	char *hex = snailMalloc((2*len)+1);
 	size_t j = 0;
 	for (size_t i = 0; i < len; i++) {
 		uint8_t byte = buf[i];
-		uint8_t nibLo = (byte & 0xf);
-		uint8_t nibHi = ((byte >> 8) & 0xf);
+		uint8_t nibLo = (byte & 0x0f);
+		uint8_t nibHi = ((byte >> 4) & 0x0f);
 		char hexLo = snailHexEncodeNibble(nibLo);
 		char hexHi = snailHexEncodeNibble(nibHi);
 		hex[j++] = hexHi;
