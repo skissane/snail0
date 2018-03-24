@@ -101,6 +101,23 @@ proc dos.vmode.enter {$mode} {
 	dos.vmode.set $mode
 }
 
+proc dos.vmode.save {$code} {
+	set mode [dict.get [dos.vmode.get] videoMode]
+	cleanup {eval.up 1 $code} {dos.vmode.enter $mode}
+}
+
+proc dos.vmode.all {} {dos.vmode.save {
+	set r {}
+	set i 0
+	while {< $i 128} {
+		catch {
+			dos.vmode.set $i
+			set r [list.add $r $i]
+		} e {null}
+		set i [+ 1 $i]
+	}
+	pass $r
+}}
 
 proc dos.vpage.set {$page} {
 	arg.must.int page
