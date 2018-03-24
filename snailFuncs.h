@@ -2105,3 +2105,36 @@ char *snailHexEncode(const char *buf, size_t len) {
 char snailHexEncodeNibble(uint8_t nibble) {
 	return nibble < 10 ? '0' + nibble : 'A' + (nibble - 10);
 }
+
+snailStatus snailDoChannelRead(snailInterp *snail, char *channelName, int64_t bytes, bool hexEncode) {
+	char *buf = snailMalloc(bytes);
+	size_t read = 0;
+	char *r = snailChannelRead(snail, channelName, buf, bytes, &read);
+	if (r != NULL) {
+		free(buf);
+		snailSetResult(snail,r);
+		free(r);
+		return snailStatusError;
+	}
+	if (read == 0) {
+		free(buf);
+		snailSetResult(snail,"");
+		return snailStatusOk;
+	}
+	snailBuffer *out = snailBufferCreate(read+1);
+	if (hexEncode) {
+		char *hex = snailHexEncode(buf, read);
+		snailBufferAddString(out, hex);
+		free(hex);
+	} else {
+		for (int i = 0; i < read; i++)
+			snailBufferAddChar(out, buf[i]);
+	}
+	snailBufferAddChar(out, 0);
+	free(buf);
+	char *quoted = snailMakeQuoted(out->bytes);
+	snailBufferDestroy(out);
+	snailSetResult(snail,quoted);
+	free(quoted);
+	return snailStatusOk;
+}

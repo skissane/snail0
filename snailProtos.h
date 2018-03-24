@@ -92,6 +92,7 @@ snailInterp *snailCreate(void);
 snailParseResult snailParseNext(snailParseTool *parser);
 snailParseTool *snailParseCreate(const char *script);
 snailReplState *snailReplStateCreate(void);
+snailStatus snailDoChannelRead(snailInterp *snail, char *channelName, int64_t bytes, bool hexEncode);
 snailStatus snailExec(snailInterp *snail, const char *script);
 snailStatus snailExecList(snailInterp *snail, char *code);
 snailStatus snailExecListUp(snailInterp *snail, int64_t level, char *code);

@@ -1461,30 +1461,19 @@ NATIVE(channel_read,2) {
 		return snailStatusError;
 	}
 	char *channelName = args[0];
-	char *buf = snailMalloc(bytes);
-	size_t read = 0;
-	char *r = snailChannelRead(snail, channelName, buf, bytes, &read);
-	if (r != NULL) {
-		free(buf);
-		snailSetResult(snail,r);
-		free(r);
+	return snailDoChannelRead(snail, channelName, bytes, false);
+}
+
+NATIVE(channel_read_hex,2) {
+	NATIVE_ARG_MUSTCLASS(0,'U');
+	NATIVE_ARG_MUSTINT(1);
+	int64_t bytes = strtoll(args[1], NULL, 10);
+	if (bytes <= 0) {
+		snailSetResult(snail, "channel.read.hex: $bytes must be greater than zero");
 		return snailStatusError;
 	}
-	if (read == 0) {
-		free(buf);
-		snailSetResult(snail,"");
-		return snailStatusOk;
-	}
-	snailBuffer *out = snailBufferCreate(read+1);
-	for (int i = 0; i < read; i++)
-		snailBufferAddChar(out, buf[i]);
-	snailBufferAddChar(out, 0);
-	free(buf);
-	char *quoted = snailMakeQuoted(out->bytes);
-	snailBufferDestroy(out);
-	snailSetResult(snail,quoted);
-	free(quoted);
-	return snailStatusOk;
+	char *channelName = args[0];
+	return snailDoChannelRead(snail, channelName, bytes, true);
 }
 
 NATIVE(string_upper,1) {

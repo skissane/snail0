@@ -1002,10 +1002,10 @@ test.case snail.test.t1610 {test.assert.error {hex.decode "0G"}}
 test.case snail.test.t1611 {test.assert.error {hex.decode {}}}
 test.case snail.test.t1612 {
 	set temp [string.concat [rand.hex 4] ".tmp"]
-	set hex "0001020300040506F0F9FF"
+	set hex "0001020300040506F0F9FFfa"
 	test.assert.null {file.write.hex $temp $hex}
-	test.assert.eq $hex {file.read.hex $temp}
-	test.assert.eq $hex {file.read.hex $temp}
+	test.assert.eq [string.upper $hex] {file.read.hex $temp}
+	test.assert.eq [string.upper $hex] {file.read.hex $temp}
 	test.assert.null {file.delete $temp}
 }
 test.case snail.test.t1613 {
@@ -1017,3 +1017,32 @@ test.case snail.test.t1613 {
 	test.assert.null {file.delete $temp}
 }
 test.case snail.test.t1614 {test.assert.eq "FF" {hex.encode [hex.decode "FF"]}}
+test.case snail.test.t1615 {
+	set temp [string.concat [rand.hex 4] ".tmp"]
+	set hex "0001020300040506F0F9FF"
+	test.assert.null {file.write.hex $temp $hex}
+	set chan [file.open $temp "r"]
+	test.assert.eq $hex {channel.read.hex $chan 128}
+	test.assert.null {channel.read.hex $chan 128}
+	test.assert.null {channel.close $chan}
+	test.assert.null {file.delete $temp}
+}
+test.case snail.test.t1616 {test.assert.error {file.write.hex "." ""}}
+test.case snail.test.t1617 {test.assert.error {file.write.hex "." {}}}
+test.case snail.test.t1618 {test.assert.error {file.write.hex {} ""}}
+test.case snail.test.t1619 {
+	set temp [string.concat [rand.hex 4] ".tmp"]
+	test.assert.not {file.exists $temp}
+	test.assert.error {file.write.hex $temp "0"}
+	test.assert.not {file.exists $temp}
+	test.assert.error {file.write.hex $temp "0G"}
+	test.assert.not {file.exists $temp}
+	test.assert.error {file.write.hex $temp "0fFfF"}
+	test.assert.not {file.exists $temp}
+	test.assert.error {file.write.hex $temp "01FAaFH"}
+	test.assert.not {file.exists $temp}
+}
+test.case snail.test.t1620 {test.assert.eq "FF" {hex.encode [hex.decode "ff"]}}
+test.case snail.test.t1621 {test.assert.error {hex.decode "0"}}
+test.case snail.test.t1622 {test.assert.error {hex.decode "!!"}}
+test.case snail.test.t1623 {test.assert.error {hex.decode "::"}}

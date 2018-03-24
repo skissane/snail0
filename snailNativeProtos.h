@@ -10,6 +10,7 @@ NATIVE(channel_control,2);
 NATIVE(channel_flush,1);
 NATIVE(channel_getline,1);
 NATIVE(channel_read,2);
+NATIVE(channel_read_hex,2);
 NATIVE(channel_write,2);
 NATIVE(continue,0);
 NATIVE(dict, VARIADIC);
