@@ -1189,7 +1189,7 @@ NATIVE(info_about_cmd,1) {
 
 NATIVE(global_set, 2) {
 	NATIVE_ARG_MUSTCLASS(0,'U');
-	free(snailHashTablePut(snail->globals,args[0],args[1]));
+	free(snailHashTablePut(snail->globals,args[0],snailDupString(args[1])));
 	snailSetResult(snail,"");
 	return snailStatusOk;
 }
