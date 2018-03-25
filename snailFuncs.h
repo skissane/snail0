@@ -44,6 +44,13 @@ void snailBufferAddString(snailBuffer *buf, const char *str) {
 	}
 }
 
+void snailBufferAddData(snailBuffer *buf, const void *data, size_t length) {
+	snailBufferGrow(buf, buf->length + length + 1);
+	for (size_t i = 0; i < length; i++) {
+		buf->bytes[buf->length++] = ((char*)data)[i];
+	}
+}
+
 char *snailDupString(char *str) {
 	size_t size = strlen(str)+1;
 	char *dup = snailMalloc(size);

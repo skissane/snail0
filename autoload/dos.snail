@@ -66,6 +66,58 @@ proc dos.key.read {} {
 	pass $r
 }
 
+proc dos.vesa.info.raw {} {
+	set mem.buf [dos.mem.alloc 272]
+	set mem.seg [channel.control $mem.buf {segment}]
+	set r [dos.int86 [hex 10] [dict ax [hex 4f00] es $mem.seg]]
+	if {not [= [dict.get $r ax] [hex 4f]]} then {
+		channel.close $mem.buf
+		return [null]
+	}
+	set r [channel.read.hex $mem.buf 256]
+	channel.close $mem.buf
+	if {not [= [hex.sub $r 0 4] [hex.encode "VESA"]]} then {return [null]}
+	return $r
+}
+
+proc dos.vesa.info {} {
+	set r [dos.vesa.info.raw]
+	if {is.null $r} then {return [null]}
+	set h %{}
+	set minor [from.radix.i32 [hex.sub $r 4 1] 16]
+	set major [from.radix.i32 [hex.sub $r 5 1] 16]
+	set version [string.concat $major "." $minor]
+	set h [dict.set $h version $version]
+	set oem.fp [hex.reverse [hex.sub $r 6 4]]
+	set oem.fpseg [from.radix.i32 [hex.sub $oem.fp 0 2] 16]
+	set oem.fpoff [from.radix.i32 [hex.sub $oem.fp 2 2] 16]
+	set oem.string [dos.mem.peek.asciiz $oem.fpseg $oem.fpoff]
+	set h [dict.set $h oem.string $oem.string]
+	set abilities [hex.reverse [hex.sub $r 10 4]]
+	set h [dict.set $h abilities $abilities]
+	set modes.fp [hex.reverse [hex.sub $r 14 4]]
+	set modes.fpseg [from.radix.i32 [hex.sub $modes.fp 0 2] 16]
+	set modes.fpoff [from.radix.i32 [hex.sub $modes.fp 2 2] 16]
+	set h [dict.set $h modes [dos.vesa.modelist $modes.fpseg $modes.fpoff]]
+	pass $h
+}
+
+proc dos.vesa.mode.get {} {
+	set r [dos.int86 [int 10] [dict ax [hex 4f03]]]
+	if {not [= [dict.get $r ax] [hex 4f]]} then {return [null]}
+	dict.get $r bx
+}
+
+proc dos.vesa.modelist {$seg $off} {
+	set r {}
+	loop {
+		set mode [dos.mem.peek16 $seg $off]
+		if {= $mode "FFFF"} then {return $r}
+		set r [list.add $r $mode]
+		set off [+ 2 $off]
+	}
+}
+
 proc dos.snail.init {} {
 	if {dos.key.installed} then {
 		repl.read.script.set {dos.key.read}
@@ -80,6 +132,8 @@ proc dos.bda.screen.columns {} {dos.bda.get.byte [hex 4A]}
 proc dos.bda.screen.rows {} {dos.bda.get.byte [hex 84]}
 
 proc dos.vmode.get {} {
+	set vesa.mode [dos.vesa.mode.get]
+	if {not.null $vesa.mode} then {return $vesa.mode}
 	set r [dos.int86 [hex 10] [dict ah [hex 0f]]]
 	dict videoMode [dict.get $r al] columnsPerLine [dict.get $r ah] activePage [dict.get $r bh]
 }
@@ -179,4 +233,42 @@ proc dos.pause {} {
 	puts.nonewline "Press any key to continue..."
 	dos.pause.key
 	puts ""
+}
+
+proc dos.mem.peek16 {$seg $off} {
+	arg.must.int seg
+	arg.must.int off
+	set r ""
+	set r [string.concat $r [hex.byte [dos.mem.peek $seg $off]]]
+	set r [string.concat $r [hex.byte [dos.mem.peek $seg [+ 1 $off]]]]
+	set r [hex.reverse $r]
+	pass $r
+}
+
+proc dos.mem.peek.asciiz {$seg $off} {
+	arg.must.int seg
+	arg.must.int off
+	set r ""
+	loop {
+		set b [dos.mem.peek $seg $off]
+		if {= $b 0} then {break}
+		set r [string.concat $r [hex.byte $b]]
+		set off [+ 1 $off]
+	}
+	hex.decode $r
+}
+
+proc dos.vesa.modeinfo.raw {$mode} {
+	arg.must.int mode
+	if {or {< $mode 0} {> $mode [hex FFFF]}} then {error "$mode argument out of valid range"}
+	set mem.buf [dos.mem.alloc 272]
+	set mem.seg [channel.control $mem.buf {segment}]
+	set r [dos.int86 [hex 10] [dict ax [hex 4f01] es $mem.seg cx $mode]]
+	if {not [= [dict.get $r ax] [hex 4f]]} then {
+		channel.close $mem.buf
+		return [null]
+	}
+	set r [channel.read.hex $mem.buf 256]
+	channel.close $mem.buf
+	return $r
 }

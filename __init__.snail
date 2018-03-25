@@ -90,6 +90,7 @@ proc file.is.sock {$path} {file.is.type $path sock}
 
 global.set module.load.path [list [string.concat [global.get snail.init.dir] "/autoload"]]
 global.set module.loaded %{}
+global.set module.path.loaded {}
 
 proc not {$bool} {if {pass $bool} then {pass f} else {pass t}}
 proc not.null {$v} {not [is.null $v]}
@@ -127,6 +128,21 @@ proc module.set.loaded {$name} {
 	global.set module.loaded [dict.set [global.get module.loaded] $name t]
 }
 
+proc module.path.is.loaded {$path} {
+	arg.must.quoted path
+	set path [string.lower $path]
+	list.contains [global.get module.path.loaded] $path
+}
+
+proc module.path.set.loaded {$path} {
+	arg.must.quoted path
+	set path [string.lower $path]
+	if {not [module.path.is.loaded $path]} then {
+		global.set module.path.loaded [list.sort [list.add [global.get module.path.loaded] $path]]
+	}
+	null
+}
+
 proc module.exists {$name} {
 	arg.must.symbol name
 	if {module.is.loaded $name} then {return t}
@@ -151,6 +167,7 @@ proc module.load {$name} {
 	} e {
 		error [string.concat "error loading file '" $path "' for module '" $name  "': " $e]
 	}
+	module.path.set.loaded $path
 	module.set.loaded $name
 	null
 }
@@ -432,6 +449,14 @@ proc platform.is.macos {} {= [platform.type] macos}
 
 proc hex {$hex} {
 	if {token.is.quoted $hex} then {from.radix.i32 $hex 16} else {from.radix.i32 [token.quote $hex] 16}
+}
+
+proc hex.sub {$hex $off $len} {string.sub $hex [* 2 $off] [* 2 $len]}
+
+proc hex.byte {$byte} {
+	arg.must.int byte
+	if {or {< $byte 0} {> $byte 255}} then {error [string.concat "invalid byte: " $byte]}
+	string.lpad [to.hex $byte] "0" 2
 }
 
 proc proc.comment {$proc $comment} {

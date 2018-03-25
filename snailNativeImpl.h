@@ -2601,3 +2601,30 @@ NATIVE(file_write_hex,2) {
 	free(error);
 	return snailStatusError;
 }
+
+NATIVE(hex_reverse,1) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	char *unquote = snailTokenUnquote(args[0]);
+	if (unquote[0] == 0) {
+		free(unquote);
+		snailSetResult(snail,"\"\"");
+		return snailStatusOk;
+	}
+	char *data = snailHexDecode(unquote);
+	size_t len = strlen(unquote)/2;
+	free(unquote);
+	if (data == NULL) {
+		snailSetResult(snail,"hex.reverse: bad hex data");
+		return snailStatusError;
+	}
+	snailBuffer *buf = snailBufferCreate(len+1);
+	snailBufferAddData(buf,data,len);
+	snailBufferReverse(buf);
+	char *hex = snailHexEncode(buf->bytes,len);
+	snailBufferDestroy(buf);
+	char *quoted = snailMakeQuoted(hex);
+	free(hex);
+	snailSetResult(snail,quoted);
+	free(quoted);
+	return snailStatusOk;
+}

@@ -1046,3 +1046,8 @@ test.case snail.test.t1620 {test.assert.eq "FF" {hex.encode [hex.decode "ff"]}}
 test.case snail.test.t1621 {test.assert.error {hex.decode "0"}}
 test.case snail.test.t1622 {test.assert.error {hex.decode "!!"}}
 test.case snail.test.t1623 {test.assert.error {hex.decode "::"}}
+test.case snail.test.t1624 {test.assert.eq "EFCDAB9078563412" {hex.reverse "1234567890ABCDEF"}}
+test.case snail.test.t1625 {test.assert.eq "3412" {hex.reverse "1234"}}
+test.case snail.test.t1626 {test.assert.eq "" {hex.reverse ""}}
+test.case snail.test.t1627 {test.assert.error {hex.reverse {}}}
+test.case snail.test.t1628 {test.assert.error {hex.reverse "0"}}
