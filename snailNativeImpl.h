@@ -2634,3 +2634,69 @@ NATIVE(disk_sync,0) {
 	snailSetResult(snail,"");
 	return snailStatusOk;
 }
+
+NATIVE(math_and_u32,2) {
+	NATIVE_ARG_MUSTINT(0);
+	NATIVE_ARG_MUSTINT(1);
+	if (args[0][0] == '-') {
+		snailSetResult(snail,"math.and.u32: argument 0 cannot be negative");
+		return snailStatusError;
+	}
+	if (args[1][0] == '-') {
+		snailSetResult(snail,"math.and.u32: argument 1 cannot be negative");
+		return snailStatusError;
+	}
+	uint32_t m = strtoul(args[0], NULL, 10);
+	uint32_t n = strtoul(args[1], NULL, 10);
+	uint32_t r = m & n;
+	snailSetResultInt(snail,r);
+	return snailStatusOk;
+}
+
+NATIVE(math_or_u32,2) {
+	NATIVE_ARG_MUSTINT(0);
+	NATIVE_ARG_MUSTINT(1);
+	if (args[0][0] == '-') {
+		snailSetResult(snail,"math.or.u32: argument 0 cannot be negative");
+		return snailStatusError;
+	}
+	if (args[1][0] == '-') {
+		snailSetResult(snail,"math.or.u32: argument 1 cannot be negative");
+		return snailStatusError;
+	}
+	uint32_t m = strtoul(args[0], NULL, 10);
+	uint32_t n = strtoul(args[1], NULL, 10);
+	uint32_t r = m | n;
+	snailSetResultInt(snail,r);
+	return snailStatusOk;
+}
+
+NATIVE(math_xor_u32,2) {
+	NATIVE_ARG_MUSTINT(0);
+	NATIVE_ARG_MUSTINT(1);
+	if (args[0][0] == '-') {
+		snailSetResult(snail,"math.xor.u32: argument 0 cannot be negative");
+		return snailStatusError;
+	}
+	if (args[1][0] == '-') {
+		snailSetResult(snail,"math.xor.u32: argument 1 cannot be negative");
+		return snailStatusError;
+	}
+	uint32_t m = strtoul(args[0], NULL, 10);
+	uint32_t n = strtoul(args[1], NULL, 10);
+	uint32_t r = m ^ n;
+	snailSetResultInt(snail,r);
+	return snailStatusOk;
+}
+
+NATIVE(math_not_u32,1) {
+	NATIVE_ARG_MUSTINT(0);
+	if (args[0][0] == '-') {
+		snailSetResult(snail,"math.xor.u32: argument 0 cannot be negative");
+		return snailStatusError;
+	}
+	uint32_t m = strtoul(args[0], NULL, 10);
+	uint32_t r = ~m;
+	snailSetResultInt(snail,r);
+	return snailStatusOk;
+}

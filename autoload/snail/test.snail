@@ -1052,3 +1052,26 @@ test.case snail.test.t1626 {test.assert.eq "" {hex.reverse ""}}
 test.case snail.test.t1627 {test.assert.error {hex.reverse {}}}
 test.case snail.test.t1628 {test.assert.error {hex.reverse "0"}}
 test.case snail.test.t1629 {test.assert.null {disk.sync}}
+test.case snail.test.t1630 {test.assert.eq 1 {math.and.u32 99 1}}
+test.case snail.test.t1631 {test.assert.eq 0 {math.and.u32 98 1}}
+test.case snail.test.t1632 {test.assert.eq 99 {math.or.u32 98 1}}
+test.case snail.test.t1633 {test.assert.eq 99 {math.or.u32 99 1}}
+test.case snail.test.t1634 {test.assert.eq 1 {math.xor.u32 99 98}}
+test.case snail.test.t1635 {test.assert.eq 4294967294 {math.not.u32 1}}
+test.case snail.test.t1636 {test.assert.eq 4294967295 {math.not.u32 0}}
+test.case snail.test.t1637 {test.assert.eq 0 {math.and.u32 0 0}}
+test.case snail.test.t1638 {test.assert.error {math.and.u32 "0" 0}}
+test.case snail.test.t1639 {test.assert.error {math.and.u32 0 "0"}}
+test.case snail.test.t1640 {test.assert.error {math.or.u32 "0" 0}}
+test.case snail.test.t1641 {test.assert.error {math.or.u32 0 "0"}}
+test.case snail.test.t1642 {test.assert.error {math.and.u32 -1 0}}
+test.case snail.test.t1643 {test.assert.error {math.and.u32 0 -1}}
+test.case snail.test.t1644 {test.assert.error {math.xor.u32 0 "0"}}
+test.case snail.test.t1645 {test.assert.error {math.xor.u32 "0" 0}}
+test.case snail.test.t1646 {test.assert.error {math.not.u32 "0"}}
+test.case snail.test.t1647 {test.assert.error {math.or.u32 -1 0}}
+test.case snail.test.t1648 {test.assert.error {math.or.u32 0 -1}}
+test.case snail.test.t1649 {test.assert.error {math.xor.u32 0 -1}}
+test.case snail.test.t1650 {test.assert.error {math.xor.u32 -1 0}}
+test.case snail.test.t1651 {test.assert.error {math.not.u32 -1}}
+test.case snail.test.t1652 {test.assert.eq 77 {math.not.u32 [math.not.u32 77]}}

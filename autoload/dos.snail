@@ -272,3 +272,28 @@ proc dos.vesa.modeinfo.raw {$mode} {
 	channel.close $mem.buf
 	return $r
 }
+
+proc dos.apm.version {} {
+	set r [dos.int86 [hex 15] [dict ax [hex 5300]]]
+	set flags [dict.get $r flags]
+	rem "If carry flag set, APM not installed"
+	if {= [math.and.u32 $flags 1] 1} then {return [null]}
+	rem "If BX <> 0x504d, APM not installed"
+	if {not [= [dict.get $r bx] [hex 504D]]} then {return [null]}
+	string.concat [bcd.decode [dict.get $r ah]] "." [bcd.decode [dict.get $r al]]
+}
+
+proc dos.apm.connect {} {
+	if {is.null [dos.apm.version]} then {error "APM is not installed"}
+	set r [dos.int86 [hex 15] [dict ax [hex 5301]]]
+	set flags [dict.get $r flags]
+	if {= [math.and.u32 $flags 1] 1} then {error "APM interface connection failed"}
+	null
+}
+
+proc dos.apm.poweroff {} {
+	dos.apm.connect
+	disk.sync
+	dos.int86 [hex 15] [dict ax [hex 5307] cx 3]
+	error "APM power off failure"
+}

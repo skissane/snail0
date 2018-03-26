@@ -1,0 +1,17 @@
+proc bcd.decode {$n} {
+	if {not [is.int $n]} then {return [null]}
+	if {< $n 0} then {return [null]}
+	set h [to.hex $n]
+	if {not [string.is.digits $h]} then {return [null]}
+	while {string.starts.with $h "0"} {set h [string.skip $h 1]}
+	if {string.is.empty $h} then {set h "0"}
+	token.unquote $h
+}
+
+proc bcd.encode {$n} {
+	if {not [is.int $n]} then {return [null]}
+	if {< $n 0} then {return [null]}
+	from.radix.i32 [token.quote $n] 16
+}
+
+proc bcd.valid {$n} {not.null [bcd.decode $n]}

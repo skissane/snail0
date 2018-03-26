@@ -3,6 +3,8 @@ if {dict.has [sys.environ] "SNAILWORK"} then {
 	file.setcwd [dict.get [sys.environ] "SNAILWORK"]
 }
 
+proc rem {& $ignored} {null}
+
 proc module.cmds {$name} {
 	arg.must.symbol name
 	if {module.exists.unloaded $name} then {module.load $name}
