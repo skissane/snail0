@@ -24,6 +24,7 @@ NATIVE(dict_size,1);
 NATIVE(dir_create,1);
 NATIVE(dir_delete,1);
 NATIVE(dir_open,1);
+NATIVE(disk_sync,0);
 NATIVE(div, VARIADIC);
 NATIVE(eq, 2);
 NATIVE(error, 1);

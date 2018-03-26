@@ -2628,3 +2628,9 @@ NATIVE(hex_reverse,1) {
 	free(quoted);
 	return snailStatusOk;
 }
+
+NATIVE(disk_sync,0) {
+	sync();
+	snailSetResult(snail,"");
+	return snailStatusOk;
+}

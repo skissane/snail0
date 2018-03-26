@@ -1051,3 +1051,4 @@ test.case snail.test.t1625 {test.assert.eq "3412" {hex.reverse "1234"}}
 test.case snail.test.t1626 {test.assert.eq "" {hex.reverse ""}}
 test.case snail.test.t1627 {test.assert.error {hex.reverse {}}}
 test.case snail.test.t1628 {test.assert.error {hex.reverse "0"}}
+test.case snail.test.t1629 {test.assert.null {disk.sync}}
