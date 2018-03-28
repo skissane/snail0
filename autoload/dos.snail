@@ -435,3 +435,21 @@ proc dos.bmp.make.vga {$from $to} {
 	channel.write.hex $out $hex
 	channel.close $out
 }
+
+proc dos.disk.read {$drive $count $start} {
+	rem "Assume 512 byte sectors"
+	set mem.buf [dos.mem.alloc [* $count 512]]
+	set mem.seg [channel.control $mem.buf {segment}]
+	rem "Note this is using the old DOS<4.0 API with max 32M disk size"
+	rem "Since I am just playing with floppies that is fine"
+	set r [dos.int86 [hex 25] [dict al $drive cx $count dx $start ds $mem.seg]]
+	set flags [dict.get $r flags]
+	rem "If carry flag set, error occurred"
+	if {= [math.and.u32 $flags 1] 1} then {
+		channel.close $mem.buf
+		error [string.concat "INT 25h failed with AX=" [string.lpad [to.hex [dict.get $r ax]] "0" 4]]
+	}
+	set hex [channel.read.hex $mem.buf [* $count 512]]
+	channel.close $mem.buf
+	pass $hex
+}
