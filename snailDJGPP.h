@@ -5,7 +5,19 @@ typedef struct snailDosMemoryBlock {
 	int32_t paragraphs;
 	int32_t segment;
 	int32_t selector;
+	bool manuallyAllocated;
 } snailDosMemoryBlock;
+
+
+typedef struct snailDescriptor {
+	uint16_t	limit_0_15;
+	uint16_t	base_0_15;
+	uint8_t		base_16_23;
+	uint8_t		access;
+	uint8_t		limit_16_19:4;
+	uint8_t		other:4;
+	uint8_t		base_24_31;
+} __attribute__((packed)) snailDescriptor;
 
 // DJGPP doesn't have these.
 // For now just make them do-nothing stubs.

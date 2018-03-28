@@ -1,0 +1,46 @@
+proc bmp.getdibtype {$dibsz} {
+	if {= $dibsz 12} then {return "BITMAPCOREHEADER"}
+	if {= $dibsz 64} then {return "OS22XBITMAPHEADER"}
+	if {= $dibsz 40} then {return "BITMAPINFOHEADER"}
+	if {= $dibsz 52} then {return "BITMAPV2INFOHEADER"}
+	if {= $dibsz 56} then {return "BITMAPV3INFOHEADER"}
+	if {= $dibsz 108} then {return "BITMAPV4HEADER"}
+	if {= $dibsz 124} then {return "BITMAPV5HEADER"}
+	error [string.concat "Unsupported DIB header size " $dibsz " in BMP file"]
+}
+
+proc bmp.read {$channel} {
+	set h1 [channel.read.hex $channel 18]
+	set magic [hex.decode [hex.sub $h1 0 2]]
+	if {not [= $magic "BM"]} then {error "bmp.read: missing BM magic"}
+	set dibsz [from.radix.i32 [hex.reverse [hex.sub $h1 14 4]] 16]
+	set dibtype [bmp.getdibtype $dibsz]
+	if {= $dibtype "BITMAPCOREHEADER"} then {return [bmp.read.BITMAPCOREHEADER $channel]}
+	error [string.concat "TODO: parse \"" $dibtype "\""]
+}
+
+proc bmp.pal.entry.count {$bit.count} {
+	if {= $bit.count 1} then {return 2}
+	if {= $bit.count 4} then {return 16}
+	if {= $bit.count 8} then {return 256}
+	if {= $bit.count 24} then {return 0}
+	error [string.concat "Bad BMP bit count " $bit.count]
+}
+
+proc bmp.read.BITMAPCOREHEADER {$channel} {
+	set h2 [channel.read.hex $channel 8]
+	set width [hex [hex.reverse [hex.sub $h2 0 2]]]
+	set height [hex [hex.reverse [hex.sub $h2 2 2]]]
+	set planes [hex [hex.reverse [hex.sub $h2 4 2]]]
+	set bit.count [hex [hex.reverse [hex.sub $h2 6 2]]]
+	set hdr [dict width $width height $height planes $planes bit.count $bit.count]
+	set pal.entries [bmp.pal.entry.count $bit.count]
+	set pal.size [* 3 $pal.entries]
+	set palette [if {> $pal.size 0} then {channel.read.hex $channel $pal.size} else {pass ""}]
+	set scan.line.bits [* $bit.count $width]
+	set scan.line.bytes [align [div.round.up $scan.line.bits 8] 4]
+	set image.bytes [* $scan.line.bytes $height]
+	set hdr [dict.set $hdr palette $palette]
+	set hdr [dict.set $hdr image.bytes $image.bytes]
+	pass $hdr
+}

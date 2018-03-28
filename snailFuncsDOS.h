@@ -31,6 +31,21 @@ bool snailChannel_CONTROL_dosmem(snailChannel *channel, snailArray *cmdIn, char 
 		*resultOut = snailI64ToStr(block->selector);
 		return true;
 	}
+	if (strcmp(cmdName,"selector.base") == 0) {
+		unsigned long addr = 0;
+		int rc = __dpmi_get_segment_base_address(block->selector,&addr);
+		if (rc != 0) {
+			*resultOut = snailDupString("__dpmi_get_segment_base_address call failed");
+			return false;
+		}
+		*resultOut = snailI64ToStr(addr);
+		return true;
+	}
+	if (strcmp(cmdName,"selector.limit") == 0) {
+		unsigned limit = __dpmi_get_segment_limit(block->selector);
+		*resultOut = snailI64ToStr(limit);
+		return true;
+	}
 	if (strcmp(cmdName,"byte.get") == 0) {
 		if (cmdIn->length != 2) {
 			*resultOut = snailDupString("DOSMEM: bad argument count for 'byte.get' control command");
@@ -46,7 +61,10 @@ bool snailChannel_CONTROL_dosmem(snailChannel *channel, snailArray *cmdIn, char 
 			return false;
 		}
 		uint8_t byte = 0;
-		dosmemget((block->segment << 4) + off, 1, &byte);
+		if (block->manuallyAllocated)
+			byte = _farpeekb(block->selector, off);
+		else
+			dosmemget((block->segment << 4) + off, 1, &byte);
 		*resultOut = snailI64ToStr(byte);
 		return true;
 	}
@@ -74,7 +92,10 @@ bool snailChannel_CONTROL_dosmem(snailChannel *channel, snailArray *cmdIn, char 
 			return false;
 		}
 		uint8_t bdata = data;
-		dosmemput(&bdata, 1, (block->segment << 4) + off);
+		if (block->manuallyAllocated)
+			_farpokeb(block->selector, off, bdata);
+		else
+			dosmemput(&bdata, 1, (block->segment << 4) + off);
 		*resultOut = NULL;
 		return true;
 	}
@@ -90,10 +111,17 @@ bool snailChannel_CONTROL_dosmem(snailChannel *channel, snailArray *cmdIn, char 
 
 char *snailChannel_CLOSE_dosmem(snailChannel *channel) {
 	snailDosMemoryBlock *block = channel->driverInfo;
-	bool rc = __dpmi_free_dos_memory(block->selector) == 0;
-	free(block);
-	if (!rc)
-		return snailDupString("__dpmi_free_dos_memory call failed");
+	if (block->manuallyAllocated) {
+		bool rc = __dpmi_free_ldt_descriptor(block->selector) == 0;
+		free(block);
+		if (!rc)
+			return snailDupString("__dpmi_free_ldt_descriptor call failed");
+	} else {
+		bool rc = __dpmi_free_dos_memory(block->selector) == 0;
+		free(block);
+		if (!rc)
+			return snailDupString("__dpmi_free_dos_memory call failed");
+	}
 	return NULL;
 }
 
@@ -114,7 +142,10 @@ char *snailChannel_READ_dosmem(snailChannel *channel, void *buf, size_t len, siz
 	int32_t blockSize = block->paragraphs << 4;
 	if (len > blockSize)
 		len = blockSize;
-	dosmemget(block->segment << 4, len, buf);
+	if (block->manuallyAllocated)
+		movedata(block->selector, 0, _my_ds(), (uint32_t)buf, len);
+	else
+		dosmemget(block->segment << 4, len, buf);
 	char *cbuf = buf;
 	cbuf[len - 1] = 0;
 	*read = len;
@@ -130,7 +161,10 @@ char *snailChannel_WRITE_dosmem(snailChannel *channel, void *buf, size_t len, si
 	int32_t blockSize = block->paragraphs << 4;
 	if (len > blockSize)
 		len = blockSize;
-	dosmemput(buf, len, block->segment << 4);
+	if (block->manuallyAllocated)
+		movedata(_my_ds(), (uint32_t)buf, block->selector, 0, len);
+	else
+		dosmemput(buf, len, block->segment << 4);
 	*written = len;
 	return NULL;
 }
@@ -146,7 +180,7 @@ char *snailChannel_WRITE_dosmem(snailChannel *channel, void *buf, size_t len, si
 bool snailDosSetReg(__dpmi_regs *regs, char *name, int32_t value) {
 // Do we plan to call any 32-bit services?
 // Are there any we could call?
-// Uncomment this until we need it (if we ever do).
+// Comment this out until we need it (if we ever do).
 // 	SNAIL_DOS_INT_SETREG(d,edi);
 // 	SNAIL_DOS_INT_SETREG(d,esi);
 // 	SNAIL_DOS_INT_SETREG(d,ebp);

@@ -1075,3 +1075,29 @@ test.case snail.test.t1649 {test.assert.error {math.xor.u32 0 -1}}
 test.case snail.test.t1650 {test.assert.error {math.xor.u32 -1 0}}
 test.case snail.test.t1651 {test.assert.error {math.not.u32 -1}}
 test.case snail.test.t1652 {test.assert.eq 77 {math.not.u32 [math.not.u32 77]}}
+test.case snail.test.t1653 {test.assert.not {is.hex {}}}
+test.case snail.test.t1654 {test.assert {is.hex ""}}
+test.case snail.test.t1655 {test.assert {is.hex "FF"}}
+test.case snail.test.t1656 {test.assert {is.hex "ff"}}
+test.case snail.test.t1657 {test.assert.not {is.hex "gg"}}
+test.case snail.test.t1658 {test.assert {is.hex "00"}}
+test.case snail.test.t1659 {test.assert.not {is.hex "000"}}
+test.case snail.test.t1660 {test.assert.null {channel.write.hex stdout [hex.encode "Hello World!\n"]}}
+test.case snail.test.t1661 {test.assert.error {channel.write.hex [token.unquote [string.concat "nonexistent.channel." [rand.hex 8]]] "1234567890ABCDEF"}}
+test.case snail.test.t1662 {test.assert.error {channel.write.hex stdout "0"}}
+test.case snail.test.t1663 {test.assert.null {channel.write.hex stdout ""}}
+test.case snail.test.t1664 {test.assert.error {channel.write.hex stdout {}}}
+test.case snail.test.t1665 {test.assert.error {channel.write.hex "stdout" ""}}
+test.case snail.test.t1666 {
+	set mem.buf [dos.mem.fixed 64000 [hex A000]]
+	test.assert.eq 64000 {channel.control $mem.buf {selector.limit}}
+	test.assert.eq [hex A0000] {channel.control $mem.buf {selector.base}}
+	test.assert.null {channel.close $mem.buf}
+}
+test.platform.only snail.test.t1666 {djgpp}
+test.case snail.test.t1667 {test.assert.eq "" {hex.zeroes 0}}
+test.case snail.test.t1668 {test.assert.error {hex.zeroes -1}}
+test.case snail.test.t1669 {test.assert.error {hex.zeroes {}}}
+test.case snail.test.t1670 {test.assert.eq "00" {hex.zeroes 1}}
+test.case snail.test.t1671 {test.assert.eq 666 {hex.length [hex.zeroes 666]}}
+test.case snail.test.t1672 {test.assert.eq 64000 {hex.length [hex.zeroes 64000]}}

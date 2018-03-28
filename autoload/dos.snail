@@ -103,7 +103,7 @@ proc dos.vesa.info {} {
 }
 
 proc dos.vesa.mode.get {} {
-	set r [dos.int86 [int 10] [dict ax [hex 4f03]]]
+	set r [dos.int86 [hex 10] [dict ax [hex 4f03]]]
 	if {not [= [dict.get $r ax] [hex 4f]]} then {return [null]}
 	dict.get $r bx
 }
@@ -132,8 +132,6 @@ proc dos.bda.screen.columns {} {dos.bda.get.byte [hex 4A]}
 proc dos.bda.screen.rows {} {dos.bda.get.byte [hex 84]}
 
 proc dos.vmode.get {} {
-	set vesa.mode [dos.vesa.mode.get]
-	if {not.null $vesa.mode} then {return $vesa.mode}
 	set r [dos.int86 [hex 10] [dict ah [hex 0f]]]
 	dict videoMode [dict.get $r al] columnsPerLine [dict.get $r ah] activePage [dict.get $r bh]
 }
@@ -296,4 +294,144 @@ proc dos.apm.poweroff {} {
 	disk.sync
 	dos.int86 [hex 15] [dict ax [hex 5307] cx 3]
 	error "APM power off failure"
+}
+
+proc dos.vga.palette.get {$count} {
+	arg.must.int count
+	if {< $count 1} then {error "dos.vga.palette.get: $count must be greater than zero"}
+	if {> $count 256} then {error "dos.vga.paletter.get: $count maximum is 256"}
+	set mem.buf [dos.mem.alloc [* 3 $count]]
+	cleanup {
+		set segment [channel.control $mem.buf {segment}]
+		dos.int86 [hex 10] [dict ax [hex 1017] cx $count es $segment]
+		set data [channel.read.hex $mem.buf [* 3 $count]]
+	} {channel.close $mem.buf}
+	pass $data
+}
+
+proc dos.vga.palette.set {$data} {
+	arg.must.hex data
+	set length [string.length $data]
+	if {= 0 $length} then {error "dos.vga.palette.set: no palette data"}
+	if {not [= 0 [% $length 6]]} then {error "dos.vga.palette.set: palette data must be multiple of 3 bytes"}
+	set count [/ $length 6]
+	set mem.buf [dos.mem.alloc [/ $length 6]]
+	cleanup {
+		channel.write.hex $mem.buf $data
+		set segment [channel.control $mem.buf {segment}]
+		dos.int86 [hex 10] [dict ax [hex 1012] cx $count es $segment]
+	} {channel.close $mem.buf}
+	null
+}
+
+proc dos.vga.palette.save {$code} {
+	set saved [dos.vga.palette.get 256]
+	cleanup {eval.up 1 $code} {dos.vga.palette.set $saved}
+}
+
+proc dos.show.bmp {$file} { dos.vmode.save { dos.vga.palette.save {
+	arg.must.quoted file
+	set chan [file.open $file "rb"]
+	set hdr [bmp.read $chan]
+	dos.vmode.enter [hex 13]
+	dos.vga.palette.set [dos.palette.to.vga [dict.get $hdr palette]]
+	dos.cls
+	set mem [dos.mem.fixed 64000 [hex A000]]
+	channel.write.hex $mem [hex.zeroes 64000]
+	set data [channel.read.hex $chan [dict.get $hdr image.bytes]]
+	channel.write.hex $mem $data
+	dos.pause.key
+	channel.close $mem
+	channel.close $chan
+}}}
+
+proc dos.palette.to.vga1 {$x} {
+	arg.must.hex.length x 1
+	string.lpad [to.hex [/ [* [hex $x] 63 ] 255]] "0" 2
+}
+
+proc dos.palette.from.vga1 {$x} {
+	arg.must.hex.length x 1
+	string.lpad [to.hex [/ [* [hex $x] 255] 63]] "0" 2
+}
+
+proc dos.palette.to.vga3 {$x} {
+	arg.must.hex.length x 3
+	set red [hex.sub $x 0 1]
+	set green [hex.sub $x 1 1]
+	set blue [hex.sub $x 2 1]
+	set red [dos.palette.to.vga1 $red]
+	set green [dos.palette.to.vga1 $green]
+	set blue [dos.palette.to.vga1 $blue]
+	string.concat $red $green $blue
+}
+
+proc dos.palette.from.vga3 {$x} {
+	arg.must.hex.length x 3
+	set red [hex.sub $x 0 1]
+	set green [hex.sub $x 1 1]
+	set blue [hex.sub $x 2 1]
+	set red [dos.palette.from.vga1 $red]
+	set green [dos.palette.from.vga1 $green]
+	set blue [dos.palette.from.vga1 $blue]
+	string.concat $red $green $blue
+}
+
+proc dos.palette.to.vga {$palette} {
+	arg.must.hex palette
+	if {not [= 1536 [string.length $palette]]} then {error "Bad $palette argument length"}
+	set i 0
+	set r ""
+	while {< $i 256} {
+		set n [* $i 3]
+		set rgb [hex.sub $palette $n 3]
+		set vga [dos.palette.to.vga3 $rgb]
+		set r [string.concat $r $vga]
+		set i [+ 1 $i]
+	}
+	pass $r
+}
+
+proc dos.palette.mode {} {
+	set r [dos.int86 [hex 10] [dict ax [hex 101a]]]
+	dict pagingMode [dict.get $r bl] currentPage [dict.get $r bh]
+}
+
+proc dos.pel.mask {} {
+	dict.get [dos.int86 [hex 10] [dict ax [hex 1019]]] bl
+}
+
+proc dos.palette.from.vga {$palette} {
+	arg.must.hex palette
+	if {not [= 1536 [string.length $palette]]} then {error "Bad $palette argument length"}
+	set i 0
+	set r ""
+	while {< $i 256} {
+		set n [* $i 3]
+		set rgb [hex.sub $palette $n 3]
+		set vga [dos.palette.from.vga3 $rgb]
+		set r [string.concat $r $vga]
+		set i [+ 1 $i]
+	}
+	pass $r
+}
+
+proc dos.bmp.make.vga {$from $to} {
+	arg.must.quoted from
+	arg.must.quoted to
+	set inp [file.open $from "rb"]
+	set hdr [bmp.read $inp]
+	channel.close $inp
+	set palette [dict.get $hdr palette]
+	set palette [dos.palette.to.vga $palette]
+	set palette [dos.palette.from.vga $palette]
+	set inp [file.open $from "rb"]
+	set hex [channel.read.hex $inp 26]
+	channel.read.hex $inp [hex.length $palette]
+	set data [channel.read.hex $inp [dict.get $hdr image.bytes]]
+	channel.close $inp
+	set hex [string.concat $hex $palette $data]
+	set out [file.open $to "wb"]
+	channel.write.hex $out $hex
+	channel.close $out
 }

@@ -26,6 +26,7 @@ djgpp: clean bin2c
 	cp snail.exe BUILD.DOS/SNAIL/SNAIL.EXE
 	make clean snail
 	./snail - snail.dos.build
+	cp fern.bmp BUILD.DOS/SNAIL
 	(cd BUILD.DOS && zip -r SNAIL.ZIP SNAIL)
 	mformat -i ./BUILD.DOS/SNAIL.IMG -C -f 1440 ::
 	mcopy -i ./BUILD.DOS/SNAIL.IMG ./BUILD.DOS/SNAIL.ZIP ::

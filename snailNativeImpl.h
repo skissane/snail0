@@ -2602,6 +2602,27 @@ NATIVE(file_write_hex,2) {
 	return snailStatusError;
 }
 
+NATIVE(channel_write_hex,2) {
+	NATIVE_ARG_MUSTCLASS(0,'U');
+	NATIVE_ARG_MUSTCLASS(1, 'Q');
+	char *channelName = args[0];
+	char *hex = snailTokenUnquote(args[1]);
+	char *data = hex[0]==0 ? snailMalloc(1) : snailHexDecode(hex);
+	size_t length = strlen(hex) / 2;
+	free(hex);
+	if (data == NULL) {
+		snailSetResult(snail,"channel.write.hex: bad hex data");
+		return snailStatusError;
+	}
+	size_t w = 0;
+	char *r=snailChannelWrite(snail, channelName, data, length, &w);
+	free(data);
+	bool ok = r == NULL;
+	snailSetResult(snail,ok ? "" : r);
+	free(r);
+	return ok ? snailStatusOk : snailStatusError;
+}
+
 NATIVE(hex_reverse,1) {
 	NATIVE_ARG_MUSTCLASS(0, 'Q');
 	char *unquote = snailTokenUnquote(args[0]);
@@ -2698,5 +2719,45 @@ NATIVE(math_not_u32,1) {
 	uint32_t m = strtoul(args[0], NULL, 10);
 	uint32_t r = ~m;
 	snailSetResultInt(snail,r);
+	return snailStatusOk;
+}
+
+NATIVE(is_hex,1) {
+	if (snailTokenClassify(args[0]) != 'Q') {
+		snailSetResultBool(snail, false);
+		return snailStatusOk;
+	}
+	char *unquote = snailTokenUnquote(args[0]);
+	if (unquote[0] == 0) {
+		free(unquote);
+		snailSetResultBool(snail, true);
+		return snailStatusOk;
+	}
+	char *data = snailHexDecode(unquote);
+	free(unquote);
+	if (data == NULL) {
+		snailSetResultBool(snail, false);
+		return snailStatusOk;
+	}
+	free(data);
+	snailSetResultBool(snail, true);
+	return snailStatusOk;
+}
+
+NATIVE(hex_zeroes,1) {
+	NATIVE_ARG_MUSTINT(0);
+	if (args[0][0] == '-') {
+		snailSetResult(snail,"hex.zeroes: argument 0 cannot be negative");
+		return snailStatusError;
+	}
+	uint32_t n = strtoul(args[0],NULL,10);
+	char *s = snailMalloc(3 + 2*n);
+	s[0] = '"';
+	for (int i = 0; i < 2*n; i++)
+		s[i+1] = '0';
+	s[2*n + 1] = '"';
+	s[2*n + 2] = 0;
+	snailSetResult(snail,s);
+	free(s);
 	return snailStatusOk;
 }

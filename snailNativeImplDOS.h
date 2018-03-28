@@ -1,4 +1,58 @@
 /***---DOS NATIVES: IMPLEMENT---***/
+NATIVE(dos_mem_fixed,2) {
+	NATIVE_ARG_MUSTINT(0);
+	NATIVE_ARG_MUSTINT(1);
+	int32_t bytes = strtol(args[0],NULL,10);
+	if (bytes <= 0) {
+		snailSetResult(snail, "dos.mem.fixed: argument cannot be zero or negative");
+		return snailStatusError;
+	}
+	if (bytes > 65535) {
+		snailSetResult(snail, "dos.mem.fixed: block size has 64KB maximum");
+		return snailStatusError;
+	}
+	int32_t segment = strtol(args[1],NULL,10);
+	if (segment < 0 || segment > 0xFFFF) {
+		snailSetResult(snail, "dos.mem.fixed: requested segment out of valid range");
+		return snailStatusError;
+	}
+	snailDosMemoryBlock *block = snailMalloc(sizeof(snailDosMemoryBlock));
+	block->paragraphs = (bytes + 15) >> 4;
+	block->segment = segment;
+	block->selector = __dpmi_allocate_ldt_descriptors(1);
+	block->manuallyAllocated = true;
+	if (block->selector == -1) {
+		free(block);
+		snailSetResult(snail,"__dpmi_allocate_ldt_descriptors failed");
+		return snailStatusError;
+	}
+	uint32_t linear = segment << 4;
+	if (__dpmi_set_segment_base_address(block->selector, linear) != 0) {
+		__dpmi_free_ldt_descriptor(block->selector);
+		free(block);
+		snailSetResult(snail,"__dpmi_set_segment_base_address failed");
+		return snailStatusError;
+	}
+	if (__dpmi_set_segment_limit(block->selector, (block->paragraphs << 4)) != 0) {
+		__dpmi_free_ldt_descriptor(block->selector);
+		free(block);
+		snailSetResult(snail,"__dpmi_set_segment_limit failed");
+		return snailStatusError;
+	}
+	if (__dpmi_set_descriptor_access_rights(block->selector, 0x40f3) != 0) {
+		__dpmi_free_ldt_descriptor(block->selector);
+		free(block);
+		snailSetResult(snail,"__dpmi_set_descriptor_access_rights failed");
+		return snailStatusError;
+	}
+	char *channelName = snailChannelMakeName(snail);
+	char *error = snailChannelRegister(snail, channelName, "DOSMEM", block);
+	assert(error==NULL);
+	snailSetResult(snail,channelName);
+	free(channelName);
+	return snailStatusOk;
+}
+
 NATIVE(dos_mem_alloc,1) {
 	NATIVE_ARG_MUSTINT(0);
 

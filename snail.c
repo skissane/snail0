@@ -25,6 +25,7 @@ extern char **environ;
 #include <sys/movedata.h>
 #include <dpmi.h>
 #include <go32.h>
+#include <sys/farptr.h>
 #include "snailDJGPP.h"
 #endif
 

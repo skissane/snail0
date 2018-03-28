@@ -82,6 +82,25 @@ proc arg.must.int {$name} {
 	}
 }
 
+proc arg.must.hex {$name} {
+	if {not [is.hex [var.get.up 1 $name]]} then {
+		error [string.concat "argument $" $name " must be an hex data (in: " [frame.cmd.up 1] ")"]
+	}
+}
+
+proc arg.must.hex.length {$name $length} {
+	arg.must.symbol name
+	arg.must.int length
+	set value [var.get.up 1 $name]
+	if {not [is.hex $value]} then {
+		error [string.concat "argument $" $name " must be an hex data (in: " [frame.cmd.up 1] ")"]
+	}
+	set actual [hex.length $value]
+	if {not [= $length $actual]} then {
+		error [string.concat "argument $" $name " hex data length expected " $length " actual " $actual " (in: " [frame.cmd.up 1] ")"]
+	}
+}
+
 proc file.is.blk {$path} {file.is.type $path blk}
 proc file.is.chr {$path} {file.is.type $path chr}
 proc file.is.dir {$path} {file.is.type $path dir}
@@ -453,6 +472,11 @@ proc hex {$hex} {
 	if {token.is.quoted $hex} then {from.radix.i32 $hex 16} else {from.radix.i32 [token.quote $hex] 16}
 }
 
+proc hex.length {$hex} {
+	arg.must.hex hex
+	/ [string.length $hex] 2
+}
+
 proc hex.sub {$hex $off $len} {string.sub $hex [* 2 $off] [* 2 $len]}
 
 proc hex.byte {$byte} {
@@ -488,6 +512,14 @@ proc file.savecwd {$code} {
 	set saved [file.getcwd]
 	cleanup {eval.up 1 $code} {file.setcwd $saved}
 }
+
+proc div.round.up {$n $mod} {
+	set v [/ $n $mod]
+	if {not [= 0 [% $n $mod]]} then {set v [+ 1 $v]}
+	pass $v
+}
+
+proc align {$n $mod} {* [div.round.up $n $mod] $mod}
 
 if {platform.is.dos} then {dos.snail.init}
 if {file.exists "__auto__.snail"} then {file.run "__auto__.snail"}
