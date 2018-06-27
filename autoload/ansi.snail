@@ -1,0 +1,7 @@
+proc ansi.sgr {$params} {
+	puts.nonewline [string.concat [string.chr 27] "[" $params "m"]
+}
+
+proc ansi.color {$fg $bg} {
+	ansi.sgr [string.concat [+ 30 $fg] ";" [+ 40 $bg]]
+}
