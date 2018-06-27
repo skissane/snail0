@@ -2,6 +2,8 @@
 
 Snail is a small programming language.
 
+Note that this is "Snail 0.x" which is completely unrelated to [Snail 1.x](https://github.com/skissane/snail).
+
 Snail is vaguely/loosely inspired by Tcl 7.x, but not compatible with it.
 
 ## Why is it called "Snail"?
