@@ -2073,7 +2073,7 @@ NATIVE(file_copy,2) {
 
 	// Open input file
 	errno = 0;
-	FILE *from = fopen(pfrom,"r");
+	FILE *from = fopen(pfrom,"rb");
 	int e = errno;
 	free(pfrom);
 	if (from == NULL) {
@@ -2091,7 +2091,7 @@ NATIVE(file_copy,2) {
 
 	// Open output file
 	errno = 0;
-	FILE *to = fopen(pto,"w");
+	FILE *to = fopen(pto,"wb");
 	e = errno;
 	free(pto);
 	if (to == NULL) {
