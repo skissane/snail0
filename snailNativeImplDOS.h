@@ -159,3 +159,14 @@ NATIVE(dos_mem_peek,2) {
 	snailSetResultInt(snail,byte);
 	return snailStatusOk;
 }
+
+NATIVE(dos_reboot,0) {
+	__dpmi_regs r;
+	sync();
+	memset(&r,0,sizeof(__dpmi_regs));
+	r.x.cs = 0xffff;
+	r.x.ip = 0x0000;
+	__dpmi_simulate_real_mode_procedure_retf(&r);
+	snailSetResult(snail,"Reboot failed");
+	return snailStatusError;
+}
