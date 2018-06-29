@@ -74,3 +74,16 @@ proc pdos.copy.dos {} {
 		sys.run "hdiutil makehybrid -ov -o pdos.iso pdos.work"
 	}
 }
+
+proc pdos.git.mirror {} {
+	file.savecwd {
+		file.setcwd [dict.get [sys.environ] "HOME"]
+		dir.create.path "gitmirrors"
+		if {not [file.exists "gitmirrors/pdos"]} then {
+			sys.run "git clone --mirror https://git.code.sf.net/p/pdos/gitcode gitmirrors/pdos"
+		}
+		file.setcwd "gitmirrors/pdos"
+		sys.run "git fetch"
+		sys.run "git push --mirror git@github.com:skissane/pdos.git"
+	}
+}
