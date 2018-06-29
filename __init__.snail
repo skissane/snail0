@@ -521,5 +521,23 @@ proc div.round.up {$n $mod} {
 
 proc align {$n $mod} {* [div.round.up $n $mod] $mod}
 
+proc hex.u16be {$u16} {
+	arg.must.int u16
+	if {or {< $u16 0} {> $u16 65535}} then {error [string.concat "Bad U16 HEX: " $u16]}
+	string.lpad [to.hex $u16] "0" 4
+}
+
+proc hex.u16le {$u16} {hex.reverse [hex.u16be $u16]}
+
+proc hex.u32be {$u32} {
+	arg.must.int u32
+	if {< $u32 0} then {error [string.concat "Bad U32 HEX: " $u32]}
+	set r [string.lpad [to.hex $u32] "0" 8]
+	if {> [hex.length $r] 8} then {error [string.concat "Bad U32 HEX: " $u32]}
+	pass $r
+}
+
+proc hex.u32le {$u32} {hex.reverse [hex.u32be $u32]}
+
 if {platform.is.dos} then {dos.snail.init}
 if {file.exists "__auto__.snail"} then {file.run "__auto__.snail"}
