@@ -453,3 +453,96 @@ proc dos.disk.read {$drive $count $start} {
 	channel.close $mem.buf
 	pass $hex
 }
+
+proc dos.cdrom.count {} {
+	rem "Uses MSCDEX INT 2F,AX=1500 - CD-ROM - INSTALLATION CHECK"
+	rem "Output: BX = number of CD-ROM drives installed"
+	set r [dos.int86 [hex 2f] [dict ax [hex 1500]]]
+	dict.get $r bx
+}
+
+proc dos.cdrom.mscdex.version {} {
+	rem "Uses MSCDEX INT 2F,AX=150C - CD-ROM v2.00+ - GET MSCDEX.EXE VERSION (GET VERSION)"
+	rem "Output BH = major version, BL = minor version"
+	rem "Not supported for MSCDEX 1.x, will return 0.0"
+	set r [dos.int86 [hex 2f] [dict ax [hex 150C]]]
+	string.concat [dict.get $r bh] "." [dict.get $r bl]
+}
+
+proc dos.cdrom.drives {} {
+	rem "Uses MSCDEX INT 2F,AX=150D - CD-ROM v2.00+ - GET CD-ROM DRIVE LETTERS"
+	set mem.buf [dos.mem.alloc 256]
+	set mem.seg [channel.control $mem.buf {segment}]
+	set r [dos.int86 [hex 2f] [dict ax [hex 150d] es $mem.seg]]
+	set s {}
+	set i 0
+	set count [dos.cdrom.count]
+	while {< $i $count} {
+		set s [list.add $s [string.chr [+ [string.char.at "A" 0] [channel.control $mem.buf [list byte.get $i]]]]]
+		set i [+ 1 $i]
+	}
+	channel.close $mem.buf
+	pass $s
+}
+
+proc dos.cdrom.mscdex.installed {} {
+	set r [dos.int86 [hex 2f] [dict ax [hex 150b]]]
+	set bx [dict.get $r bx]
+	= [hex ADAD] $bx
+}
+
+proc dos.drive.to.index {$drive} {
+	if {not [= 1 [string.length $drive]]} then {error [string.concat "Invalid drive specification '" $drive ":'"]}
+	set drive [string.upper $drive]
+	set index [string.char.at $drive 0]
+	if {< $index [string.char.at "A" 0]} then {error [string.concat "Invalid drive specification '" $drive ":'"]}
+	if {> $index [string.char.at "Z" 0]} then {error [string.concat "Invalid drive specification '" $drive ":'"]}
+	- $index [string.char.at "A" 0]
+}
+
+proc dos.cdrom.is {$drive} {
+	set index [dos.drive.to.index $drive]
+	set r [dos.int86 [hex 2f] [dict ax [hex 150b] cx $index]]
+	set ax [dict.get $r ax]
+	not [= $ax 0]
+}
+
+proc dos.reqhdr.prefixlen {$hex} {
+	string.concat [hex.byte [hex.length $hex]] $hex
+}
+
+proc dos.reqhdr.make {$subunit $cmd $body} {
+	dos.reqhdr.prefixlen [string.concat [hex.byte $subunit] [hex.byte $cmd] [hex.u16le 0] [hex.zeroes 8] $body]
+}
+
+proc dos.reqhdr.ioctlo {$subunit $dtaseg $dtaoff $dtacount} {
+	set body [string.concat [hex.byte 0] [hex.u16le $dtaoff] [hex.u16le $dtaseg] [hex.u16le $dtacount] [hex.zeroes 10]]
+	rem "12=IOCTLO (IOCTL OUTPUT) COMMAND"
+	dos.reqhdr.make $subunit 12 $body
+}
+
+proc dos.cdrom.ioctlo {$drive $body} {
+	set drive [dos.drive.to.index $drive]
+	set dta.count [hex.length $body]
+	set dta.buf [dos.mem.alloc $dta.count]
+	set dta.seg [channel.control $dta.buf {segment}]
+	channel.write.hex $dta.buf $body
+	set req.hex [dos.reqhdr.ioctlo 0 $dta.seg 0 $dta.count]
+	set req.len [hex.length $req.hex]
+	set req.buf [dos.mem.alloc $req.len]
+	set req.seg [channel.control $req.buf {segment}]
+	set r [dos.int86 [hex 2f] [dict ax [hex 1510] cx $drive es $req.seg]]
+	rem "TODO: Process output, detect error, etc."
+	channel.close $req.buf
+	channel.close $dta.buf
+	null
+}
+
+proc dos.cdrom.eject {$drive} {
+	if {not [dos.cdrom.is $drive]} then {error [string.concat "Drive " $drive " is not a CD-ROM, cannot eject"]}
+	dos.cdrom.ioctlo $drive "0100"
+	dos.cdrom.ioctlo $drive "00"
+
+	rem "FIXME: This function is broken, it doesn't work."
+	rem "I think the basic logic is right, I've just made an error somewhere"
+}
