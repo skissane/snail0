@@ -62,3 +62,15 @@ proc pdos.build.pdos {} {file.savecwd {
 	sys.run "patchver a:io.sys"
 	puts "SUCCESS: PDOS: 16-bit version installed on drive A, reboot to test"
 }}
+
+proc pdos.copy.dos {} {
+	rem "This routine is used to copy PDOS sources from my Mac to an ISO for loading into VirtualBox"
+	rem "It might not correspond to your ways of working, but it works for me"
+	file.savecwd {
+		file.setcwd [dict.get [sys.environ] "HOME"]
+		dir.create.path "pdos.work"
+		if {file.exists "pdos.work/pdos.zip"} then {file.delete "pdos.work/pdos.zip"}
+		sys.run "zip -r pdos.work/pdos.zip pdos -x '*/.*'"
+		sys.run "hdiutil makehybrid -ov -o pdos.iso pdos.work"
+	}
+}
