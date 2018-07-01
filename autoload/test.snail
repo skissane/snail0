@@ -24,6 +24,16 @@ proc test.run.case {$name} {
 	pass $r
 }
 
+proc test.get.failed {$results} {
+	set failed {}
+	foreach r $results {
+		set status [list.at $r 0]
+		set name [list.at $r 1]
+		if {= $status FAIL} then {set failed [list.add $failed $name]}
+	}
+	pass $failed
+}
+
 proc test.summary {$results} {
 	set h %{}
 	foreach r $results {
@@ -54,8 +64,9 @@ proc test.run.cases {$cases} {
 proc test.run.suite {$module} {
 	set r [test.run.cases [module.cmds $module]]
 	set s [test.summary $r]
+	set failed [test.get.failed $r]
 	if {dict.has $s FAIL} then {
-		error [string.concat "Tests failed in suite " $module]
+		error [string.concat "Tests failed in suite " $module ": " $failed]
 	}
 }
 
