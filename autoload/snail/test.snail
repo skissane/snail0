@@ -1101,3 +1101,18 @@ test.case snail.test.t1669 {test.assert.error {hex.zeroes {}}}
 test.case snail.test.t1670 {test.assert.eq "00" {hex.zeroes 1}}
 test.case snail.test.t1671 {test.assert.eq 666 {hex.length [hex.zeroes 666]}}
 test.case snail.test.t1672 {test.assert.eq 64000 {hex.length [hex.zeroes 64000]}}
+test.case snail.test.t1673 {test.assert.error {sys.setenv foo bar}}
+test.case snail.test.t1674 {test.assert.error {sys.setenv "foo" bar}}
+test.case snail.test.t1675 {test.assert.error {sys.delenv foo}}
+test.case snail.test.t1676 {
+	set var.name [rand.hex 8]
+	set var.val [rand.hex 8]
+	test.assert.not {dict.has [sys.environ] $var.name}
+	sys.setenv $var.name $var.val
+	test.assert {dict.has [sys.environ] $var.name}
+	test.assert.eq $var.val {dict.get [sys.environ] $var.name}
+	sys.delenv $var.name
+	test.assert.not {dict.has [sys.environ] $var.name}
+}
+test.case snail.test.t1677 {test.assert.error {sys.setenv "" ""}}
+test.case snail.test.t1678 {test.assert.error {sys.delenv ""}}

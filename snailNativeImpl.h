@@ -2386,6 +2386,52 @@ NATIVE(sys_at_exit_remove,1) {
 	return snailStatusOk;
 }
 
+NATIVE(sys_setenv,2) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	NATIVE_ARG_MUSTCLASS(1, 'Q');
+	char *varName = snailTokenUnquote(args[0]);
+	char *value = snailTokenUnquote(args[1]);
+	int rc = setenv(varName,value,true);
+	if (rc != 0) {
+		int e = errno;
+		snailBuffer *buf = snailBufferCreate(16);
+		snailBufferAddString(buf,"sys.setenv ");
+		snailBufferAddString(buf,args[0]);
+		snailBufferAddString(buf," to ");
+		snailBufferAddString(buf,args[1]);
+		snailBufferAddString(buf," failed with OS error ");
+		char *r = snailI64ToStr(e);
+		snailBufferAddString(buf,r);
+		free(r);
+		snailBufferAddChar(buf,0);
+		snailSetResult(snail,buf->bytes);
+		snailBufferDestroy(buf);
+		return snailStatusError;
+	}
+	return snailStatusOk;
+}
+
+NATIVE(sys_delenv,1) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	char *varName = snailTokenUnquote(args[0]);
+	int rc = unsetenv(varName);
+	if (rc != 0) {
+		int e = errno;
+		snailBuffer *buf = snailBufferCreate(16);
+		snailBufferAddString(buf,"sys.delenv ");
+		snailBufferAddString(buf,args[0]);
+		snailBufferAddString(buf," failed with OS error ");
+		char *r = snailI64ToStr(e);
+		snailBufferAddString(buf,r);
+		free(r);
+		snailBufferAddChar(buf,0);
+		snailSetResult(snail,buf->bytes);
+		snailBufferDestroy(buf);
+		return snailStatusError;
+	}
+	return snailStatusOk;
+}
+
 NATIVE(sys_environ,0) {
 	char **ptr = environ;
 	snailBuffer *buf = snailBufferCreate(256);
