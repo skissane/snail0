@@ -84,6 +84,7 @@ proc pdos.git.mirror {} {
 		}
 		file.setcwd "gitmirrors/pdos"
 		sys.run "git fetch"
-		sys.run "git push --mirror git@github.com:skissane/pdos.git"
+		sys.run "git push --all --force git@github.com:skissane/pdos.git"
+		sys.run "git push --tags git@github.com:skissane/pdos.git"
 	}
 }
