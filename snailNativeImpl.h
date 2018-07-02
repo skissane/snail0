@@ -2408,6 +2408,7 @@ NATIVE(sys_setenv,2) {
 		snailBufferDestroy(buf);
 		return snailStatusError;
 	}
+	snailSetResult(snail,"");
 	return snailStatusOk;
 }
 
@@ -2429,6 +2430,7 @@ NATIVE(sys_delenv,1) {
 		snailBufferDestroy(buf);
 		return snailStatusError;
 	}
+	snailSetResult(snail,"");
 	return snailStatusOk;
 }
 
@@ -2524,6 +2526,24 @@ NATIVE(list_reverse, 1) {
 	snailArray *r = snailArrayCreate(list->length);
 	for (int i = list->length-1; i >= 0; i--)
 		snailArrayAdd(r, list->elems[i]);
+	char *result = snailQuoteList(r);
+	snailSetResult(snail, result);
+	free(result);
+	snailArrayDestroy(r, NULL);
+	snailArrayDestroy(list, free);
+	return snailStatusOk;
+}
+
+NATIVE(list_remove, 2) {
+	snailArray *list = snailUnquoteList(args[0]);
+	if (list == NULL) {
+		snailSetResult(snail, "list.remove: argument 0 is not a valid list");
+		return snailStatusError;
+	}
+	snailArray *r = snailArrayCreate(list->length);
+	for (int i = 0; i < list->length; i++)
+		if (strcmp(list->elems[i],args[1]) != 0)
+			snailArrayAdd(r, list->elems[i]);
 	char *result = snailQuoteList(r);
 	snailSetResult(snail, result);
 	free(result);

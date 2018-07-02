@@ -467,6 +467,9 @@ proc list.quoted.only {$list} {
 proc platform.is.dos {} {= [platform.type] djgpp}
 proc platform.is.linux {} {= [platform.type] linux}
 proc platform.is.macos {} {= [platform.type] macos}
+proc platform.path.sep {} {
+	if {platform.is.dos} then {pass ";"} else {pass ":"}
+}
 
 proc hex {$hex} {
 	if {token.is.quoted $hex} then {from.radix.i32 $hex 16} else {from.radix.i32 [token.quote $hex] 16}
@@ -538,6 +541,30 @@ proc hex.u32be {$u32} {
 }
 
 proc hex.u32le {$u32} {hex.reverse [hex.u32be $u32]}
+
+proc sys.path.get {} {
+	string.split [nvl [dict.get [sys.environ] "PATH"] ""] [platform.path.sep]
+}
+
+proc sys.path.set {$path} {
+	arg.must.list path
+	sys.setenv "PATH" [string.join $path [platform.path.sep]]
+}
+
+proc sys.path.saving {$code} {
+	arg.must.list code
+	set saved [sys.path.get]
+	cleanup {eval.up 1 $code} {sys.path.set $saved}
+}
+
+proc sys.path.prepend {$elem} {
+	arg.must.quoted elem
+	sys.path.set [list.concat [list $elem] [sys.path.get]]
+}
+
+proc sys.path.append {$elem} {
+	sys.path.set [list.concat [sys.path.get] [list $elem]]
+}
 
 if {platform.is.dos} then {dos.snail.init}
 if {file.exists "__auto__.snail"} then {file.run "__auto__.snail"}

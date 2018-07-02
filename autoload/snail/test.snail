@@ -1116,3 +1116,38 @@ test.case snail.test.t1676 {
 }
 test.case snail.test.t1677 {test.assert.error {sys.setenv "" ""}}
 test.case snail.test.t1678 {test.assert.error {sys.delenv ""}}
+test.case snail.test.t1679 {test.assert.eq {"A" "C"} {list.remove {"A" "B" "C"} "B"}}
+test.case snail.test.t1680 {test.assert.eq {1 1 1} {list.remove {1 2 1 2 1 2} 2}}
+test.case snail.test.t1681 {test.assert.error {list.remove "foo bar" "foo"}}
+test.case snail.test.t1682 {
+	set test.path [rand.hex 8]
+	set orig.path [sys.path.get]
+	test.assert.not {list.contains [sys.path.get] $test.path}
+	test.assert.not {string.contains [dict.get [sys.environ] "PATH"] $test.path}
+	sys.path.saving {
+		sys.path.prepend $test.path
+		test.assert {list.contains [sys.path.get] $test.path}
+		test.assert {string.contains [dict.get [sys.environ] "PATH"] $test.path}
+		test.assert.eq $test.path {list.at [sys.path.get] 0}
+	}
+	test.assert.eq $orig.path {sys.path.get}
+	test.assert.not {list.contains [sys.path.get] $test.path}
+	test.assert.not {string.contains [dict.get [sys.environ] "PATH"] $test.path}
+}
+test.case snail.test.t1683 {
+	set test.path [rand.hex 8]
+	set orig.path [sys.path.get]
+	test.assert.not {list.contains [sys.path.get] $test.path}
+	test.assert.not {string.contains [dict.get [sys.environ] "PATH"] $test.path}
+	sys.path.saving {
+		sys.path.append $test.path
+		test.assert {list.contains [sys.path.get] $test.path}
+		test.assert {string.contains [dict.get [sys.environ] "PATH"] $test.path}
+		test.assert.not {= $test.path [list.at [sys.path.get] 0]}
+		test.assert.eq $test.path {list.at [sys.path.get] [- [list.length [sys.path.get]] 1]}
+	}
+	test.assert.eq $orig.path {sys.path.get}
+	test.assert.not {list.contains [sys.path.get] $test.path}
+	test.assert.not {string.contains [dict.get [sys.environ] "PATH"] $test.path}
+}
+test.case snail.test.t1684 {test.assert {string.contains [dict.get [sys.environ] "PATH"] [platform.path.sep]}}
