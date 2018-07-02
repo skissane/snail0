@@ -1114,7 +1114,11 @@ test.case snail.test.t1676 {
 	sys.delenv $var.name
 	test.assert.not {dict.has [sys.environ] $var.name}
 }
-test.case snail.test.t1677 {test.assert.error {sys.setenv "" ""}}
+test.case snail.test.t1677 {
+	rem "Disabled test on DJGPP since it fails there"
+	test.assert.error {sys.setenv "" ""}
+}
+test.platform.only snail.test.t1677 {macos linux}
 test.case snail.test.t1678 {test.assert.error {sys.delenv ""}}
 test.case snail.test.t1679 {test.assert.eq {"A" "C"} {list.remove {"A" "B" "C"} "B"}}
 test.case snail.test.t1680 {test.assert.eq {1 1 1} {list.remove {1 2 1 2 1 2} 2}}
