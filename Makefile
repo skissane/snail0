@@ -31,6 +31,9 @@ djgpp: clean bin2c
 	mformat -i ./BUILD.DOS/SNAIL.IMG -C -f 1440 ::
 	mcopy -i ./BUILD.DOS/SNAIL.IMG ./BUILD.DOS/SNAIL.ZIP ::
 
+djgppvbox: djgpp
+	./snail - snail.dos.vbox.refresh
+
 test: snail
 	./testsnail
 
@@ -39,4 +42,4 @@ linux:
 
 allports: clean test djgpp linux
 
-.PHONY: clean djgpp test linux allports
+.PHONY: clean djgpp test linux allports djgppvbox

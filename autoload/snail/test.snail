@@ -1155,3 +1155,19 @@ test.case snail.test.t1683 {
 	test.assert.not {string.contains [dict.get [sys.environ] "PATH"] $test.path}
 }
 test.case snail.test.t1684 {test.assert {string.contains [dict.get [sys.environ] "PATH"] [platform.path.sep]}}
+test.case snail.test.t1685 {
+	set global.name [token.unquote [string.concat "test.global." [rand.hex 8]]]
+	set orig [rand.hex 8]
+	set new [rand.hex 8]
+	global.set $global.name $orig
+	test.assert.eq $orig {global.get $global.name}
+	global.save $global.name {
+		test.assert.eq $orig {global.get $global.name}
+		global.set $global.name $new
+		test.assert.eq $new {global.get $global.name}
+	}
+	test.assert.eq $orig {global.get $global.name}
+}
+test.case snail.test.t1686 {test.assert.error {cleanup "" ""}}
+test.case snail.test.t1687 {test.assert.error {cleanup {} ""}}
+test.case snail.test.t1688 {test.assert.eq "bar" {catching {cleanup {error "foo"} {error "bar"}}}}

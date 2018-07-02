@@ -1,0 +1,59 @@
+proc vbox.floppy.insert {$vm $drive $name} {
+	arg.must.quoted vm
+	arg.must.int drive
+	arg.must.quoted name
+	set cmd {"VBoxManage" "storageattach"}
+	set cmd [list.add $cmd [string.concat "\"" $vm "\""]]
+	set cmd [list.concat $cmd {"--storagectl" "Floppy"}]
+	set cmd [list.concat $cmd {"--port" "0"}]
+	set cmd [list.concat $cmd [list "--device" [token.quote $drive]]]
+	set qname [string.concat "\"" $name "\""]
+	set cmd [list.concat $cmd [list "--medium" $qname]]
+	set cmd [string.join $cmd " "]
+	puts [string.concat "RUN: " $cmd]
+	sys.run.check $cmd
+}
+
+proc vbox.floppy.eject {$vm $drive} {
+	arg.must.quoted vm
+	arg.must.int drive
+	vbox.floppy.insert $vm $drive "emptydrive"
+}
+
+proc vbox.floppy.refresh {$vm $drive $name} {
+	arg.must.quoted vm
+	arg.must.int drive
+	arg.must.quoted name
+	vbox.floppy.eject $vm $drive
+	vbox.floppy.insert $vm $drive $name
+}
+
+proc vbox.cdrom.insert {$vm $drive $name} {
+	arg.must.quoted vm
+	arg.must.int drive
+	arg.must.quoted name
+	set cmd {"VBoxManage" "storageattach"}
+	set cmd [list.add $cmd [string.concat "\"" $vm "\""]]
+	set cmd [list.concat $cmd {"--storagectl" "IDE"}]
+	set cmd [list.concat $cmd {"--port" "1"}]
+	set cmd [list.concat $cmd [list "--device" [token.quote $drive]]]
+	set qname [string.concat "\"" $name "\""]
+	set cmd [list.concat $cmd [list "--medium" $qname]]
+	set cmd [string.join $cmd " "]
+	puts [string.concat "RUN: " $cmd]
+	sys.run.check $cmd
+}
+
+proc vbox.cdrom.eject {$vm $drive} {
+	arg.must.quoted vm
+	arg.must.int drive
+	vbox.cdrom.insert $vm $drive "emptydrive"
+}
+
+proc vbox.cdrom.refresh {$vm $drive $name} {
+	arg.must.quoted vm
+	arg.must.int drive
+	arg.must.quoted name
+	vbox.cdrom.eject $vm $drive
+	vbox.cdrom.insert $vm $drive $name
+}

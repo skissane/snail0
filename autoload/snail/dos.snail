@@ -10,3 +10,7 @@ proc snail.dos.build {} {
 		"snail - \"test.run.suite snail.test\""
 	}] "\r\n"]
 }
+
+proc snail.dos.vbox.refresh {} {
+	vbox.floppy.refresh "MS-DOS 6" 0 [string.concat [file.getcwd] "/BUILD.DOS/SNAIL.IMG"]
+}

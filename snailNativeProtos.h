@@ -13,6 +13,7 @@ NATIVE(channel_read,2);
 NATIVE(channel_read_hex,2);
 NATIVE(channel_write,2);
 NATIVE(channel_write_hex,2);
+NATIVE(cleanup, 2);
 NATIVE(continue,0);
 NATIVE(dict, VARIADIC);
 NATIVE(dict_del,2);

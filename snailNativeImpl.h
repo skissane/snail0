@@ -2827,3 +2827,24 @@ NATIVE(hex_zeroes,1) {
 	free(s);
 	return snailStatusOk;
 }
+
+NATIVE(cleanup, 2) {
+	if (snailTokenClassify(args[0]) != 'L') {
+		snailSetResult(snail, "cleanup: argument 0 is not a valid list");
+		return snailStatusError;
+	}
+	if (snailTokenClassify(args[1]) != 'L') {
+		snailSetResult(snail, "cleanup: argument 1 is not a valid list");
+		return snailStatusError;
+	}
+	snailStatus r = snailExecList(snail,args[0]);
+	char *result = snailDupString(snail->result);
+	snailStatus r2 = snailExecList(snail,args[1]);
+	if (r2 != snailStatusOk) {
+		free(result);
+		return r2;
+	}
+	snailSetResult(snail,result);
+	free(result);
+	return r;
+}

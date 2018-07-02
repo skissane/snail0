@@ -500,17 +500,6 @@ proc cls {} {
 	if {platform.is.dos} then {dos.cls.home} else {puts.nonewline [string.concat [string.chr 27] "[2J" [string.chr 27] "[H"]}
 }
 
-proc cleanup {$body $cleanup} {
-	set caught [null]
-	set r [null]
-	catch {
-		set r [eval.up 1 $body]
-	} e {set caught $e}
-	eval.up 1 $cleanup
-	if {not.null $caught} then {error $caught}
-	pass $r
-}
-
 proc file.savecwd {$code} {
 	set saved [file.getcwd]
 	cleanup {eval.up 1 $code} {file.setcwd $saved}
@@ -542,8 +531,10 @@ proc hex.u32be {$u32} {
 
 proc hex.u32le {$u32} {hex.reverse [hex.u32be $u32]}
 
+proc sys.path.getstr {} {nvl [dict.get [sys.environ] "PATH"] ""}
+
 proc sys.path.get {} {
-	string.split [nvl [dict.get [sys.environ] "PATH"] ""] [platform.path.sep]
+	string.split [sys.path.getstr] [platform.path.sep]
 }
 
 proc sys.path.set {$path} {
@@ -564,6 +555,37 @@ proc sys.path.prepend {$elem} {
 
 proc sys.path.append {$elem} {
 	sys.path.set [list.concat [sys.path.get] [list $elem]]
+}
+
+proc sys.path.anycontains {$string} {
+	foreach e [sys.path.get] {
+		if {string.contains $e $string} then {return t}
+	}
+	pass f
+}
+
+proc sys.path.removeall {$string} {
+	loop {
+		if {not [sys.path.anycontains $string]} then {return [null]}
+		set r {}
+		foreach e [sys.path.get] {
+			if {not [string.contains $e $string]} then {set r [list.add $r $e]}
+		}
+		sys.path.set $r
+	}
+}
+
+proc sys.run.check {$cmd} {
+	set rc [sys.run $cmd]
+	if {not [= $rc 0]} then {error [string.concat "Command failed with rc=" $rc]}
+	null
+}
+
+proc global.save {$name $code} {
+	arg.must.symbol name
+	arg.must.list code
+	set saved [global.get $name]
+	cleanup {eval.up 1 $code} {global.set $name $saved}
 }
 
 if {platform.is.dos} then {dos.snail.init}
