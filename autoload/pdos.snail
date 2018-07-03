@@ -1,9 +1,20 @@
-proc pdos.build.pdpclib {} {file.savecwd {
+proc pdos.build.pdpclib16 {} {file.savecwd {
 	file.setcwd "/pdos/pdpclib"
 	puts "NOTICE: PDPCLIB: Clean prior build artifacts"
 	foreach to.del [dir.find.files "." {"obj" "exe" "lib" "log"}] {file.delete $to.del}
 	puts "NOTICE: PDPCLIB: Execute make, logging to /pdos/pdpclib/make.log"
 	sys.run.check "make -fmakefile.dos >make.log"
+	puts "SUCCESS: PDPCLIB: make complete"
+}}
+
+proc pdos.build.pdpclib32 {} {file.savecwd {
+	pdos.toolchain.emx
+	sys.path.append "C:\\TC\\BIN"
+	file.setcwd "/pdos/pdpclib"
+	puts "NOTICE: PDPCLIB: Clean prior build artifacts"
+	foreach to.del [dir.find.files "." {"obj" "exe" "lib" "log"}] {file.delete $to.del}
+	puts "NOTICE: PDPCLIB: Execute make, logging to /pdos/pdpclib/make.log"
+	sys.run.check "make -fmakefile.pds >make.log"
 	puts "SUCCESS: PDPCLIB: make complete"
 }}
 
@@ -32,11 +43,13 @@ proc pdos.toolchain.emx {} {
 	sys.path.removeall "\\WATCOM\\"
 	sys.path.removeall "\\EMX\\"
 	sys.path.removeall "\\TC\\"
+	sys.path.removeall "\\RSX\\"
 	sys.path.prepend "C:\\EMX\\BIN"
+	sys.path.append "C:\\RSX\\BIN"
 }
 
-proc pdos.build.pdos {} {file.savecwd {
-	pdos.build.pdpclib
+proc pdos.build.pdos16 {} {file.savecwd {
+	pdos.build.pdpclib16
 	file.setcwd "/pdos/src"
 	puts "NOTICE: PDOS: Clean prior build artifacts"
 	foreach to.del [dir.find.files "." {"obj" "exe" "lib" "com" "sys" "log"}] {file.delete $to.del}
@@ -89,6 +102,7 @@ proc pdos.build.pdos {} {file.savecwd {
 	file.copy "pload.com" "a:io.sys"
 	file.copy "pdos.exe" "a:msdos.sys"
 	file.copy "pcomm.exe" "a:command.com"
+	file.copy "world.exe" "a:world.exe"
 	sys.run.check "patchver a:io.sys"
 	puts "SUCCESS: PDOS: 16-bit version installed on drive A, reboot to test"
 }}
@@ -123,3 +137,62 @@ proc pdos.git.mirror {} {
 		sys.run.check "git push --tags git@github.com:skissane/pdos.git"
 	}
 }
+
+proc pdos.build.pdos32 {} {file.savecwd {
+	pdos.build.pdpclib32
+	file.setcwd "/pdos/src"
+	puts "NOTICE: PDOS: Clean prior build artifacts"
+	foreach to.del [dir.find.files "." {"obj" "exe" "lib" "com" "sys" "log"}] {file.delete $to.del}
+	puts "NOTICE: PDOS: Building patchver"
+	pdos.toolchain.tc
+	sys.run.check "tcc patchver.c"
+	puts "NOTICE: PDOS: Assemble stage 4"
+	pdos.toolchain.watcom
+	foreach file {"ploadst.asm" "int13x.asm" "near.asm" "support.asm" "lldos.asm" "protinta.asm"} {
+		sys.run.check [string.concat "wasmr -zq -zcm -Dmemodel=tiny " $file]
+	}
+	puts "NOTICE: PDOS: Compile stage 4a, logging to /pdos/src/comp4a.log"
+	pdos.toolchain.tc
+	sys.run.check "tcc -O -c -mt -DPDOS32 -I..\\pdpclib pload.c protint.c file.c >comp4a.log"
+	puts "NOTICE: PDOS: Compile stage 4a, logging to /pdos/src/comp4b.log"
+	sys.run.check "tcc -O -c -mt -DNEED_DUMP -DPDOS32 -I..\\pdpclib fat.c bos.c pdosload.c ..\\pdpclib\\string.c ..\\pdpclib\\dossupc.c >comp4b.log"
+	puts "NOTICE: PDOS: Link stage 4"
+	sys.run.check "tlink -t -x -3 ploadst+pload+int13x+near+support+bos+dossupc+fat+string+pdosload+lldos+protinta+file+protint,pload.com,,,"
+	puts "NOTICE: PDOS: Compile stage 5a, logging to /pdos/src/comp5a.log"
+	pdos.toolchain.emx
+	sys.run.check "gcc -fno-common -c -I../pdpclib strt32.s pdos.c bos.c fat.c >comp5a.log"
+	puts "NOTICE: PDOS: Compile stage 5b, logging to /pdos/src/comp5b.log"
+	sys.run.check "gcc -fno-common -c -I../pdpclib patmat.c support.s memmgr.c protintp.c protints.s pdoss.s >comp5b.log"
+	puts "NOTICE: PDOS: Link stage 4"
+	sys.run.check "ld -r -s -o pdos strt32.o pdos.o bos.o fat.o memmgr.o patmat.o support.o protintp.o protints.o pdoss.o ../pdpclib/pdos.a"
+	if {file.exists "pdos.exe"} then {file.delete "pdos.exe"}
+	file.rename "pdos" "pdos.exe"
+	puts "NOTICE: PDOS: Compile stage 6, logging to /pdos/src/comp6.log"
+	sys.run.check "gcc -fno-common -c -O -s -I../pdpclib pcomm.c pcommrt.c dostime.c >comp6.log"
+	puts "NOTICE: PDOS: Link stage 6"
+	sys.run.check "ld -r -s -o pcomm ../pdpclib/pdosst32.o pcomm.o pcommrt.o dostime.o ../pdpclib/pdos.a"
+	if {file.exists "pcomm.exe"} then {file.delete "pcomm.exe"}
+	file.rename "pcomm" "pcomm.exe"
+	puts "NOTICE: PDOS: Compile 32-bit hello world, logging to /pdos/src/compw32.log"
+	pdos.toolchain.emx
+	sys.run.check "gcc -s -c -I../pdpclib world.c >compw32.log"
+	puts "NOTICE: PDOS: Link 32-bit hello world"
+	sys.run.check "ld -s -o world ../pdpclib/pdosst32.o world.o ../pdpclib/pdos.a"
+	if {file.exists "world.exe"} then {file.delete "world.exe"}
+	file.rename "world" "world.exe"
+	puts "NOTICE: PDOS: Assemble boot sector"
+	pdos.toolchain.watcom
+	sys.run.check "wasmr -zq -zcm -Dmemodel=tiny pbootsec.asm"
+	puts "NOTICE: PDOS: Link boot sector"
+	pdos.toolchain.tc
+	sys.run.check "tlink -t -x pbootsec,pbootsec.com,,,"
+	if {not [prompt.yesno "CONFIRM: Wipe all data on floppy in drive A"]} then {return [null]}
+	puts "NOTICE: PDOS: Installing on Drive A"
+	pdos.format.a
+	file.copy "pload.com" "a:io.sys"
+	file.copy "pdos.exe" "a:msdos.sys"
+	file.copy "pcomm.exe" "a:command.com"
+	file.copy "world.exe" "a:world.exe"
+	sys.run.check "patchver a:io.sys"
+	puts "SUCCESS: PDOS: 32-bit version installed on drive A, reboot to test"
+}}
