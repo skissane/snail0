@@ -1171,3 +1171,24 @@ test.case snail.test.t1685 {
 test.case snail.test.t1686 {test.assert.error {cleanup "" ""}}
 test.case snail.test.t1687 {test.assert.error {cleanup {} ""}}
 test.case snail.test.t1688 {test.assert.eq "bar" {catching {cleanup {error "foo"} {error "bar"}}}}
+test.case snail.test.t1689 {test.assert.error {file.rename {} {}}}
+test.case snail.test.t1690 {test.assert.error {file.rename "" {}}}
+test.case snail.test.t1691 {test.assert.error {file.rename "" ""}}
+test.case snail.test.t1692 {test.assert.error {file.rename [rand.hex 8] [rand.hex 8]}}
+test.case snail.test.t1693 {
+	set name1 [string.concat "F0" [rand.hex 4] ".tmp"]
+	set name2 [string.concat "F1" [rand.hex 4] ".tmp"]
+	set value [rand.hex 128]
+	test.assert.not {file.exists $name1}
+	test.assert.not {file.exists $name2}
+	test.assert.null {file.write $name1 $value}
+	test.assert {file.exists $name1}
+	test.assert.not {file.exists $name2}
+	test.assert.eq $value {file.read $name1}
+	test.assert.null {file.rename $name1 $name2}
+	test.assert.error {file.rename $name1 $name2}
+	test.assert.not {file.exists $name1}
+	test.assert {file.exists $name2}
+	test.assert.eq $value {file.read $name2}
+	test.assert.null {file.delete $name2}
+}

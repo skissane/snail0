@@ -2848,3 +2848,33 @@ NATIVE(cleanup, 2) {
 	free(result);
 	return r;
 }
+
+NATIVE(file_rename,2) {
+	NATIVE_ARG_MUSTCLASS(0, 'Q');
+	NATIVE_ARG_MUSTCLASS(1, 'Q');
+	char *from = snailTokenUnquote(args[0]);
+	char *to = snailTokenUnquote(args[1]);
+	int rc = rename(from,to);
+	if (rc != 0) {
+		int e = errno;
+		snailBuffer *buf = snailBufferCreate(16);
+		snailBufferAddString(buf,"file.rename from ");
+		snailBufferAddString(buf,args[0]);
+		snailBufferAddString(buf," to ");
+		snailBufferAddString(buf,args[1]);
+		snailBufferAddString(buf," failed with OS error ");
+		char *r = snailI64ToStr(e);
+		snailBufferAddString(buf,r);
+		free(r);
+		snailBufferAddChar(buf,0);
+		snailSetResult(snail,buf->bytes);
+		snailBufferDestroy(buf);
+		free(from);
+		free(to);
+		return snailStatusError;
+	}
+	snailSetResult(snail,"");
+	free(from);
+	free(to);
+	return snailStatusOk;
+}
