@@ -102,7 +102,7 @@ proc pdos.build.pdos16 {} {file.savecwd {
 	file.copy "pload.com" "a:io.sys"
 	file.copy "pdos.exe" "a:msdos.sys"
 	file.copy "pcomm.exe" "a:command.com"
-	file.copy "world.exe" "a:world.exe"
+	file.copy "world.exe" "a:world16.exe"
 	sys.run.check "patchver a:io.sys"
 	puts "SUCCESS: PDOS: 16-bit version installed on drive A, reboot to test"
 }}
@@ -192,7 +192,7 @@ proc pdos.build.pdos32 {} {file.savecwd {
 	file.copy "pload.com" "a:io.sys"
 	file.copy "pdos.exe" "a:msdos.sys"
 	file.copy "pcomm.exe" "a:command.com"
-	file.copy "world.exe" "a:world.exe"
+	file.copy "world.exe" "a:world32.exe"
 	sys.run.check "patchver a:io.sys"
 	puts "SUCCESS: PDOS: 32-bit version installed on drive A, reboot to test"
 }}
