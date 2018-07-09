@@ -61,11 +61,13 @@ proc pdos.build.pdos16 {} {file.savecwd {
 	foreach file {"ploadst.asm" "int13x.asm" "near.asm" "support.asm" "lldos.asm"} {
 		sys.run.check [string.concat "wasmr -zq -zcm -Dmemodel=tiny " $file]
 	}
-	puts "NOTICE: PDOS: Compile stage 1, logging to /pdos/src/comp1.log"
+	puts "NOTICE: PDOS: Compile stage 1, logging to /pdos/src/comp1a.log"
 	pdos.toolchain.tc
-	sys.run.check "tcc -O -c -mt -DNEED_DUMP -j1 -I..\\pdpclib pload.c fat.c bos.c pdosload.c ..\\pdpclib\\string.c ..\\pdpclib\\dossupc.c >comp1.log"
+	sys.run.check "tcc -O -c -mt -DNEED_DUMP -j1 -I..\\pdpclib pload.c fat.c bos.c pdosload.c >comp1a.log"
+	puts "NOTICE: PDOS: Compile stage 1, logging to /pdos/src/comp1b.log"
+	sys.run.check "tcc -O -c -mt -DNEED_DUMP -j1 -I..\\pdpclib ..\\pdpclib\\string.c ..\\pdpclib\\dossupc.c ..\\pdpclib\\ctype.c >comp1b.log"
 	puts "NOTICE: PDOS: Link stage 1"
-	sys.run.check "tlink -t -x ploadst+pload+int13x+near+support+bos+dossupc+fat+string+pdosload+lldos,pload.com,,,"
+	sys.run.check "tlink -t -x ploadst+pload+int13x+near+support+bos+dossupc+fat+string+pdosload+lldos+ctype,pload.com,,,"
 	puts "NOTICE: PDOS: Assemble stage 2"
 	pdos.toolchain.watcom
 	foreach file {"pdosstrt.asm" "support.asm" "lldos.asm" "handlers.asm" "..\\pdpclib\\dossupa.asm"} {
@@ -103,6 +105,7 @@ proc pdos.build.pdos16 {} {file.savecwd {
 	file.copy "pdos.exe" "a:msdos.sys"
 	file.copy "pcomm.exe" "a:command.com"
 	file.copy "world.exe" "a:world16.exe"
+	file.copy "testbat.bat" "a:autoexec.bat"
 	sys.run.check "patchver a:io.sys"
 	puts "SUCCESS: PDOS: 16-bit version installed on drive A, reboot to test"
 }}
@@ -154,17 +157,19 @@ proc pdos.build.pdos32 {} {file.savecwd {
 	puts "NOTICE: PDOS: Compile stage 4a, logging to /pdos/src/comp4a.log"
 	pdos.toolchain.tc
 	sys.run.check "tcc -O -c -mt -DPDOS32 -I..\\pdpclib pload.c protint.c file.c >comp4a.log"
-	puts "NOTICE: PDOS: Compile stage 4a, logging to /pdos/src/comp4b.log"
-	sys.run.check "tcc -O -c -mt -DNEED_DUMP -DPDOS32 -I..\\pdpclib fat.c bos.c pdosload.c ..\\pdpclib\\string.c ..\\pdpclib\\dossupc.c >comp4b.log"
+	puts "NOTICE: PDOS: Compile stage 4b, logging to /pdos/src/comp4b.log"
+	sys.run.check "tcc -O -c -mt -DNEED_DUMP -DPDOS32 -I..\\pdpclib fat.c bos.c pdosload.c >comp4b.log"
+	puts "NOTICE: PDOS: Compile stage 4b, logging to /pdos/src/comp4c.log"
+	sys.run.check "tcc -O -c -mt -DNEED_DUMP -DPDOS32 -I..\\pdpclib ..\\pdpclib\\string.c ..\\pdpclib\\dossupc.c ..\\pdpclib\\ctype.c >comp4c.log"
 	puts "NOTICE: PDOS: Link stage 4"
-	sys.run.check "tlink -t -x -3 ploadst+pload+int13x+near+support+bos+dossupc+fat+string+pdosload+lldos+protinta+file+protint,pload.com,,,"
+	sys.run.check "tlink -t -x -3 ploadst+pload+int13x+near+support+bos+dossupc+fat+string+ctype+pdosload+lldos+protinta+file+protint,pload.com,,,"
 	puts "NOTICE: PDOS: Compile stage 5a, logging to /pdos/src/comp5a.log"
 	pdos.toolchain.emx
-	sys.run.check "gcc -fno-common -c -I../pdpclib strt32.s pdos.c bos.c fat.c >comp5a.log"
+	sys.run.check "gcc -fno-common -c -I../pdpclib strt32.s pdos.c bos.c fat.c ../pdpclib/ctype.c >comp5a.log"
 	puts "NOTICE: PDOS: Compile stage 5b, logging to /pdos/src/comp5b.log"
 	sys.run.check "gcc -fno-common -c -I../pdpclib patmat.c support.s memmgr.c protintp.c protints.s pdoss.s >comp5b.log"
 	puts "NOTICE: PDOS: Link stage 4"
-	sys.run.check "ld -r -s -o pdos strt32.o pdos.o bos.o fat.o memmgr.o patmat.o support.o protintp.o protints.o pdoss.o ../pdpclib/pdos.a"
+	sys.run.check "ld -r -s -o pdos strt32.o pdos.o bos.o fat.o memmgr.o patmat.o support.o protintp.o protints.o pdoss.o ctype.o ../pdpclib/pdos.a"
 	if {file.exists "pdos.exe"} then {file.delete "pdos.exe"}
 	file.rename "pdos" "pdos.exe"
 	puts "NOTICE: PDOS: Compile stage 6, logging to /pdos/src/comp6.log"
@@ -193,6 +198,7 @@ proc pdos.build.pdos32 {} {file.savecwd {
 	file.copy "pdos.exe" "a:msdos.sys"
 	file.copy "pcomm.exe" "a:command.com"
 	file.copy "world.exe" "a:world32.exe"
+	file.copy "testbat.bat" "a:autoexec.bat"
 	sys.run.check "patchver a:io.sys"
 	puts "SUCCESS: PDOS: 32-bit version installed on drive A, reboot to test"
 }}
