@@ -63,11 +63,14 @@ proc pdos.build.pdos16 {} {file.savecwd {
 	}
 	puts "NOTICE: PDOS: Compile stage 1, logging to /pdos/src/comp1a.log"
 	pdos.toolchain.tc
-	sys.run.check "tcc -O -c -mt -DNEED_DUMP -j1 -I..\\pdpclib pload.c fat.c bos.c pdosload.c >comp1a.log"
+	sys.run.check "tcc -O -c -mt -DNEED_DUMP -j1 -I..\\pdpclib pload.c minifat.c bos.c pdosload.c >comp1a.log"
 	puts "NOTICE: PDOS: Compile stage 1, logging to /pdos/src/comp1b.log"
 	sys.run.check "tcc -O -c -mt -DNEED_DUMP -j1 -I..\\pdpclib ..\\pdpclib\\string.c ..\\pdpclib\\dossupc.c ..\\pdpclib\\ctype.c >comp1b.log"
 	puts "NOTICE: PDOS: Link stage 1"
-	sys.run.check "tlink -t -x ploadst+pload+int13x+near+support+bos+dossupc+fat+string+pdosload+lldos+ctype,pload.com,,,"
+	if {file.exists "borland.lib"} then {file.delete "borland.lib"}
+	sys.run.check "tlib borland +support.obj +bos.obj +dossupc.obj +minifat.obj"
+	sys.run.check "tlib borland +string.obj +pdosload.obj +lldos.obj +ctype.obj"
+	sys.run.check "tlink -t -x ploadst+pload+int13x+near,pload.com,,borland.lib,"
 	puts "NOTICE: PDOS: Assemble stage 2"
 	pdos.toolchain.watcom
 	foreach file {"pdosstrt.asm" "support.asm" "lldos.asm" "handlers.asm" "..\\pdpclib\\dossupa.asm"} {
@@ -158,11 +161,14 @@ proc pdos.build.pdos32 {} {file.savecwd {
 	pdos.toolchain.tc
 	sys.run.check "tcc -O -c -mt -DPDOS32 -I..\\pdpclib pload.c protint.c file.c >comp4a.log"
 	puts "NOTICE: PDOS: Compile stage 4b, logging to /pdos/src/comp4b.log"
-	sys.run.check "tcc -O -c -mt -DNEED_DUMP -DPDOS32 -I..\\pdpclib fat.c bos.c pdosload.c >comp4b.log"
+	sys.run.check "tcc -O -c -mt -DNEED_DUMP -DPDOS32 -I..\\pdpclib minifat.c bos.c pdosload.c >comp4b.log"
 	puts "NOTICE: PDOS: Compile stage 4b, logging to /pdos/src/comp4c.log"
 	sys.run.check "tcc -O -c -mt -DNEED_DUMP -DPDOS32 -I..\\pdpclib ..\\pdpclib\\string.c ..\\pdpclib\\dossupc.c ..\\pdpclib\\ctype.c >comp4c.log"
 	puts "NOTICE: PDOS: Link stage 4"
-	sys.run.check "tlink -t -x -3 ploadst+pload+int13x+near+support+bos+dossupc+fat+string+ctype+pdosload+lldos+protinta+file+protint,pload.com,,,"
+	if {file.exists "borland.lib"} then {file.delete "borland.lib"}
+	sys.run.check "tlib borland +support.obj +bos.obj +dossupc.obj +minifat.obj +string.obj +pdosload.obj"
+	sys.run.check "tlib borland +lldos.obj +protinta.obj +file.obj +protint.obj +ctype.obj"
+	sys.run.check "tlink -t -x -3 ploadst+pload+int13x+near,pload.com,,borland.lib,"
 	puts "NOTICE: PDOS: Compile stage 5a, logging to /pdos/src/comp5a.log"
 	pdos.toolchain.emx
 	sys.run.check "gcc -fno-common -c -I../pdpclib strt32.s pdos.c bos.c fat.c ../pdpclib/ctype.c >comp5a.log"
