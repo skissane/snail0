@@ -188,7 +188,7 @@ proc pdos.build.pdos32 {} {file.savecwd {
 	pdos.toolchain.emx
 	sys.run.check "gcc -s -c -I../pdpclib world.c >compw32.log"
 	puts "NOTICE: PDOS: Link 32-bit hello world"
-	sys.run.check "ld -s -o world ../pdpclib/pdosst32.o world.o ../pdpclib/pdos.a"
+	sys.run.check "ld -r -s -o world ../pdpclib/pdosst32.o world.o ../pdpclib/pdos.a"
 	if {file.exists "world.exe"} then {file.delete "world.exe"}
 	file.rename "world" "world.exe"
 	puts "NOTICE: PDOS: Assemble boot sector"
