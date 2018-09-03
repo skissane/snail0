@@ -117,6 +117,10 @@ proc pdos.vbox.refresh {} {
 	vbox.cdrom.refresh "MS-DOS 6" 0 [string.concat [dict.get [sys.environ] "HOME"] "/pdos.iso"]
 }
 
+proc pdos.eject {} {
+	vbox.floppy.eject "MS-DOS 6" 0
+}
+
 proc pdos.copy.dos {} {
 	rem "This routine is used to copy PDOS sources from my Mac to an ISO for loading into VirtualBox"
 	rem "It might not correspond to your ways of working, but it works for me"
